@@ -54,6 +54,8 @@ pw> console error                       # and see how the page copes
 - **Record:** what someone does in a tab (`watch`), a timeline of requests and console (`capture`), or a
   video of the tab (`record`), with a virtual pointer (`cursor`), captions (`toast`) and highlights
   (`highlight`).
+- **Profile:** what keeps a page's main thread busy (`profile`): long tasks and the function behind each,
+  forced style and layout, each click's or key's time to the next paint, and dropped frames.
 - **Share:** many clients on one REPL, each with its own tab; a command server on a Unix socket or a local
   port, with an HTTP+JSON protocol.
 
@@ -146,6 +148,7 @@ example the Docker bridge gateway, `ip route | awk '/default/ {print $3}'`).
 | see each step as I click              | `watch on --live`                                                                    |
 | replay what I clicked through         | `watch on`, click around, `watch save flow.txt`, then `pw-repl send --file flow.txt` |
 | record requests and console together  | `capture on`, then `capture off`                                                     |
+| find what makes the page slow         | `profile on`, then `profile off`; `profile reload` for a page load                   |
 | fake a backend response               | `route <glob> <status> <json>`, `route <glob> abort`                                 |
 | change or slow an API response        | `route <glob> patch <json>`, `route <glob> delay <secs>`                             |
 | cut or slow the whole network         | `network off`, `network slow`, then `network on`                                     |
@@ -159,11 +162,11 @@ example the Docker bridge gateway, `ip route | awk '/default/ {print $3}'`).
 
 ### Modes
 
-Some commands turn on a mode that stays on until you turn it off: `watch`, `capture`, `route`, `network
-off` or `slow`, `emulate`, `viewport`, `record`, `highlight`, `cursor` and `toast`. While any are on in
-the selected tab, the prompt shows them: `(watch network:off routes:2) pw>`. `modes` lists them for every
-tab, and `modes off` turns them all off. Each of these commands on its own shows its state and what you
-can run next.
+Some commands turn on a mode that stays on until you turn it off: `watch`, `capture`, `profile`, `route`,
+`network off` or `slow`, `emulate`, `viewport`, `record`, `highlight`, `cursor` and `toast`. While any
+are on in the selected tab, the prompt shows them: `(watch network:off routes:2) pw>`. `modes` lists them
+for every tab, and `modes off` turns them all off. Each of these commands on its own shows its state and
+what you can run next.
 
 ## For agents and scripts
 

@@ -20,7 +20,8 @@ If you hit a limitation or write a workaround, consider adding the capability to
   drawn over the page, which the element and mouse commands glide first), `lib/toast.js` (a line of text
   over the page), `lib/overlay.js` (the element the cursor and toast are drawn in, one layer each), `lib/inspect.js` (reading the
   page, screenshots, eval, CDP, waits), `lib/watch.js`, `lib/requestlog.js` (requests, bodies, console),
-  `lib/routes.js`, `lib/network.js`, `lib/emulation.js` (and viewport), `lib/capture.js`, `lib/record.js`
+  `lib/routes.js`, `lib/network.js`, `lib/emulation.js` (and viewport), `lib/capture.js`, `lib/profile.js` (performance traces;
+  `lib/trace.js` reads and sums them up), `lib/record.js`
   (video, through ffmpeg, and the steps file saved with it), `lib/dialogs.js` and `lib/modes.js`. Beneath them, `lib/tabstate.js` is the one record kept per tab, `lib/cdp.js` the CDP
   session kept per tab, and `lib/util.js` small shared helpers. No facility requires `lib/modes.js` or
   `lib/commands.js`, and a unit test fails on a require cycle, which CommonJS would not report.
