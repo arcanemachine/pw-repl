@@ -86,7 +86,7 @@ Selectors are Playwright selectors (CSS, text=..., role=...) or snapshot refs su
 the first match (click, dblclick and hover the first they can use: help click); see help fill for
 selectors with spaces. mousemove and the other mouse commands act at a point instead.
 
-  click <selector> [button]             click the first match that can be clicked
+  click <selector> [button]                click the first match that can be clicked
       Arguments:
         <selector>          a Playwright selector or a snapshot ref (e5); quote one with spaces.
         [button]            left, right or middle, after a ref or a quoted selector: click e5 right. Default:
@@ -104,9 +104,9 @@ selectors with spaces. mousemove and the other mouse commands act at a point ins
       Timed out after it began acting, it says what stopped it (e.g. <div class="overlay"> intercepts pointer
       events) and that the outcome is unknown; Playwright's full call log goes to the REPL's pane or log.
 
-  dblclick <selector> [button]          double-click, choosing the match as click does
-  hover <selector>                      hover, choosing the match as click does
-  fill <selector> <value> [--submit]    clear an input and fill it
+  dblclick <selector> [button]             double-click, choosing the match as click does
+  hover <selector>                         hover, choosing the match as click does
+  fill <selector> <value> [--submit]       clear an input and fill it
       Arguments:
         <selector>          the first word; quote it if it has spaces: fill "text=Your name" Ada.
         <value>             the rest of the line; quotes around all of it are removed, so fill #name "" clears
@@ -117,7 +117,7 @@ selectors with spaces. mousemove and the other mouse commands act at a point ins
       Examples: fill #name Ada Lovelace, fill "text=Your name" Ada, fill e7 Ada. It sets the whole value at
       once, even while recording: type shows it being typed.
 
-  type [<selector>] <text> [--submit]   type key by key after what the field holds; text as for fill
+  type [--delay=<ms>] [<selector>] <text>  type key by key after what the field holds; text as for fill
       Arguments:
         [<selector>]        as for fill. Without it (one word, or one quoted), into what has focus: type
                             "garden hose".
@@ -137,8 +137,8 @@ selectors with spaces. mousemove and the other mouse commands act at a point ins
       from the first part with a selector, or from the part a click landed on. type says what the input then
       holds. Their ISO form (2026-10-02) is refused, since typed it comes out mangled: fill sets it.
 
-  press <key> | press <selector> <key>  press a key (Enter, Escape, Control+A; any case), maybe on an element
-  select <selector> <value>             choose an option in a select (the value is the rest of the line)
+  press <key> | press <selector> <key>     press a key (Enter, Control+A; any case), maybe on an element
+  select <selector> <value>                choose an option in a select (the value is the rest of the line)
       Arguments:
         <value>             an option's value or its label.
 
@@ -146,9 +146,9 @@ selectors with spaces. mousemove and the other mouse commands act at a point ins
       option, since a native select's list opens outside the page, where no screenshot or recording sees it;
       the page gets the same input either way.
 
-  check <selector>                      check a checkbox
-  uncheck <selector>                    uncheck a checkbox
-  upload <selector> <file>...           choose files in a file input, as the file picker would
+  check <selector>                         check a checkbox
+  uncheck <selector>                       uncheck a checkbox
+  upload <selector> <file>...              choose files in a file input, as the file picker would
       Arguments:
         <selector>          a file input (even a hidden one), its label, or a button that opens the file
                             picker.
@@ -158,7 +158,7 @@ selectors with spaces. mousemove and the other mouse commands act at a point ins
       The page then does what it does with a chosen file; often that is the upload itself. The REPL reads the
       files and hands the page their contents, so they need not be where the browser runs; up to 50MB in all.
 
-  mousemove <x> <y>                     move the mouse to a point in the viewport
+  mousemove <x> <y>                        move the mouse to a point in the viewport
       Arguments:
         <x> <y>             CSS pixels from the top left of the tab's viewport (not the page), as mouse events
                             have them.
@@ -170,7 +170,7 @@ selectors with spaces. mousemove and the other mouse commands act at a point ins
       A click at a point: mouseclick <x> <y>. A drag: mousedown, then mousemove to another point, then
       mouseup.
 
-  mouseclick <x> <y> [button]           click at a point in the viewport
+  mouseclick <x> <y> [button]              click at a point in the viewport
       Arguments:
         <x> <y>             CSS pixels from the top left of the tab's viewport, as for mousemove.
         [button]            left, right or middle. Default: left.
@@ -183,9 +183,9 @@ selectors with spaces. mousemove and the other mouse commands act at a point ins
       point, for a mousewheel or mousedown after it. The cursor (help cursor) moves there first and shows a
       ring at the press.
 
-  mousedown [button]                    press a mouse button where the mouse is (left, right or middle)
-  mouseup [button]                      release a mouse button where the mouse is
-  mousewheel <dx> <dy>                  turn the wheel where the mouse is
+  mousedown [button]                       press a mouse button where the mouse is (left, right or middle)
+  mouseup [button]                         release a mouse button where the mouse is
+  mousewheel <dx> <dy>                     turn the wheel where the mouse is
       Arguments:
         <dx> <dy>           CSS pixels; positive dy scrolls down.
 
