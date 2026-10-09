@@ -302,7 +302,8 @@ Output is capped; --all right after the command, or at the end, shows everything
                             20, give send time too: pw-repl send -t 70 profile on 60.
         off                 stops it and prints the summary.
         reload              reloads the tab and profiles its load, until its network is idle (at most 10s
-                            after load).
+                            after load) and half a second more. For work that starts later (a timer): profile
+                            on, reload, sleep, profile off.
         save <file>         writes the last profile's trace, the tab's events only, as Chrome trace JSON for
                             DevTools' Performance panel (Load profile) or ui.perfetto.dev. It refuses a file
                             that exists.
@@ -318,12 +319,12 @@ Output is capped; --all right after the command, or at the end, shows everything
 
       The summary: main-thread busy time by kind (scripting, style/layout, paint, GC, other); the page's load
       marks, when it loaded; each long task (over 50ms), with what set it off, the script it ran, the function
-      it spent most time in ("most in"), and a big response (100 KB or more) that finished just before it;
-      forced style and layout (work a script waited for, reading a size or a style), by where in the script;
-      and the steps: each click or key press with its time to the next paint (input delay, handlers,
-      presentation), and each burst of wheel or scroll events and each drag, with the main thread's busy time
-      and the frames drawn and dropped. Times are from when it started. --all lists every long task and step,
-      not the first ones.
+      it spent most time in ("most in"), each as file:line function, and a big response (100 KB or more) that
+      finished just before it; forced style and layout (work a script waited for, reading a size or a style),
+      by where in the script; and the steps: each click or key press with its time to the next paint (input
+      delay, handlers, presentation), and each burst of wheel or scroll events and each drag, with the main
+      thread's busy time and the frames drawn and dropped. Times are from when it started. --all lists every
+      long task and step, not the first ones.
 
       Size: a busy page fills Chrome's trace buffer in under a minute (one that restyles many elements as it
       draws, sooner), which stops the profile there, and the summary says so. Stopping a long one takes a
@@ -339,6 +340,9 @@ Output is capped; --all right after the command, or at the end, shows everything
 
       Frames: a tab pw-repl uses is kept drawing as if it were in front (help tab), so its frame counts are a
       tab in front's; one behind another tab draws far less, as the user would see it. The summary says so.
+
+      A function the JS engine inlined into its caller counts as the caller, in "most in" and --cpu alike: a
+      small hot function called in a loop can show as the loop's function.
 
       A wheel-zoom or drag the page handles in its own script (a map) shows as a step from its events; one the
       browser handles alone, with no listener, may show only as frames.
