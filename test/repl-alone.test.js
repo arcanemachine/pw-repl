@@ -275,3 +275,51 @@ exit 1
     assert.ok(fs.existsSync(`${dir}/cut.webm`));
   });
 });
+
+describe('a REPL killed while it profiles', { skip: SKIP }, () => {
+  let chrome, site;
+
+  before(async () => {
+    chrome = await startChrome();
+    site = await startSite();
+  });
+
+  after(async () => {
+    site?.stop();
+    await chrome?.stop();
+  });
+
+  // Chrome traces one at a time: one left running would refuse every profile after it, and DevTools'.
+  it('leaves no trace running in the browser: the next profile on starts', async () => {
+    const first = await startRepl(chrome.cdpUrl);
+    try {
+      assert.equal((await first.run(`tab new ${site.url}/slow-map?killed`)).status, 'ok');
+      const on = await first.run('profile on');
+      assert.equal(on.status, 'ok', on.output);
+      // While it runs, no other trace can start: what the kill must not leave behind.
+      const other = await startRepl(chrome.cdpUrl);
+      try {
+        assert.equal((await other.run('tab killed')).status, 'ok');
+        const refused = await other.run('profile on');
+        assert.equal(refused.status, 'error');
+        assert.match(refused.output, /The browser is already recording a trace, and records one at a time/);
+      } finally {
+        await other.stop();
+      }
+      first.proc.kill('SIGKILL');
+      await waitFor(() => first.exited, 'the REPL to die');
+    } finally {
+      await first.stop();
+    }
+    const second = await startRepl(chrome.cdpUrl);
+    try {
+      assert.equal((await second.run('tab killed')).status, 'ok');
+      const on = await second.run('profile on');
+      assert.equal(on.status, 'ok', on.output);
+      const off = await second.run('profile off');
+      assert.match(off.output, /^Profiled http:\/\/127\.0\.0\.1:\d+\/slow-map\?killed for /);
+    } finally {
+      await second.stop();
+    }
+  });
+});

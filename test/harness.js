@@ -200,6 +200,27 @@ redraw();
 pad.addEventListener('wheel', e => { e.preventDefault(); log.textContent += 'wheel:' + e.deltaY + '@' + e.clientX + ',' + e.clientY + ' '; });
 </script>`);
     }
+    // Planted slowness for profile: a load that waits on a big response, then draws for 70ms; a wheel
+    // handled in script (a map's zoom) that forces a layout; a slow click. Named functions, to find by name.
+    if (req.url === '/slow-map') {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      return res.end(`<!doctype html><title>Slow map</title><body style="margin:0">
+<div id="map" style="width:400px;height:300px;background:#cde"></div><button id="heavy">Heavy</button><p id="shown">loading</p>
+<script>
+function spin(ms) { const t = performance.now(); while (performance.now() - t < ms); }
+function drawLayers(layers) { spin(70); shown.textContent = layers.length + ' layers'; }
+function measure() { map.style.width = (380 + Math.random() * 40) + 'px'; return map.offsetWidth; }
+function onWheel(e) { e.preventDefault(); spin(60); measure(); }
+function onHeavy() { spin(120); shown.textContent = 'heavy'; }
+map.addEventListener('wheel', onWheel, { passive: false });
+heavy.addEventListener('click', onHeavy);
+fetch('/api/big').then(r => r.json()).then(drawLayers);
+</script>`);
+    }
+    if (req.url === '/api/big') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify(Array.from({ length: 3000 }, (_, i) => ({ id: i, name: `layer ${i}`, lat: i / 100, lng: i / 50 }))));
+    }
     if (req.url === '/controls') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end(CONTROLS_PAGE); }
     if (req.url === '/cards') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end(CARDS_PAGE); }
     if (req.url === '/picker') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end(PICKER_PAGE); }

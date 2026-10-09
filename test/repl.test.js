@@ -562,6 +562,100 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match(await ok('modes'), /No modes are on/);
   });
 
+  it('profiles a load: its long task, the function behind it, the big response before it, and the load marks', async () => {
+    await ok(`tab new ${site.url}/slow-map`);
+    await ok('wait text 3000 layers');
+    const summary = await ok('profile reload');
+    assert.match(summary, /^Profiled http:\/\/127\.0\.0\.1:\d+\/slow-map for [\d.]+s, from /);
+    assert.match(summary, /^Page: .*DOMContentLoaded \+[\d.]+s.*, load \+[\d.]+s/m);
+    assert.match(summary, /^ +\+[\d.]+s +\d+ms +scripting, promise callbacks; most in slow-map:\d+ (?:drawLayers|spin) \(\d+ms\) +\(after #\d+ GET http:\/\/127\.0\.0\.1:\d+\/api\/big, 1[56]\dKB, finished \+[\d.]+s\)$/m);
+    const dir = fs.mkdtempSync(require('path').join(require('os').tmpdir(), 'pw-repl-profile-test-'));
+    try {
+      const file = require('path').join(dir, 'load.json');
+      assert.match(await ok(`profile save ${file}`), /^Saved the profile of http:\/\/127\.0\.0\.1:\d+\/slow-map to .*load\.json \(\d+ KB\): the tab's events only\./);
+      // What DevTools needs to find the tab, and nothing from another process.
+      const { traceEvents } = JSON.parse(fs.readFileSync(file, 'utf8'));
+      const [started] = traceEvents;
+      assert.equal(started.name, 'TracingStartedInBrowser');
+      assert.match(started.args.data.frames[0].url, /\/slow-map$/);
+      const renderer = started.args.data.frames[0].processId;
+      assert.deepEqual(traceEvents.slice(1).filter(e => e.pid !== renderer), []);
+      assert.ok(!traceEvents.some(e => e.name === 'thread_name' && e.args.name === 'CrBrowserMain'), 'not the browser process, which names the tab\'s frame too');
+      assert.ok(traceEvents.some(e => e.name === 'RunTask' && e.dur >= 50000), 'its long task is in it');
+      const again = await repl.run(`profile save ${file}`);
+      assert.equal(again.status, 'error');
+      assert.match(again.output, /exists already; name another file/);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('profiles what the user does: a wheel the page handles, a slow click, a forced layout, and not another tab', async () => {
+    const as = async (client, command) => {
+      const result = await repl.runAs(client, command);
+      assert.equal(result.status, 'ok', `${client}: ${command}\n${result.output}`);
+      return result.output;
+    };
+    await ok(`tab new ${site.url}/slow-map`);
+    await ok('wait text 3000 layers');
+    // Another tab, of another site, busy while the profile runs.
+    await as('prof-other', 'tab new data:text/html,<script>function otherTabWork() { const t = performance.now(); while (performance.now() - t < 90); }</script>other');
+    try {
+      assert.match(await ok('profile on'), /^Profiling the selected tab; profile off stops it/);
+      assert.match(await ok('modes'), /slow-map +\(profile\)$/m);
+      const twice = await repl.run('profile on');
+      assert.equal(twice.status, 'error');
+      assert.match(twice.output, /Already profiling http:\/\/127\.0\.0\.1:\d+\/slow-map; profile off stops it/);
+      await ok('mousemove 200 150');
+      for (let i = 0; i < 3; i += 1) await ok('mousewheel 0 -100');
+      await ok('click #heavy');
+      await as('prof-other', 'eval otherTabWork()');
+      const summary = await ok('profile off');
+      assert.match(summary, /^ +\+[\d.]+s +\d+ms +scripting, wheel event, slow-map:\d+ onWheel; most in slow-map:\d+ (?:onWheel|spin) /m);
+      assert.match(summary, /^ +\+[\d.]+s +\d+ms +scripting, click event, slow-map:\d+ onHeavy; /m);
+      assert.match(summary, /^Forced style and layout \(work a script waited for, reading a size or style\): \d+, \d+ms in all\n(?: +\d+x +\d+ms +slow-map:\d+ measure \((?:style|layout)\)\n?)+/m);
+      // However many bursts the three wheel turns fall into on a busy machine, each is a step.
+      const wheels = [...summary.matchAll(/^ +\+[\d.]+s +wheel\/scroll +[\d.]+s, (\d+) events?; busy \d+ms/gm)];
+      assert.equal(wheels.reduce((sum, m) => sum + Number(m[1]), 0), 3, summary);
+      const click = /^ +\+[\d.]+s +click +\d+ms to next paint \(input delay \d+ms, handlers (\d+)ms, presentation \d+ms\); busy \d+ms, longest task \d+ms/m.exec(summary);
+      assert.ok(click && Number(click[1]) >= 100, summary);
+      assert.match(summary, /Frames are counted as for a tab in front/);
+      assert.doesNotMatch(summary, /otherTabWork|data:/, 'the other tab is left out');
+      assert.match(await ok('modes'), /No modes are on/);
+    } finally {
+      await repl.runAs('prof-other', 'tab close data:');
+    }
+  });
+
+  it('ends a profile when its tab closes, and keeps what it recorded; --cpu adds the functions that ran longest', async () => {
+    await ok(`tab new ${site.url}/slow-map?closing`);
+    await ok('wait text 3000 layers');
+    await ok('profile on --cpu');
+    await ok('click #heavy');
+    await ok('tab close');
+    const shown = await waitFor(async () => {
+      const output = (await repl.run('profile')).output;
+      return /^Not profiling\. The last profile, from /.test(output) && output;
+    }, 'the profile to end');
+    assert.match(shown, /^Profiled http:\/\/127\.0\.0\.1:\d+\/slow-map\?closing for [\d.]+s, from .*, with a JS CPU profile$/m);
+    assert.match(shown, /click event, slow-map:\d+ onHeavy/);
+    assert.match(shown, /^JS CPU profile, by own time:\n +\d+ms +slow-map:\d+ (?:onHeavy|spin)$/m);
+    // A timed profile whose tab closes answers with what it recorded. Closed by the browser, not the REPL,
+    // which runs one command at a time.
+    await ok(`tab new ${site.url}/slow-map?timed`);
+    await ok('wait text 3000 layers');
+    const timed = repl.run('profile on 30');
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const target = (await (await fetch(`${chrome.cdpUrl}/json/list`)).json()).find(t => t.url.endsWith('?timed'));
+    await fetch(`${chrome.cdpUrl}/json/close/${target.id}`);
+    const answer = await timed;
+    assert.equal(answer.status, 'ok', answer.output);
+    assert.match(answer.output, /^Profiling the selected tab for 30s\.\.\.\nProfiled http:\/\/127\.0\.0\.1:\d+\/slow-map\?timed for .*\nStopped early: the tab closed\.\n/);
+    const usage = await repl.run('profile on 0');
+    assert.equal(usage.status, 'error');
+    assert.match(usage.output, /Usage: profile on \[seconds\] \[--cpu\] \(seconds from 1 to 120\)/);
+  });
+
   it('hooks each page once, however often its tab is selected or watched', async () => {
     const start = repl.stdout.length;
     // Selected again, by this client and by others: each select must not hook it again.

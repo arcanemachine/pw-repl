@@ -1,6 +1,6 @@
 ---
 name: pw-repl
-description: Inspect and drive a Chromium browser, possibly one the user is using, through the pw-repl REPL - tabs, page snapshots, clicks and typing, the mouse at a point (moves, buttons, wheel), requests and their bodies, console messages, waiting for pages and elements, choosing files, faking, patching or delaying responses, cutting or slowing the network, emulating a phone, dark mode, a locale or a timezone, recording what the user does, and recording a video of a tab, with a pointer and on-screen captions. Use when asked to look at, debug or test something in a web page, in an existing Chromium with remote debugging or in one it starts itself.
+description: Inspect and drive a Chromium browser, possibly one the user is using, through the pw-repl REPL - tabs, page snapshots, clicks and typing, the mouse at a point (moves, buttons, wheel), requests and their bodies, console messages, waiting for pages and elements, choosing files, faking, patching or delaying responses, cutting or slowing the network, emulating a phone, dark mode, a locale or a timezone, recording what the user does, profiling what makes a page slow (long tasks, forced layouts, input delay, dropped frames), and recording a video of a tab, with a pointer and on-screen captions. Use when asked to look at, debug or test something in a web page, in an existing Chromium with remote debugging or in one it starts itself.
 allowed-tools: Bash(pw-repl:*) Bash(npx pw-repl@latest:*)
 ---
 
@@ -180,6 +180,11 @@ When watching someone:
   fires, since another tab opening later does not show in `watch`.
 - A watch belongs to the tab: when another client watches it too, read it with `watch <n>`, since
   `watch new`'s place is shared and each one's would hide steps from the other.
+
+When a page is slow or feels laggy, `requests` shows a slow response; for what the page itself is busy
+with, `profile on` and `profile off` around what you do, or while the user uses it, sum up a performance
+trace of the tab: long tasks and the function behind each, forced layouts, each click's time to the next
+paint, and frames dropped while scrolling or dragging. `profile reload` profiles a load. `help profile`.
 
 Exit status: `0` ok, `1` the command failed, `2` completion not confirmed (outcome unknown: do not
 blindly retry a change), `64` usage or the REPL is not reachable. `pw-repl --help` has the options.
