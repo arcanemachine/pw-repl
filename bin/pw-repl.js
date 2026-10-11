@@ -38,7 +38,9 @@ $PW_ENDPOINT, then $PW_SOCKET, then the default.
 send -c <client> (or $PW_CLIENT) sends as a client of the REPL's with a selected tab of its own, so
 several agents can share one REPL; pw-repl help session has the rest.
 
-send exit status: 0 ok, 1 command error, 2 completion not confirmed, 64 usage or unreachable.
+send exit status: 0 ok, 1 command error, 2 completion not confirmed, 64 usage or unreachable. send -t is
+how long send waits for the answer (default 20s); it does not lengthen a command's own limits, such as
+the 5s an action waits for its element.
 
 send --file <file> runs each line of a file as a command, in order, as if typed at the REPL's prompt:
 quoted as the prompt reads it (no shell), with a file it records, uploads or saves relative to this
