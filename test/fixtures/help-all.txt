@@ -84,7 +84,8 @@ own lists them all.
 == interact ==
 Selectors are Playwright selectors (CSS, text=..., role=...) or snapshot refs such as e5. Commands use
 the first match (click, dblclick and hover the first they can use: help click); see help fill for
-selectors with spaces. mousemove and the other mouse commands act at a point instead.
+selectors with spaces. mousemove and the other mouse commands act at a point instead. An action scrolls
+its element into view first, as Playwright does; profile counts that scroll in the action's step.
 
   click <selector> [button]                           click the first match that can be clicked
       Arguments:
@@ -349,6 +350,10 @@ Output is capped; --all right after the command, or at the end, shows everything
 
       A wheel-zoom or drag the page handles in its own script (a map) shows as a step from its events; one the
       browser handles alone, with no listener, may show only as frames.
+
+      A page gets scroll events for any scroll, input or not. Those next to a click or key press, with no
+      wheel event (an action's scroll into view, or a handler's scrollTo), are that step's: it says the page
+      scrolled. A burst of scroll events alone may also be the page's own script scrolling.
 
       profile on and off each run console.timeStamp in the page, which prints nothing, so the tab is found in
       the trace even when its page did nothing. The trace is kept in a temporary folder until the next

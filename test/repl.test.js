@@ -627,6 +627,15 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     }
   });
 
+  it('counts a click\'s own scroll into view in its step, not as a step of its own', async () => {
+    await ok('tab new data:text/html,<div style="height:5000px"></div><button id=far onclick="this.textContent=1">far</button>');
+    await ok('profile on');
+    await ok('click #far');
+    const summary = await ok('profile off');
+    assert.match(summary, /^ +\+[\d.]+s +click +\d+ms to next paint \([^)]*\), the page scrolled; busy/m, summary);
+    assert.doesNotMatch(summary, /wheel\/scroll/, summary);
+  });
+
   it('ends a profile when its tab closes, and keeps what it recorded; --cpu adds the functions that ran longest', async () => {
     await ok(`tab new ${site.url}/slow-map?closing`);
     await ok('wait text 3000 layers');
