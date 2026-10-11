@@ -336,6 +336,22 @@ describe('action timeouts', () => {
   });
 });
 
+describe('profile summary', () => {
+  it('says a step began before the profile, without the busy time it could not record', () => {
+    const { printProfile } = require('../lib/profile');
+    const t0 = 1e9;
+    const step = (start, kind) => ({ kind, start, end: start + 20000, latency: 20, delay: 1, handlers: 2, presentation: 17, busy: 12000, longest: 3000, frames: 2, dropped: 0 });
+    const summary = { t0, duration: 2e6, busy: 1e5, buckets: {}, marks: [], longTasks: [], forced: [], steps: [step(t0 - 15e6, 'click'), step(t0 + 5e5, 'key press')], cpu: null };
+    const printed = [];
+    const log = console.log;
+    console.log = text => printed.push(String(text));
+    try { printProfile({ url: 'http://x/', startedAt: Date.now(), summary }); } finally { console.log = log; }
+    const text = printed.join('\n');
+    assert.match(text, /^ +before {2}click {2}20ms to next paint \([^)]*\); began before the profile: its busy time was not recorded, frames 2 drawn, 0 dropped$/m);
+    assert.match(text, /^ +\+0\.50s {2}key press {2}20ms to next paint \([^)]*\); busy 12ms, longest task 3ms, frames 2 drawn/m);
+  });
+});
+
 describe('times', () => {
   const t = Date.UTC(2026, 8, 25, 0, 16, 15, 721);
   const withZone = (zone, fn) => {
