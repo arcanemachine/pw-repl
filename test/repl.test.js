@@ -627,6 +627,21 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     }
   });
 
+  it('counts the frame a wheel scroll drew before the page heard of it', async () => {
+    // No wheel listener: the browser scrolls and draws, and the page's scroll event comes a frame later.
+    await ok('tab new data:text/html,<div style="height:8000px">tall</div>');
+    await ok('mousemove 200 200');
+    await ok('profile on');
+    for (let i = 0; i < 4; i += 1) {
+      await ok('mousewheel 0 300');
+      await ok('sleep 400');
+    }
+    const summary = await ok('profile off');
+    const steps = [...summary.matchAll(/^ +\+[\d.]+s +wheel\/scroll .*$/gm)].map(m => m[0]);
+    assert.equal(steps.length, 4, summary);
+    for (const step of steps) assert.match(step, /frames [1-9]\d* drawn/, summary);
+  });
+
   it('counts a click\'s own scroll into view in its step, not as a step of its own', async () => {
     await ok('tab new data:text/html,<div style="height:5000px"></div><button id=far onclick="this.textContent=1">far</button>');
     await ok('profile on');
