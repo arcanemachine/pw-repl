@@ -110,7 +110,8 @@ selectors with spaces. mousemove and the other mouse commands act at a point ins
       Arguments:
         <selector>          the first word; quote it if it has spaces: fill "text=Your name" Ada.
         <value>             the rest of the line; quotes around all of it are removed, so fill #name "" clears
-                            it.
+                            it. Over send, the shell's quotes do it: pw-repl send fill #name "" ('""' types
+                            two quote marks).
       Options:
         --submit            at the end: presses Enter in it afterwards.
 
