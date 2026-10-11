@@ -332,7 +332,8 @@ Output is capped; --all right after the command, or at the end, shows everything
 
       Long tasks read kind, what set it off, script: scripting, click event, app.js:120 handleClick. The kind
       is what most of its time went to (GC, style/layout); what set it off is the event or callback that began
-      it (timer, promise callbacks). No script is named when none of its code came from a page URL.
+      it (timer, promise callbacks); promise callbacks a click handler queued run in the click's task, so show
+      as click event. No script is named when none of its code came from a page URL.
 
       A page that freezes: profile on, then do what freezes it. Your commands wait for the page meanwhile, and
       may time out, but the profile records it all; profile off once the page answers again.
