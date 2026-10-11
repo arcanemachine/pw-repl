@@ -322,6 +322,20 @@ describe('snapshot changes', () => {
   });
 });
 
+describe('action timeouts', () => {
+  const { onElement } = require('../lib/elements');
+  const timedOut = steps => () => Promise.reject(new Error(`page.click: Timeout 5000ms exceeded.\nCall log:\n  - waiting for locator('#go')\n    - locator resolved to <button id="go">Go</button>\n  - attempting click action\n${steps.map(step => `    - ${step}`).join('\n')}\n`));
+  const quiet = async run => { const log = console.error; console.error = () => {}; try { return await run(); } finally { console.error = log; } };
+
+  it('says a click was sent when the page stopped answering after it, and a busy page when it never got that far', async () => {
+    const sent = await quiet(() => onElement('#go', timedOut(['waiting for element to be visible, enabled and stable', 'element is visible, enabled and stable', 'scrolling into view if needed', 'done scrolling', 'performing click action'])).catch(e => e));
+    assert.match(sent.message, /^Timed out after 5s on #go: the click was sent, and may have landed, but the page stopped answering after it, likely busy with what it set off: profile on now/);
+    assert.equal(sent.uncertain, true);
+    const waiting = await quiet(() => onElement('#go', timedOut(['waiting for element to be visible, enabled and stable'])).catch(e => e));
+    assert.match(waiting.message, /: it never became ready to act on; a page busy with a long task does not answer meanwhile: profile on, then try again/);
+  });
+});
+
 describe('times', () => {
   const t = Date.UTC(2026, 8, 25, 0, 16, 15, 721);
   const withZone = (zone, fn) => {
