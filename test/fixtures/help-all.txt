@@ -205,6 +205,7 @@ Output is capped; --all right after the command, or at the end, shows everything
         <eN>                outlines one element; the refs of the last snapshot keep working.
         <selector>          outlines the first match, with new refs: those from before stop working.
       Options:
+        --all               the whole outline, not capped.
         --full              Playwright's snapshot unchanged.
         --grep <text>       only the lines containing text (role, name or a flag such as [disabled], any
                             case), each with the named elements around it.
@@ -224,7 +225,8 @@ Output is capped; --all right after the command, or at the end, shows everything
       its value. Every other field shows what it holds (textbox "Name": Ada), and a select its chosen option:
       inputs lists the fields without what they hold.
 
-      Output over 60 lines ends with a line count.
+      Output over 60 lines ends with a line count. Past 12000 characters it is cut at the end of a line,
+      saying where: --all shows all.
 
   watch on [options] | off | [n|new] | save <file>     record what happens in the tab; show or save the steps
       Arguments:

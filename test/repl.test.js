@@ -1996,9 +1996,24 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match((await repl.run('cdp Browser.close {}')).output, /reserved/);
   });
 
-  it('caps long output unless --all is given', async () => {
+  it('caps long output unless --all is given, at a line\'s end when there is one late enough', async () => {
     assert.match(await ok('eval "x".repeat(13000)'), /\[truncated; add --all to the command/);
     assert.doesNotMatch(await ok('eval --all "x".repeat(13000)'), /truncated/);
+    const lines = await ok('eval Array.from({ length: 2000 }, (_, i) => "line " + i).join("\\n")');
+    assert.match(lines, /\nline \d+\n\[truncated at line \d+ of 2000; add --all to the command to show all\]$/);
+    assert.match(await ok('eval "short\\n" + "x".repeat(13000)'), /^short\nx+\n\[truncated; add --all/, 'a short line before a long one is cut by characters');
+  });
+
+  it('cuts a long snapshot between lines and keeps its line count', async () => {
+    await ok('eval document.body.append(...Array.from({ length: 600 }, (_, i) => Object.assign(document.createElement("button"), { textContent: "generic item " + i }))); 0');
+    const capped = await ok('snapshot');
+    const all = await ok('snapshot --all');
+    const total = all.split('\n').length - 1;
+    const tail = new RegExp(`\\n\\[truncated at line (\\d+) of ${total}; add --all to the command to show all\\]\\n\\[${total} lines; snapshot --grep <text> or snapshot <eN> shows less\\]$`);
+    assert.match(capped, tail);
+    const shown = capped.replace(tail, '');
+    assert.ok(all.startsWith(`${shown}\n`), 'the cut falls between lines');
+    assert.doesNotMatch(all, /truncated/);
   });
 
   it('fakes a response in the browser and proves it', async () => {
