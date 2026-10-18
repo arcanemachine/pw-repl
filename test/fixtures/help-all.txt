@@ -459,6 +459,10 @@ Output is capped; --all right after the command, or at the end, shows everything
 
       emulate mobile sets a phone's size instead, and each refuses while the other is on.
 
+      The window's size here is the size of the page in it. Chromium's --window-size flag sizes the whole
+      window, frame included, so the page is smaller: --window-size=1280,900 gives 1280x757 in a headless one.
+      For a page of an exact size, use viewport <W>x<H>.
+
   emulate [<what> [off] | off]                         emulate a phone, dark mode, a locale or a timezone
       Arguments:
         mobile [device]     a phone's screen, touch and user agent: a Pixel 7, or a device named as in
