@@ -1374,6 +1374,8 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match((await pwSend(['wait', 'text', 'Showing 1'])).output, /^Visible: Showing 1$/m, 'quoted in the shell, through send too');
     assert.match((await pwSend(['wait', 'text=Showing 1', '2'])).output, /^Visible: "text=Showing 1"$/m, 'a selector with a space, and the seconds');
     assert.equal((await repl.run('wait #never 1')).output, 'Error: No visible element matches #never within 1s');
+    assert.equal((await repl.run('wait text Showing 2026')).output, 'Error: wait takes 1-120 seconds (got 2026); for text that ends in a number, quote it: wait text "Showing 2026"');
+    assert.equal((await repl.run('wait load 500')).output, 'Error: wait takes 1-120 seconds (got 500)');
     await ok('eval document.body.insertAdjacentHTML("beforeend", \'<p id="later" hidden>Later</p>\'); setTimeout(() => { document.querySelector("#later").hidden = false; }, 400); "added"');
     assert.equal(await ok('wait #later 5'), 'Visible: #later', 'a hidden element is waited for until it shows');
     assert.match(await ok('info'), /Title: Fixture$/m, 'a wait that times out does not disconnect');
