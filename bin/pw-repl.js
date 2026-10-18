@@ -147,7 +147,8 @@ function parseSendArgs(args, subcommand) {
   // send's, refused, not the end of a URL or a selector.
   while (allowCommand && !dashes) {
     const last = words.length - 1;
-    if (last > 0 && words[last] === '--no-vars') take(words.pop(), true, true);
+    if (last > 0 && words[last] === '--raw') words.pop();
+    else if (last > 0 && words[last] === '--no-vars') take(words.pop(), true, true);
     else if (last > 1 && /^-[ecst]$/.test(words[last - 1])) { const value = words.pop(); take(words.pop(), value, true); } else break;
   }
   // An address that is refused (not loopback) is a usage error, said once, not a stack trace.

@@ -40,6 +40,7 @@ describe('pw-repl send help', () => {
     const quit = help.render('quit');
     assert.equal(pwRepl(['send', 'help', 'quit', '-t', '30', '-c', 'me', '--no-vars'], { env }).stdout.trimEnd(), quit);
     assert.equal(pwRepl(['send', 'help quit', '-t', '30'], { env }).stdout.trimEnd(), quit, 'after a command in one word');
+    assert.equal(pwRepl(['send', 'help', 'quit', '--raw'], { env }).stdout.trimEnd(), quit, 'playwright-cli\'s --raw, after it too');
     const bad = pwRepl(['send', 'help', 'quit', '-t', '30s'], { env });
     assert.equal(bad.status, 64, 'a bad value is still send\'s, not the command\'s');
     assert.match(bad.stderr, /^pw-repl: -t takes whole seconds, 1 or more \(got 30s\)\n/);
