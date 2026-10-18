@@ -1586,7 +1586,9 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
   it('unsets a viewport, which counts as a mode, and keeps it through a screenshot', async () => {
     const windowSize = /^(\d+x\d+) \(the window's size\)$/.exec(await ok('viewport'))[1];
     assert.equal(await ok('viewport off'), `No viewport is set in the selected tab: ${windowSize} (the window's size)`);
-    await ok('viewport 700x500');
+    assert.equal((await repl.run('viewport 1280')).output, 'Error: A size is <width>x<height>, e.g. viewport 1280x900 (got 1280). Usage: viewport [<width>x<height> | off]');
+    assert.equal((await repl.run('viewport 0x0')).output, 'Error: A width and a height are 1 or more (got 0x0)');
+    await ok('viewport 700X500');
     assert.match(await ok('modes'), /\(viewport:700x500\)/);
     assert.match((await repl.run('emulate mobile')).output, /viewport off first/, 'one screen size at a time');
     const shot = /Saved: (\S+)/.exec(await ok('screenshot'))[1];
