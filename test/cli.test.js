@@ -80,8 +80,34 @@ describe('pw-repl send help', () => {
       assert.notEqual(result.status, 0, 'nothing to connect to');
       assert.match(result.stderr, /No browser answered at http:\/\/127\.0\.0\.1:9 \(connect ECONNREFUSED[\s\S]*--remote-debugging-port=9222/, 'says how to start a browser');
     }
-    assert.match(pwRepl(['http://example.com']).stderr, /Usage:/, 'a URL on its own does not connect');
-    assert.match(pwRepl(['sned']).stderr, /Usage:/, 'a mistyped subcommand shows the usage');
+    assert.match(pwRepl(['http://example.com']).stderr, /^pw-repl: http:\/\/example\.com is not a command [^\n]*; a start URL goes after run or serve: pw-repl run http:\/\/example\.com\n/, 'a URL on its own does not connect');
+    assert.match(pwRepl(['sned']).stderr, /^pw-repl: sned is not a command \(they are run, serve, attach, stop, send, where, help, skill\)\npw-repl --help has the usage\.\n$/, 'a mistyped subcommand says so');
+  });
+
+  it('says what is wrong in a line, with only that subcommand\'s usage', () => {
+    const env = { ...process.env, PW_SOCKET: '/nonexistent/pw-usage-test.sock', PW_ENDPOINT: '' };
+    const early = pwRepl(['-t', '30', 'send', 'open https://example.com'], { env });
+    assert.equal(early.status, 64);
+    assert.equal(early.stdout, '');
+    assert.match(early.stderr, /^pw-repl: -t is an option of a subcommand, and goes after it: pw-repl send -t 30 'open https:\/\/example\.com'\nUsage:\n  pw-repl send \[[^\n]*\n      run one command[^\n]*\npw-repl --help has the rest\.\n$/, 'the line put right, and send\'s usage alone');
+    assert.match(pwRepl(['-c', 'me'], { env }).stderr, /^pw-repl: -c is an option of a subcommand, and goes after it: pw-repl send -c me <command>\n/);
+    const cases = [
+      [['send', '-t', '30s', 'tab'], /^pw-repl: -t takes whole seconds, 1 or more \(got 30s\)\nUsage:\n  pw-repl send /],
+      [['send', '-c'], /^pw-repl: -c needs a value\nUsage:\n  pw-repl send /],
+      [['where', 'tab'], /^pw-repl: where takes no command \(got tab\)\nUsage:\n  pw-repl where /],
+      [['stop', '-s', 'x'], /^pw-repl: -s is send's tmux session; stop takes -e <endpoint>\nUsage:\n  pw-repl stop /],
+      [['serve', '-e', 'foo'], /^pw-repl: -e takes an endpoint: [^\n]*\(got foo\)\nUsage:\n  pw-repl serve /],
+      [['run', '--background'], /^pw-repl: --background is serve's: pw-repl serve --background\nUsage:\n  pw-repl run /],
+      [['run', '--headed'], /^pw-repl: --headed is for the Chromium --launch starts; add --launch\n/],
+      [['run', 'a', 'b'], /^pw-repl: one start URL at most \(got a b\)\n/],
+    ];
+    for (const [args, expected] of cases) {
+      const result = pwRepl(args, { env });
+      assert.equal(result.status, 64, args.join(' '));
+      assert.match(result.stderr, expected, args.join(' '));
+      assert.doesNotMatch(result.stderr, /PW_PASSWORD/, `${args.join(' ')}: not the whole usage`);
+    }
+    assert.match(pwRepl(['serve', '--help'], { env }).stderr, /PW_PASSWORD/, '--help after a subcommand is still the whole usage');
   });
 
   it('says why it stops when its input ends', { skip: SKIP }, async () => {
