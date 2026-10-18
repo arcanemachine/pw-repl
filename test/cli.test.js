@@ -131,7 +131,7 @@ describe('pw-repl send help', () => {
     const chrome = await startChrome();
     try {
       const result = pwRepl(['run'], { env: { ...process.env, PW_CDP_URL: chrome.cdpUrl }, input: '', timeout: 20000 });
-      assert.match(result.stderr, /Input ended; disconnecting\./);
+      assert.match(result.stderr, /Input ended \(stdin is not a terminal\); disconnecting\. pw-repl serve --background runs it without one\./);
     } finally {
       await chrome.stop();
     }
