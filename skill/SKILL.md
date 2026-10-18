@@ -54,12 +54,12 @@ run one; each takes an optional start URL, which opens in a new tab.
 - Add `--launch` to `run` or `serve` (with or without `--background`) to have it start a Chromium of its
   own instead of connecting to one: headless unless `--headed`, in a temporary profile, on a free port
   of its own (never 9222). It stops with the REPL, Ctrl-C while it starts included, and `stop` returns
-  once it has exited. It prints the command it ran; flags after `--` are passed to that Chromium, and a
-  `--user-data-dir=<dir>` among them is used instead of the temporary profile, and kept. Started again
-  in a kept profile, Chromium picks up where it left off, as it would for the user, headless too: its
-  tabs come back, and session cookies with them, so a login stays. They start loading before the REPL is
-  attached, so `requests` and `console` have only what came after, often nothing: `reload` for a full
-  record.
+  once it has exited. It prints the command it ran; flags after `--` are passed to that Chromium (only
+  flags: a start URL goes before `--`), and a `--user-data-dir=<dir>` among them is used instead of the
+  temporary profile, and kept. Started again in a kept profile, Chromium picks up where it left off, as
+  it would for the user, headless too: its tabs come back, and session cookies with them, so a login
+  stays. They start loading before the REPL is attached, so `requests` and `console` have only what
+  came after, often nothing: `reload` for a full record.
 - `pw-repl run` runs it in a terminal with no server; `send` then reaches it through tmux, if it runs in
   the tmux session `pw-repl`:
 

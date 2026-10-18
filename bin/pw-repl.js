@@ -67,7 +67,7 @@ The browser must be running with --remote-debugging-port (default http://localho
 --launch is the quick start instead: it starts a Chromium of the REPL's own (headless unless --headed, in
 a temporary profile, on a free port of its own, which pw-repl where names), prints the command it ran,
 and stops it with the REPL (Ctrl-C while it starts too); stop returns once that Chromium has exited.
-Flags after -- go to it; a --user-data-dir=<dir> among them is used instead of the temporary profile, and
+Flags after -- go to it, and only flags; a --user-data-dir=<dir> among them is used instead of the temporary profile, and
 kept. PW_CHROME picks which one. To set a browser up your own way, start it yourself and use PW_CDP_URL.
 
 In a tmux session named pw-repl, pw-repl send reaches pw-repl run without the server.`;
@@ -180,6 +180,9 @@ function startOptions(args, serve) {
   const subcommand = serve ? 'serve' : 'run';
   if (options.headed && !options.launch) usage('--headed is for the Chromium --launch starts; add --launch', subcommand);
   if (options.chromeArgs.length && !options.launch) usage('flags after -- go to the Chromium --launch starts; add --launch', subcommand);
+  // Chromium takes any word that is not a --switch as a page to open, and a headless one refuses a second.
+  const page = options.chromeArgs.find(word => !word.startsWith('-'));
+  if (page) usage(`${page} after -- would go to Chromium as a page to open; only flags go after --. A start URL goes before --; for a browser already running, leave out --launch and set PW_CDP_URL`, subcommand);
   // -e <endpoint>, as send, attach, stop and where take it, or the endpoint as the first word.
   const e = rest.indexOf('-e');
   if (serve && e !== -1 && rest[e + 1] && looksLikeEndpoint(rest[e + 1])) {

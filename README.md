@@ -126,7 +126,7 @@ example the Docker bridge gateway, `ip route | awk '/default/ {print $3}'`).
   it. `pw-repl where` says what is running and how `send` will reach it.
 - For `send` to reach `run`, start it in tmux: `tmux new -s pw-repl`, then `pw-repl run` there.
 - A URL after the command opens in a new tab: `pw-repl serve http://localhost:3000`.
-- `--launch` works with each of them. Flags after `--` go to that Chromium.
+- `--launch` works with each of them. Flags after `--` go to that Chromium (flags only; a start URL goes before `--`).
 - A REPL of your own goes on a socket of its own: `-e /tmp/mine.sock` on every command, `serve`
   included, or set `PW_SOCKET`. `serve <port>` listens on TCP, on 127.0.0.1 only.
 
