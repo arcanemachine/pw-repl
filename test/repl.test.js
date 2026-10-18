@@ -60,6 +60,16 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
   });
   const sendFile = (name, env = {}, flags = []) => pwSend(['--file', name, ...flags], env);
 
+  it('takes send\'s options after the command, not as the end of it', async () => {
+    await ok(`tab new ${site.url}/`);
+    const after = await pwSend(['eval', 'location.pathname', '-t', '30']);
+    assert.equal(after.status, 0, after.output);
+    assert.equal(after.output, '/\n');
+    const kept = await pwSend(['--', 'eval', 'location.pathname', '-t', '30']);
+    assert.equal(kept.status, 1);
+    assert.match(kept.output, /SyntaxError/, 'after --, the command\'s own');
+  });
+
   it('clicks the first match that can be clicked, and says which, or why none can', async () => {
     await ok(`tab new ${site.url}/pick`);
     try {

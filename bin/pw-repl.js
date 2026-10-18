@@ -38,6 +38,9 @@ $PW_ENDPOINT, then $PW_SOCKET, then the default.
 send -c <client> (or $PW_CLIENT) sends as a client of the REPL's with a selected tab of its own, so
 several agents can share one REPL; pw-repl help session has the rest.
 
+send's options can also follow the command, as in pw-repl send open <url> -t 30; after a -- before the
+command, every word is the command's, -t 30 included.
+
 send exit status: 0 ok, 1 command error, 2 completion not confirmed, 64 usage or unreachable. send -t is
 how long send waits for the answer (default 20s); it does not lengthen a command's own limits, such as
 the 5s an action waits for its element.
@@ -95,11 +98,28 @@ function shellLine(words) {
   return words.map(w => (/^[\w@%+=:,./-]+$/.test(w) ? w : `'${w.replace(/'/g, "'\\''")}'`)).join(' ');
 }
 
-// -e, -s, -c and -t, then the command words (unquoted words are one command).
+// -e, -s, -c and -t, then the command words (unquoted words are one command), and send's options again
+// at the end, as an agent types them (send open <url> -t 30); after --, every word is the command.
 function parseSendArgs(args, subcommand) {
   const allowCommand = subcommand === 'send';
   const options = { endpoint: null, session: null, client: null, timeout: 20, command: '', file: null };
+  const given = new Set();
+  const take = (arg, value, after) => {
+    if (value === undefined) usage(`${arg} needs a value`, subcommand);
+    // Given before the command and after it, neither silently wins.
+    if (after && given.has(arg)) usage(`${arg} is given twice, ${value === true ? arg : `${arg} ${value}`} after the command; give it once`, subcommand);
+    given.add(arg);
+    if (arg === '--no-vars') options.noVars = true;
+    if (arg === '-e') options.endpoint = value;
+    if (arg === '-s') options.session = value;
+    if (arg === '-c') options.client = value;
+    if (arg === '-t') {
+      if (!/^\d+$/.test(value) || Number(value) < 1) usage(`-t takes whole seconds, 1 or more (got ${value})`, subcommand);
+      options.timeout = Number(value);
+    }
+  };
   let i = 0;
+  let dashes = false;
   for (; i < args.length; i++) {
     const arg = args[i];
     // playwright-cli's --raw: the output here is only the command's already.
@@ -118,18 +138,17 @@ function parseSendArgs(args, subcommand) {
       options.file = require('path').resolve(args[++i]);
       continue;
     }
-    if (arg === '--no-vars') { options.noVars = true; continue; }
-    if (arg === '-e' || arg === '-s' || arg === '-c' || arg === '-t') {
-      const value = args[++i];
-      if (value === undefined) usage(`${arg} needs a value`, subcommand);
-      if (arg === '-e') options.endpoint = value;
-      if (arg === '-s') options.session = value;
-      if (arg === '-c') options.client = value;
-      if (arg === '-t') {
-        if (!/^\d+$/.test(value) || Number(value) < 1) usage(`-t takes whole seconds, 1 or more (got ${value})`, subcommand);
-        options.timeout = Number(value);
-      }
-    } else if (arg === '--') { i++; break; } else break;
+    if (arg === '--no-vars') take(arg, true);
+    else if (arg === '-e' || arg === '-s' || arg === '-c' || arg === '-t') take(arg, args[++i]);
+    else if (arg === '--') { i++; dashes = true; break; } else break;
+  }
+  const words = args.slice(i);
+  // A word the shell kept whole ("a -t 3") is never one of these; an option with a bad value is still
+  // send's, refused, not the end of a URL or a selector.
+  while (allowCommand && !dashes) {
+    const last = words.length - 1;
+    if (last > 0 && words[last] === '--no-vars') take(words.pop(), true, true);
+    else if (last > 1 && /^-[ecst]$/.test(words[last - 1])) { const value = words.pop(); take(words.pop(), value, true); } else break;
   }
   // An address that is refused (not loopback) is a usage error, said once, not a stack trace.
   const endpoint = options.endpoint || process.env.PW_ENDPOINT;
@@ -141,7 +160,6 @@ function parseSendArgs(args, subcommand) {
       process.exit(64);
     }
   }
-  const words = args.slice(i);
   if (!allowCommand && options.file) usage(`--file is send's; ${subcommand} runs no commands`, subcommand);
   if (!allowCommand && words.length) usage(`${subcommand} takes no command (got ${shellLine(words)})`, subcommand);
   if (options.file && words.length) usage(`a command or --file, not both (got --file and ${shellLine(words)})`, subcommand);

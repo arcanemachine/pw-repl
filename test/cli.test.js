@@ -36,6 +36,22 @@ describe('pw-repl send help', () => {
     assert.equal(pwRepl(['send', 'help', 'quit'], { env, encoding: 'utf8' }).stdout.trimEnd(), help.render('quit'));
   });
 
+  it('takes send\'s options after the command too, unless -- says where it starts', () => {
+    const quit = help.render('quit');
+    assert.equal(pwRepl(['send', 'help', 'quit', '-t', '30', '-c', 'me', '--no-vars'], { env }).stdout.trimEnd(), quit);
+    assert.equal(pwRepl(['send', 'help quit', '-t', '30'], { env }).stdout.trimEnd(), quit, 'after a command in one word');
+    const bad = pwRepl(['send', 'help', 'quit', '-t', '30s'], { env });
+    assert.equal(bad.status, 64, 'a bad value is still send\'s, not the command\'s');
+    assert.match(bad.stderr, /^pw-repl: -t takes whole seconds, 1 or more \(got 30s\)\n/);
+    const twice = pwRepl(['send', '-t', '5', 'help', 'quit', '-t', '30'], { env });
+    assert.equal(twice.status, 64);
+    assert.match(twice.stderr, /^pw-repl: -t is given twice, -t 30 after the command; give it once\n/);
+    const kept = pwRepl(['send', '--', 'help', 'quit', '-t', '30'], { env });
+    assert.equal(kept.status, 1, 'after --, every word is the command');
+    assert.match(kept.stdout, /No help for quit -t 30/);
+    assert.match(pwRepl(['send', 'help', 'quit -t 30'], { env }).stdout, /No help for quit -t 30/, 'nor a word the shell kept whole');
+  });
+
   it('ignores playwright-cli\'s --raw', () => {
     assert.equal(pwRepl(['send', '--raw', 'help', 'quit'], { env }).stdout.trimEnd(), help.render('quit'));
   });
