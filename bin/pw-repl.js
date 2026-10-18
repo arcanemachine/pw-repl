@@ -182,8 +182,14 @@ function startOptions(args, serve) {
   if (options.headed && !options.launch) usage('--headed is for the Chromium --launch starts; add --launch', subcommand);
   if (options.chromeArgs.length && !options.launch) usage('flags after -- go to the Chromium --launch starts; add --launch', subcommand);
   // Chromium takes any word that is not a --switch as a page to open, and a headless one refuses a second.
-  const page = options.chromeArgs.find(word => !word.startsWith('-'));
-  if (page) usage(`${page} after -- would go to Chromium as a page to open; only flags go after --. A start URL goes before --; for a browser already running, leave out --launch and set PW_CDP_URL`, subcommand);
+  const n = options.chromeArgs.findIndex(word => !word.startsWith('-'));
+  if (n !== -1) {
+    const [page, before] = [options.chromeArgs[n], options.chromeArgs[n - 1]];
+    // Most likely a switch's value given as a word of its own (--user-data-dir /tmp/p); a URL after a
+    // switch is a URL (--disable-gpu http://...).
+    if (before && /^--[^=]+$/.test(before) && !page.includes('://')) usage(`${page} after -- would go to Chromium as a page to open: it takes a switch's value as ${before}=${page}`, subcommand);
+    usage(`${page} after -- would go to Chromium as a page to open; only flags go after --. A start URL goes before --; for a browser already running, leave out --launch and set PW_CDP_URL`, subcommand);
+  }
   // -e <endpoint>, as send, attach, stop and where take it, or the endpoint as the first word.
   const e = rest.indexOf('-e');
   if (serve && e !== -1 && rest[e + 1] && looksLikeEndpoint(rest[e + 1])) {

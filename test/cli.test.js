@@ -117,6 +117,8 @@ describe('pw-repl send help', () => {
       [['run', '--background'], /^pw-repl: --background is serve's: pw-repl serve --background\nUsage:\n  pw-repl run /],
       [['run', '--headed'], /^pw-repl: --headed is for the Chromium --launch starts; add --launch\n/],
       [['run', 'a', 'b'], /^pw-repl: one start URL at most \(got a b\)\n/],
+      [['serve', '--launch', '--', '--disable-gpu', 'http://localhost:9222'], /^pw-repl: http:\/\/localhost:9222 after -- would go to Chromium as a page to open; only flags go after --\. A start URL goes before --/],
+      [['run', '--launch', '--', '--user-data-dir', '/tmp/p'], /^pw-repl: \/tmp\/p after -- would go to Chromium as a page to open: it takes a switch's value as --user-data-dir=\/tmp\/p\nUsage:\n  pw-repl run /],
       [['serve', '--background', '--launch', '--', 'http://localhost:9222'], /^pw-repl: http:\/\/localhost:9222 after -- would go to Chromium as a page to open; only flags go after --\. A start URL goes before --; for a browser already running, leave out --launch and set PW_CDP_URL\nUsage:\n  pw-repl serve /],
     ];
     for (const [args, expected] of cases) {
