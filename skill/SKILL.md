@@ -162,34 +162,17 @@ background REPL (server commands as `[server]` lines), so whoever looks there se
 shows REPL commands only, not what was clicked in the browser (unless `watch on --live` is on); for
 that, look at the browser itself: `tab` and `info` for where things are, `requests` for the requests the
 clicks made (`body <#>` for what one returned), `console` for console messages and page errors.
-`watch on` records each step someone takes in a tab, with the requests it caused (`watch on --changes`
-adds what each step changed on the page); `watch` reads it back, and `watch new` only what it has not
-shown yet. For a tab they have not opened yet, `watch on --next-tab [url-part]` waits for it and
-watches it from its first page. `watch save <file>` writes the steps as commands that `send --file`
-runs again, a repro to keep. What is typed is recorded, except in password fields; `watch on
---no-values` leaves it out. The file has a `{{ PW_PASSWORD }}` variable where a password was typed,
-set when it runs (`PW_PASSWORD=... pw-repl send --file login.txt`), so the file can be shared without
-it.
-
-When watching someone:
-
-- A watched tab keeps response bodies of up to 100 KB, so `body <#>` still has them after the tab
-  navigates. Read a bigger one that matters as soon as it shows up in `requests`: the browser drops it
-  once the tab navigates.
-- `watch` leaves out images and other static files, failed ones too; `console error` and
-  `requests --all` show what failed.
-- Without a url-part, `--next-tab` takes the first tab anyone opens; check `tab` and `info` once it
-  fires, since another tab opening later does not show in `watch`.
-- A watch belongs to the tab: when another client watches it too, read it with `watch <n>`, since
-  `watch new`'s place is shared and each one's would hide steps from the other.
+`watch on` records each step someone takes in a tab, with the requests it caused; `watch` reads it back,
+and `watch save <file>` writes the steps as commands that `send --file` runs again, a repro to keep.
+Before you watch someone, read `help watch`: what it keeps and leaves out, passwords, and sharing a watch
+with another client.
 
 When a page is slow or feels laggy, `requests` shows a slow response; for what the page itself is busy
-with, `profile on` and `profile off` around what you do, or while the user uses it, sum up a performance
-trace of the tab: long tasks and the function behind each, forced layouts, each click's time to the next
-paint, and frames dropped while scrolling or dragging. `profile reload` profiles a load. `help profile`.
+with, `profile on` and `profile off` around what you do, or while the user uses it (`help profile`).
 
 Exit status: `0` ok, `1` the command failed, `2` completion not confirmed (outcome unknown: do not
-blindly retry a change), `64` usage or the REPL is not reachable. `pw-repl --help` has the options.
+blindly retry a change), `64` usage or the REPL is not reachable. `pw-repl --help` has the options, and
+`pw-repl send --help` the rest of send's.
 
 ## Learn the commands
 
