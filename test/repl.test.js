@@ -70,6 +70,13 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match(kept.output, /SyntaxError/, 'after --, the command\'s own');
   });
 
+  it('says a pw-repl subcommand sent as a command is run at the shell', async () => {
+    const where = await repl.run('where');
+    assert.equal(where.status, 'error');
+    assert.equal(where.output, 'Error: where is a pw-repl subcommand, run at the shell: pw-repl where');
+    assert.equal((await repl.run('stop -e /tmp/x.sock')).output, 'Error: stop is a pw-repl subcommand, run at the shell: pw-repl stop ...');
+  });
+
   it('clicks the first match that can be clicked, and says which, or why none can', async () => {
     await ok(`tab new ${site.url}/pick`);
     try {
