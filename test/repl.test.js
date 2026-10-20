@@ -160,6 +160,21 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.equal(await ok('eval log.textContent'), 'dragstart drop down up-on-rail down ', 'pressed, then released when the target never came');
   });
 
+  it('clicks three times at once, selecting a field\'s text, on an element or at a point', async () => {
+    await ok('fill #name Ada Lovelace');
+    const selected = 'eval (f => `${f.selectionStart}-${f.selectionEnd}`)(document.querySelector("#name"))';
+    const sent = await pwSend(['click', '#name', '--click-count=3']);
+    assert.equal(sent.status, 0, sent.output);
+    assert.equal(await ok(selected), '0-12', 'all of it, not the word a double-click selects');
+    await ok('eval document.querySelector("#name").setSelectionRange(0, 0)');
+    const at = JSON.parse(await ok('eval JSON.stringify((r => [Math.round(r.x + 5), Math.round(r.y + r.height / 2)])(document.querySelector("#name").getBoundingClientRect()))'));
+    assert.equal(await ok(`mouseclick ${at[0]} ${at[1]} --click-count=3`), `Clicked the left button at ${at[0]}, ${at[1]} 3 times`);
+    assert.equal(await ok(selected), '0-12');
+    assert.match((await repl.run('click #name --click-count=4')).output, /--click-count is 1, 2 or 3, once/);
+    assert.match((await repl.run('mouseclick 5 5 --click-count=0')).output, /--click-count is 1, 2 or 3, once/);
+    assert.match((await repl.run('dblclick #name --click-count=3')).output, /dblclick is a click count of 2; for another count, click --click-count=<n>/);
+  });
+
   it('double-clicks at a point, where two clicks make no dblclick', async () => {
     await ok(`tab new ${site.url}/pick`);
     try {

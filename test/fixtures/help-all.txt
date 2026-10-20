@@ -96,6 +96,9 @@ its element into view first, as Playwright does; profile counts that scroll in t
         --button=<button>   the button, after any selector: click #menu --button=right. Over send, the shell
                             takes the quotes, so pw-repl send click '#menu' right clicks a selector "#menu
                             right": use --button, or quote it twice ('"#menu"').
+        --click-count=<n>   clicks this many times at once, as Playwright's clickCount: 2 is a double-click
+                            (as dblclick), 3 a triple-click, which selects a line of text or all of a field's.
+                            1 to 3. Default: 1.
         --modifiers=<keys>  keys held down meanwhile, comma-separated: Alt, Control, ControlOrMeta, Meta,
                             Shift.
 
@@ -109,6 +112,8 @@ its element into view first, as Playwright does; profile counts that scroll in t
       events) and that the outcome is unknown; Playwright's full call log goes to the REPL's pane or log.
 
   dblclick <selector> [button]                        double-click, as click does, with its options
+      click --click-count=2, as Playwright's dblclick is. For a triple-click: click --click-count=3.
+
   hover <selector>                                    hover, choosing the match as click does
   drag <from> <to>                                    drag one element onto another
       Arguments:
@@ -193,6 +198,8 @@ its element into view first, as Playwright does; profile counts that scroll in t
         <x> <y>             CSS pixels from the top left of the tab's viewport, as for mousemove.
         [button]            left, right or middle. Default: left.
       Options:
+        --click-count=<n>   as click's: 2 is a double-click (as mousedblclick), 3 a triple-click. 1 to 3.
+                            Default: 1.
         --delay=<ms>        holds the button down this long between press and release, as Playwright's
                             mouse.click delay. Default: 0.
 
@@ -206,8 +213,9 @@ its element into view first, as Playwright does; profile counts that scroll in t
         <x> <y>             CSS pixels from the top left of the tab's viewport, as for mousemove.
         [button]            left, right or middle. Default: left.
 
-      As Playwright's mouse.dblclick: the page gets two clicks and a dblclick. Two mouseclicks are two single
-      clicks, which fire no dblclick. Otherwise as mouseclick.
+      mouseclick --click-count=2, as Playwright's mouse.dblclick is: the page gets two clicks and a dblclick.
+      Two mouseclicks are two single clicks, which fire no dblclick. For a triple-click: mouseclick <x> <y>
+      --click-count=3.
 
   mousedown [button]                                  press a mouse button at the mouse (left, right, middle)
   mouseup [button]                                    release a mouse button where the mouse is
