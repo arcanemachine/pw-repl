@@ -107,6 +107,16 @@ its element into view first, as Playwright does; profile counts that scroll in t
 
   dblclick <selector> [button]                        double-click, choosing the match as click does
   hover <selector>                                    hover, choosing the match as click does
+  drag <from> <to>                                    drag one element onto another
+      Arguments:
+        <from> <to>         selectors or snapshot refs, each quoted if it has spaces: drag e5 e9, drag
+                            "text=Item 1" "#done ul".
+
+      As Playwright's dragTo: it hovers the first match of <from>, presses the left button, hovers the first
+      match of <to>, and releases, waiting up to 5s in all for each to be ready. An HTML5 drag (a draggable
+      element) gets dragstart, dragover and drop; any other gets pointer and mouse events. A drag through
+      points of its own: mousemove, mousedown, mousemove, mouseup.
+
   fill <selector> <value> [--submit]                  clear an input and fill it
       Arguments:
         <selector>          the first word; quote it if it has spaces: fill "text=Your name" Ada.
@@ -637,10 +647,11 @@ clean browser of its own (here, its video-start is record on).
 
       The REPL's clicks and typing don't move a pointer on screen, so a recording shows things happening with
       nothing pointing at them. With the cursor on, these commands move it smoothly to their element or point
-      before they act: click, dblclick, hover, fill, type <selector>, press <selector>, select, check,
-      uncheck, upload, mousemove, mouseclick and mousedblclick. Each move takes 150 to 600ms by distance (300
-      to 1000ms while the tab records), and the command waits for it. Clicks (click, dblclick, check, uncheck,
-      mouseclick, mousedblclick, mousedown, and upload when it clicks a button) show a ring where they land.
+      before they act: click, dblclick, hover, drag (to each end), fill, type <selector>, press <selector>,
+      select, check, uncheck, upload, mousemove, mouseclick and mousedblclick. Each move takes 150 to 600ms by
+      distance (300 to 1000ms while the tab records), and the command waits for it. Clicks (click, dblclick,
+      check, uncheck, mouseclick, mousedblclick, mousedown, and upload when it clicks a button) show a ring
+      where they land.
 
       Only the drawing moves: no mouse events are sent along the way, so the page gets the same input as with
       the cursor off. It shows only the REPL's input, from every client, never the user's own mouse. fill,

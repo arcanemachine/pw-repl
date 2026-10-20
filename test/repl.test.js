@@ -116,6 +116,23 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     }
   });
 
+  it('drags one element onto another, HTML5 or by pointer events', async () => {
+    await ok(`eval document.body.innerHTML = '<p draggable="true" id="item">Item 1</p><div id="bin" style="height:80px">Done list</div><div id="knob" style="width:40px;height:40px;background:red"></div><div id="rail" style="height:40px"></div><p id="log"></p>'`);
+    await ok('eval bin.ondragover = e => e.preventDefault(); bin.ondrop = e => { e.preventDefault(); log.textContent += "drop "; }; item.ondragstart = e => { e.dataTransfer.setData("text/plain", "x"); log.textContent += "dragstart "; }');
+    await ok('eval knob.onpointerdown = () => { log.textContent += "down "; }; rail.onpointerup = () => { log.textContent += "up-on-rail "; }');
+    const sent = await pwSend(['drag', 'text=Item 1', 'text=Done list']);
+    assert.equal(sent.status, 0, sent.output);
+    assert.equal(sent.output, 'Dragged text=Item 1 to text=Done list\n', 'send keeps each selector with spaces whole');
+    assert.equal(await ok('drag #knob #rail'), 'Dragged #knob to #rail');
+    assert.equal(await ok('eval log.textContent'), 'dragstart drop down up-on-rail ');
+    assert.match((await repl.run('drag #knob')).output, /Usage: drag <from> <to>/);
+    assert.match((await repl.run('drag #knob #rail #bin')).output, /Usage: drag <from> <to>/);
+    const missing = await repl.run('drag #knob #nowhere');
+    assert.equal(missing.status, 'error');
+    assert.match(missing.output, /No element matches #nowhere/);
+    assert.equal(await ok('eval log.textContent'), 'dragstart drop down up-on-rail down ', 'pressed, then released when the target never came');
+  });
+
   it('double-clicks at a point, where two clicks make no dblclick', async () => {
     await ok(`tab new ${site.url}/pick`);
     try {

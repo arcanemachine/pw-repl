@@ -485,7 +485,7 @@ describe('playwright-cli names', () => {
   it('runs, rewrites or refuses each of playwright-cli\'s commands by name, never as unknown', () => {
     const { commands } = require('../lib/commands');
     for (const name of CLI_COMMANDS) assert.ok(translate(name) || Object.hasOwn(commands, name), name);
-    assert.match(translate('drag e1 e2').refuse, /^drag is playwright-cli's and not here yet$/);
+    assert.match(translate('drop e1').refuse, /^drop is playwright-cli's and not here yet$/);
     assert.match(translate('close-all').refuse, /not here on purpose: it would close a browser someone else may be using/);
   });
 
