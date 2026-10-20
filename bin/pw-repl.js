@@ -260,6 +260,7 @@ async function main() {
     // falls through never: process.exit above
     case 'send': {
       const options = parseSendArgs(args, 'send');
+      if (!options.command && !options.file) usage('no command given', 'send');
       // help is fixed text, so it needs no browser: answer it here.
       const asksHelp = /^help(?:\s+(.*))?$/.exec(options.command);
       if (asksHelp) return help((asksHelp[1] || '').trim());

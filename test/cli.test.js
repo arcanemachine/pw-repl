@@ -111,6 +111,7 @@ describe('pw-repl send help', () => {
     const cases = [
       [['send', '-t', '30s', 'tab'], /^pw-repl: -t takes whole seconds, 1 or more \(got 30s\)\nUsage:\n  pw-repl send /],
       [['send', '-c'], /^pw-repl: -c needs a value\nUsage:\n  pw-repl send /],
+      [['send'], /^pw-repl: no command given\nUsage:\n  pw-repl send /],
       [['where', 'tab'], /^pw-repl: where takes no command \(got tab\)\nUsage:\n  pw-repl where /],
       [['stop', '-s', 'x'], /^pw-repl: -s is send's tmux session; stop takes -e <endpoint>\nUsage:\n  pw-repl stop /],
       [['serve', '-e', 'foo'], /^pw-repl: -e takes an endpoint: [^\n]*\(got foo\)\nUsage:\n  pw-repl serve /],
