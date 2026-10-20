@@ -132,11 +132,14 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       const onRef = send('eval', '--file', 'fn.js', ref);
       assert.equal(onRef.status, 0, onRef.stderr);
       assert.equal(onRef.stdout, 'name\n');
+      const onSelector = send('eval', '--file=fn.js', 'label:has-text("Name") input');
+      assert.equal(onSelector.status, 0, onSelector.stderr);
+      assert.equal(onSelector.stdout, 'name\n', 'a selector, spaces and all, as well as a ref');
       fs.writeFileSync(path.join(dir, 'take.txt'), 'eval --file=check.js\n');
       const file = spawnSync(process.execPath, [path.join(__dirname, '..', 'bin', 'pw-repl.js'), 'send', '-e', repl.socket, '--file', 'take.txt'], { encoding: 'utf8', cwd: dir });
       assert.equal(file.status, 0, file.stdout + file.stderr);
       assert.match(file.stdout, /^Fixture\|two$/m, 'a send file\'s line too');
-      assert.match((await repl.run(`eval --file="${path.join(dir, 'check.js')}" and more`)).output, /Usage: eval --file=<path> \[<ref>\]/);
+      assert.match((await repl.run(`eval --file=${path.join(dir, 'check.js')}`)).output, /eval --file: cannot read .*pw-repl-eval \(ENOENT\); quote a path with spaces$/m, 'unquoted, the path stops at its space');
       assert.match((await repl.run(`eval --file="${path.join(dir, 'gone.js')}"`)).output, /eval --file: cannot read .*gone\.js \(ENOENT\)/);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });

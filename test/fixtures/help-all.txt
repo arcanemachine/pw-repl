@@ -820,8 +820,9 @@ show sensitive data (cdp Network.getCookies shows cookie values).
                             newline and its \" a quote: write \\n for a JS string's \n.
       Options:
         --file=<path>       the JavaScript is the file's text: anything the line takes, over many lines and
-                            with // comments. With a <ref> after the path, it is a function called with that
-                            element. Over send, a relative path is from your folder.
+                            with // comments. With a ref or a selector after the path, it is a function called
+                            with that element (the first match). Over send, a relative path is from your
+                            folder.
         --all               the whole result, not capped.
 
       eval fetch(...) sends a new request, which can change state on the server; it cannot read one that
