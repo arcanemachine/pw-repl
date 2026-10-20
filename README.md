@@ -154,7 +154,7 @@ example the Docker bridge gateway, `ip route | awk '/default/ {print $3}'`).
 | record requests and console together  | `capture on`, then `capture off`                              |
 | find what makes the page slow         | `profile on`, then `profile off`; `profile reload` for a load |
 | fake a backend response               | `route <glob> <status> <json>`, `route <glob> abort`          |
-| change or slow an API response        | `route <glob> patch <json>`, `route <glob> delay <secs>`      |
+| change or slow an API response        | `route <glob> patch <json>`, `route <glob> delay <time>`      |
 | cut or slow the whole network         | `network off`, `network slow`, then `network on`              |
 | record a video of the page            | `record on`, then `record off` (`help video` for a take)      |
 | show a pointer where the agent acts   | `cursor on`, then `cursor off`                                |

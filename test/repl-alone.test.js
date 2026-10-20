@@ -143,7 +143,7 @@ describe('quitting at the prompt while a sent command runs', { skip: SKIP }, () 
     await repl?.stop();
     repl = await startRepl(chrome.cdpUrl);
     await repl.run(`tab new ${site.url}/`);
-    const sender = spawn(process.execPath, [path.join(__dirname, '..', 'bin', 'pw-repl.js'), 'send', '-e', repl.socket, '-t', '30', command]);
+    const sender = spawn(process.execPath, [path.join(__dirname, '..', 'bin', 'pw-repl.js'), 'send', '-e', repl.socket, '-t', '30s', command]);
     let stdout = '';
     let stderr = '';
     sender.stdout.on('data', d => { stdout += d; });
@@ -171,7 +171,7 @@ describe('quitting at the prompt while a sent command runs', { skip: SKIP }, () 
   });
 
   it('answers a read-only command that the browser would never end as interrupted', async () => {
-    const result = await sendThenQuit('wait request /never 30');
+    const result = await sendThenQuit('wait request /never 30s');
     assert.equal(result.code, 1, result.stderr);
     assert.match(result.stdout, /The REPL quit before this command finished\.$/m);
     assert.doesNotMatch(result.stderr, /cannot reach|not answering/);

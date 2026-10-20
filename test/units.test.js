@@ -7,7 +7,7 @@ const help = require('../lib/help');
 const { commands, complete } = require('../lib/commands');
 const { compactSnapshot, grepSnapshot } = require('../lib/inspect');
 const { summarizeChanges, scrubEditable } = require('../lib/watch');
-const { clock } = require('../lib/util');
+const { clock, parseDuration, durationText, longDuration } = require('../lib/util');
 const { parseEndpoint, looksLikeEndpoint, DEFAULT_SOCKET } = require('../lib/client');
 
 describe('help', () => {
@@ -124,6 +124,23 @@ describe('modules', () => {
       };
       visit(file, []);
     }
+  });
+});
+
+describe('times', () => {
+  it('reads milliseconds, or seconds with an s, and says them back', () => {
+    assert.equal(parseDuration('1500'), 1500);
+    assert.equal(parseDuration('1.5s'), 1500);
+    assert.equal(parseDuration('250ms'), 250);
+    assert.equal(parseDuration('soon'), null);
+    assert.equal(durationText(1500), '1.5s');
+    assert.equal(durationText(250), '250ms');
+  });
+
+  it('says a time under a second, where one must be longer, is milliseconds', () => {
+    assert.equal(longDuration('30s', 'x'), 30000);
+    assert.equal(longDuration('30000', 'x'), 30000);
+    assert.throws(() => longDuration('30', 'capture on\'s time'), { message: 'capture on\'s time is in milliseconds, 1000 or more: 30 is 30ms; 30s for seconds' });
   });
 });
 

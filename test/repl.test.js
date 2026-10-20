@@ -62,19 +62,19 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
 
   it('takes send\'s options after the command, not as the end of it', async () => {
     await ok(`tab new ${site.url}/`);
-    const after = await pwSend(['eval', 'location.pathname', '-t', '30']);
+    const after = await pwSend(['eval', 'location.pathname', '-t', '30s']);
     assert.equal(after.status, 0, after.output);
     assert.equal(after.output, '/\n');
-    const kept = await pwSend(['--', 'eval', 'location.pathname', '-t', '30']);
+    const kept = await pwSend(['--', 'eval', 'location.pathname', '-t', '30s']);
     assert.equal(kept.status, 1);
     assert.match(kept.output, /SyntaxError/, 'after --, the command\'s own');
   });
 
   it('cancels a command whose sender gave up, and drops one still queued', async () => {
     const start = repl.stdout.length;
-    const hung = pwSend(['-t', '3', 'eval', 'new Promise(() => {})']);
+    const hung = pwSend(['-t', '3s', 'eval', 'new Promise(() => {})']);
     await waitFor(() => repl.stdout.slice(start).includes('new Promise(() => {})'), 'the hung eval running');
-    const queued = await pwSend(['-t', '1', 'eval', 'window.droppedRan = 1']);
+    const queued = await pwSend(['-t', '1000', 'eval', 'window.droppedRan = 1']);
     assert.equal(queued.status, 2, queued.output);
     assert.equal((await hung).status, 2);
     await waitFor(() => /new Promise\(\(\) => \{\}\): cancelled, its sender gave up; it may still be acting on the page/.test(repl.stdout.slice(start)), 'the cancel in the pane');
@@ -816,16 +816,16 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     // which runs one command at a time.
     await ok(`tab new ${site.url}/slow-map?timed`);
     await ok('wait text 3000 layers');
-    const timed = repl.run('profile on 30');
+    const timed = repl.run('profile on 30s');
     await new Promise(resolve => setTimeout(resolve, 500));
     const target = (await (await fetch(`${chrome.cdpUrl}/json/list`)).json()).find(t => t.url.endsWith('?timed'));
     await fetch(`${chrome.cdpUrl}/json/close/${target.id}`);
     const answer = await timed;
     assert.equal(answer.status, 'ok', answer.output);
     assert.match(answer.output, /^Profiling the selected tab for 30s\.\.\.\nProfiled http:\/\/127\.0\.0\.1:\d+\/slow-map\?timed for .*\nStopped early: the tab closed\.\n/);
-    const usage = await repl.run('profile on 0');
+    const usage = await repl.run('profile on 30');
     assert.equal(usage.status, 'error');
-    assert.match(usage.output, /Usage: profile on \[seconds\] \[--cpu\] \(seconds from 1 to 120\)/);
+    assert.equal(usage.output, 'Error: profile on\'s time is in milliseconds, 1000 or more: 30 is 30ms; 30s for seconds');
   });
 
   it('hooks each page once, however often its tab is selected or watched', async () => {
@@ -941,7 +941,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
         `fill 'body > x-card:nth-of-type(2) #qty' "3"`,
         `select 'role=combobox[name*="Plan"]' "pro-yearly"`,
         `click 'role=button[name*="Route"]'`,
-        `wait 'role=link[name*="Next"]' 30`,
+        `wait 'role=link[name*="Next"]' 30s`,
         `click 'role=link[name*="Next"]'`,
         'wait load',
       ]);
@@ -956,7 +956,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       await ok(`goto ${site.url}/flow`);
       const lines = saved.split('\n');
       const beforeLeaving = path.join(dir, 'stay.txt');
-      fs.writeFileSync(beforeLeaving, lines.slice(0, lines.findIndex(l => l === `wait 'role=link[name*="Next"]' 30`)).join('\n'));
+      fs.writeFileSync(beforeLeaving, lines.slice(0, lines.findIndex(l => l === `wait 'role=link[name*="Next"]' 30s`)).join('\n'));
       const unset = await sendFile(beforeLeaving);
       assert.equal(unset.status, 1);
       assert.match(unset.output, /stopped at line \d+ of \S+stay\.txt \(fill 'role=textbox\[name\*="Password"\]' "\{\{ PW_PASSWORD \}\}"\): PW_PASSWORD is not set/);
@@ -1018,12 +1018,12 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       const saved = fs.readFileSync(file, 'utf8');
       assert.deepEqual(saved.split('\n').filter(l => l && !l.startsWith('#')), [
         `goto ${site.url}/app`,
-        `wait 'role=textbox[name*="Day"]' 30`,
+        `wait 'role=textbox[name*="Day"]' 30s`,
         `fill 'role=textbox[name*="Day"]' "2026-10-21"`,
         `click 'role=button[name*="Search"]'`,
-        `wait 'role=button[name*="Filter"]' 30`,
+        `wait 'role=button[name*="Filter"]' 30s`,
         `click 'role=button[name*="Filter"]'`,
-        `wait 'role=checkbox[name*="Native"]' 30`,
+        `wait 'role=checkbox[name*="Native"]' 30s`,
         `check 'role=checkbox[name*="Native"]'`,
         `click 'role=checkbox[name*="stars"]'`,
       ]);
@@ -1496,44 +1496,44 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
   it('waits for text, and for a response even if it already arrived', async () => {
     await ok('fill #name Wu');
     await ok('click #go');
-    assert.match(await ok('wait text "Hello Wu" 5'), /Visible: Hello Wu/);
+    assert.match(await ok('wait text "Hello Wu" 5s'), /Visible: Hello Wu/);
     await ok('click #load');
     await new Promise(r => setTimeout(r, 300));
-    assert.match(await ok('wait request /api/data 5'), /#\d+ GET 200 \S+\/api\/data/);
+    assert.match(await ok('wait request /api/data 5s'), /#\d+ GET 200 \S+\/api\/data/);
     await ok('click #load');
-    assert.match(await ok('wait request **/api/* 5'), /\/api\/data/, 'globs work too');
-    const late = await repl.run('wait request /never 1');
+    assert.match(await ok('wait request **/api/* 5s'), /\/api\/data/, 'globs work too');
+    const late = await repl.run('wait request /never 1s');
     assert.equal(late.status, 'error');
-    const never = await repl.run('wait text "never shown" 1');
+    const never = await repl.run('wait text "never shown" 1s');
     assert.equal(never.output, 'Error: No visible text matches never shown within 1s', 'said plainly');
-    assert.equal((await repl.run('wait text never shown 1')).output, 'Error: No visible text matches never shown within 1s (1 was taken as the seconds: wait text "never shown 1" waits for that text)');
+    assert.equal((await repl.run('wait text never shown 1')).output, 'Error: No visible text matches never shown within 1ms (1 was taken as the time: wait text "never shown 1" waits for that text)');
     await ok('eval document.body.insertAdjacentHTML("beforeend", "<p>Showing 1</p>"); 0');
     assert.equal(await ok('wait text "Showing 1"'), 'Visible: Showing 1', 'quoted, the number is the text\'s');
     assert.match((await pwSend(['wait', 'text', 'Showing 1'])).output, /^Visible: Showing 1$/m, 'quoted in the shell, through send too');
-    assert.match((await pwSend(['wait', 'text=Showing 1', '2'])).output, /^Visible: "text=Showing 1"$/m, 'a selector with a space, and the seconds');
-    assert.equal((await repl.run('wait #never 1')).output, 'Error: No visible element matches #never within 1s');
-    assert.equal((await repl.run('wait text Showing 2026')).output, 'Error: wait takes 1-120 seconds (got 2026); for text that ends in a number, quote it: wait text "Showing 2026"');
-    assert.equal((await repl.run('wait load 500')).output, 'Error: wait takes 1-120 seconds (got 500)');
+    assert.match((await pwSend(['wait', 'text=Showing 1', '2s'])).output, /^Visible: "text=Showing 1"$/m, 'a selector with a space, and the time');
+    assert.equal((await repl.run('wait #never 1s')).output, 'Error: No visible element matches #never within 1s');
+    assert.equal((await repl.run('wait text Showing 0')).output, 'Error: wait takes a time over 0 (got 0); for text that ends in a number, quote it: wait text "Showing 0"');
+    assert.equal((await repl.run('wait load 0')).output, 'Error: wait takes a time over 0 (got 0)');
     await ok('eval document.body.insertAdjacentHTML("beforeend", \'<p id="later" hidden>Later</p>\'); setTimeout(() => { document.querySelector("#later").hidden = false; }, 400); "added"');
-    assert.equal(await ok('wait #later 5'), 'Visible: #later', 'a hidden element is waited for until it shows');
+    assert.equal(await ok('wait #later 5s'), 'Visible: #later', 'a hidden element is waited for until it shows');
     assert.match(await ok('info'), /Title: Fixture$/m, 'a wait that times out does not disconnect');
   });
 
   it('waits for the page to load, counting a navigation that just began', async () => {
     await ok('eval setTimeout(() => { location.href = "/slow-load"; }, 0); "leaving"');
-    assert.match(await ok('wait load 5'), /^Loaded: \S+\/slow-load — Slow$/);
+    assert.match(await ok('wait load 5s'), /^Loaded: \S+\/slow-load — Slow$/);
     assert.equal(await ok('eval document.readyState'), 'complete');
-    assert.match(await ok('wait load 1'), /^Loaded before the previous command, nothing since: \S+\/slow-load — Slow\n/, 'a page that has loaded is done at once, and says it is not a new load');
+    assert.match(await ok('wait load 1s'), /^Loaded before the previous command, nothing since: \S+\/slow-load — Slow\n/, 'a page that has loaded is done at once, and says it is not a new load');
     // An app's own routing changes the URL a moment later, without a load: the page being left is not reported as a new load.
     await ok('eval setTimeout(() => history.pushState({}, "", "/routed"), 300); "routing"');
-    assert.match(await ok('wait load 1'), /^Loaded before the previous command, nothing since: \S+\/slow-load — Slow\n\(A page that changes its own URL does not load/);
+    assert.match(await ok('wait load 1s'), /^Loaded before the previous command, nothing since: \S+\/slow-load — Slow\n\(A page that changes its own URL does not load/);
     assert.equal((await repl.run('wait load --gone')).status, 'error');
     await ok(`goto ${site.url}/`);
     // Chrome answers a link to a 204 by staying put, and reports it as aborted.
     await ok('eval document.body.insertAdjacentHTML("beforeend", \'<a id="to-empty" href="/api/empty">empty</a>\'); 0');
     await ok('click #to-empty');
     const started = Date.now();
-    const stayed = await repl.run('wait load 5');
+    const stayed = await repl.run('wait load 5s');
     assert.equal(stayed.status, 'error');
     assert.match(stayed.output, /The page did not load: #\d+ \S+\/api\/empty 204 \(no page to show, so the tab stays where it was\)/);
     assert.ok(Date.now() - started < 3000, 'at once, not at the end of the wait');
@@ -1543,16 +1543,16 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
   });
 
   it('says sleep takes milliseconds when the number looks like seconds', async () => {
-    assert.equal(await ok('sleep 3'), 'Slept 3ms (sleep takes milliseconds: sleep 3000 is 3s)');
+    assert.equal(await ok('sleep 3'), 'Slept 3ms (sleep takes milliseconds: sleep 3s for 3s)');
     assert.equal(await ok('sleep 150'), 'Slept 150ms');
   });
 
   it('waits for an element or text to be gone', async () => {
     await ok('eval (() => { const s = document.createElement("p"); s.className = "spin"; s.textContent = "Loading now"; document.body.append(s); setTimeout(() => { s.hidden = true; }, 300); setTimeout(() => s.remove(), 600); return "added"; })()');
-    assert.match(await ok('wait .spin --gone 5'), /^Gone: \.spin$/);
-    assert.match(await ok('wait text "Loading now" --gone 5'), /^Gone: Loading now$/);
+    assert.match(await ok('wait .spin --gone 5s'), /^Gone: \.spin$/);
+    assert.match(await ok('wait text "Loading now" --gone 5s'), /^Gone: Loading now$/);
     assert.match(await ok('wait .never-there --gone'), /Gone/, 'nothing matching is gone already');
-    const stays = await repl.run('wait h1 --gone 1');
+    const stays = await repl.run('wait h1 --gone 1s');
     assert.equal(stays.status, 'error');
     assert.match(stays.output, /Still visible after 1s: h1/);
   });
@@ -2256,8 +2256,10 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match(await ok('requests 3 /api/data'), /GET 200 patched/);
     await ok('route **/api/data patch {"real":null}');
     assert.match(await ok(json), /^\{\}$/m, 'null removes a key');
-    await ok('route **/api/data delay 1');
+    await ok('route **/api/data delay 1s');
     assert.match(await ok('eval (async () => { const t = Date.now(); await fetch("/api/data"); return Date.now() - t >= 900; })()'), /^true$/m);
+    await ok('route **/api/never delay 600s');
+    assert.match(await ok('route'), /\*\*\/api\/never +delay 600s/, 'no limit on a delay');
     await ok('route **/api/data abort');
     assert.match(await ok(fetchStatus), /Failed to fetch/);
     assert.match(await ok('route'), /\*\*\/api\/data +abort/);
@@ -2325,7 +2327,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     try {
       await ok('eval fetch("/api/slow"); 0');
       await ok('info');
-      assert.match(await ok('wait request /api/slow 5'), /GET 200 \S+\/api\/slow$/, 'begun two commands ago, finished during the wait');
+      assert.match(await ok('wait request /api/slow 5s'), /GET 200 \S+\/api\/slow$/, 'begun two commands ago, finished during the wait');
       await ok('route **/api/data patch [1, 2]');
       assert.match(await ok('eval fetch("/api/data").then(r => r.json()).then(j => JSON.stringify(j))'), /^Patched: #\d+ GET \S+ -> 200\n\[1,2\]$/, 'an array replaces the body');
       await ok('route off --all');
@@ -2450,12 +2452,13 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
 
   it('captures one kind for a set time', async () => {
     await ok('eval setTimeout(() => { fetch("/api/data"); console.log("timed-log"); }, 200); "scheduled"');
-    const captured = await ok('capture on requests 1');
+    const captured = await ok('capture on requests 1s');
     assert.match(captured, /Capturing requests for 1s/);
     assert.match(captured, /\/api\/data/);
     assert.doesNotMatch(captured, /timed-log/);
     assert.match(await ok('capture'), /Not capturing/, 'a timed capture stops by itself');
     assert.equal((await repl.run('capture on 0')).status, 'error');
+    assert.equal((await repl.run('capture on 30')).output, 'Error: capture on\'s time is in milliseconds, 1000 or more: 30 is 30ms; 30s for seconds');
     assert.equal((await repl.run('capture on requests console')).status, 'error');
   });
 

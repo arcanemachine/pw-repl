@@ -38,13 +38,13 @@ describe('pw-repl send help', () => {
 
   it('takes send\'s options after the command too, unless -- says where it starts', () => {
     const quit = help.render('quit');
-    assert.equal(pwRepl(['send', 'help', 'quit', '-t', '30', '-c', 'me', '--no-vars'], { env }).stdout.trimEnd(), quit);
-    assert.equal(pwRepl(['send', 'help quit', '-t', '30'], { env }).stdout.trimEnd(), quit, 'after a command in one word');
+    assert.equal(pwRepl(['send', 'help', 'quit', '-t', '30s', '-c', 'me', '--no-vars'], { env }).stdout.trimEnd(), quit);
+    assert.equal(pwRepl(['send', 'help quit', '-t', '30000'], { env }).stdout.trimEnd(), quit, 'after a command in one word');
     assert.equal(pwRepl(['send', 'help', 'quit', '--raw'], { env }).stdout.trimEnd(), quit, 'playwright-cli\'s --raw, after it too');
-    const bad = pwRepl(['send', 'help', 'quit', '-t', '30s'], { env });
+    const bad = pwRepl(['send', 'help', 'quit', '-t', '30'], { env });
     assert.equal(bad.status, 64, 'a bad value is still send\'s, not the command\'s');
-    assert.match(bad.stderr, /^pw-repl: -t takes whole seconds, 1 or more \(got 30s\)\n/);
-    const twice = pwRepl(['send', '-t', '5', 'help', 'quit', '-t', '30'], { env });
+    assert.match(bad.stderr, /^pw-repl: -t is in milliseconds, 1000 or more: 30 is 30ms; 30s for seconds\n/);
+    const twice = pwRepl(['send', '-t', '5s', 'help', 'quit', '-t', '30'], { env });
     assert.equal(twice.status, 64);
     assert.match(twice.stderr, /^pw-repl: -t is given twice, -t 30 after the command; give it once\n/);
     const kept = pwRepl(['send', '--', 'help', 'quit', '-t', '30'], { env });
@@ -103,13 +103,14 @@ describe('pw-repl send help', () => {
 
   it('says what is wrong in a line, with only that subcommand\'s usage', () => {
     const env = { ...process.env, PW_SOCKET: '/nonexistent/pw-usage-test.sock', PW_ENDPOINT: '' };
-    const early = pwRepl(['-t', '30', 'send', 'open https://example.com'], { env });
+    const early = pwRepl(['-t', '30s', 'send', 'open https://example.com'], { env });
     assert.equal(early.status, 64);
     assert.equal(early.stdout, '');
-    assert.match(early.stderr, /^pw-repl: -t is an option of a subcommand, and goes after it: pw-repl send -t 30 'open https:\/\/example\.com'\nUsage:\n  pw-repl send \[[^\n]*\n {15}<command[^\n]*\n      run one command[^\n]*\npw-repl --help has the rest\.\n$/, 'the line put right, and send\'s usage alone');
+    assert.match(early.stderr, /^pw-repl: -t is an option of a subcommand, and goes after it: pw-repl send -t 30s 'open https:\/\/example\.com'\nUsage:\n  pw-repl send \[[^\n]*\n {15}<command[^\n]*\n      run one command[^\n]*\npw-repl --help has the rest\.\n$/, 'the line put right, and send\'s usage alone');
     assert.match(pwRepl(['-c', 'me'], { env }).stderr, /^pw-repl: -c is an option of a subcommand, and goes after it: pw-repl send -c me <command>\n/);
     const cases = [
-      [['send', '-t', '30s', 'tab'], /^pw-repl: -t takes whole seconds, 1 or more \(got 30s\)\nUsage:\n  pw-repl send /],
+      [['send', '-t', '30', 'tab'], /^pw-repl: -t is in milliseconds, 1000 or more: 30 is 30ms; 30s for seconds\nUsage:\n  pw-repl send /],
+      [['send', '-t', 'soon', 'tab'], /^pw-repl: -t is a time, in milliseconds or with s for seconds: 30000 or 30s \(got soon\)\nUsage:\n  pw-repl send /],
       [['send', '-c'], /^pw-repl: -c needs a value\nUsage:\n  pw-repl send /],
       [['send'], /^pw-repl: no command given\nUsage:\n  pw-repl send /],
       [['where', 'tab'], /^pw-repl: where takes no command \(got tab\)\nUsage:\n  pw-repl where /],
@@ -212,7 +213,7 @@ describe('pw-repl send help', () => {
       assert.equal(pwRepl(['stop'], { env: { ...env, PW_SOCKET: path.join(dir, 'other.sock') } }).status, 64, 'stop goes by PW_SOCKET, not the default socket');
       // One that ended by itself, unseen, from another client; and one the stop ends.
       assert.equal(pwRepl(['send', '-c', 'other', 'tab new about:blank'], { env }).status, 0);
-      assert.equal(pwRepl(['send', '-c', 'other', `record on ${dir}/ended.webm 1 --pause=0 --lead=0 --tail=0`], { env }).status, 0);
+      assert.equal(pwRepl(['send', '-c', 'other', `record on ${dir}/ended.webm 1s --pause=0 --lead=0 --tail=0`], { env }).status, 0);
       // A file the shell kept whole, spaces and all.
       fs.mkdirSync(path.join(dir, 'my dir'));
       assert.equal(pwRepl(['send', 'record', 'on', `${dir}/my dir/stopped.webm`, '--lead=0'], { env }).status, 0);
@@ -585,7 +586,7 @@ describe('pw-repl send typing into a tmux pane', { skip: HAS_TMUX ? false : 'tmu
     const script = `const p = "(watch routes:1) pw> "; process.stdout.write(p); require("readline").createInterface({ input: process.stdin }).on("line", l => { const id = /^@(\\S+)/.exec(l)[1]; process.stdout.write("answered\\n[[pw-done:" + id + ":ok]]\\n" + p); })`;
     spawnSync('tmux', ['new-session', '-d', '-s', session, `${process.execPath} -e '${script}'`]);
     await new Promise(resolve => setTimeout(resolve, 500));
-    const result = pwRepl(['send', '-s', session, '-t', '5', 'info'], { env, encoding: 'utf8' });
+    const result = pwRepl(['send', '-s', session, '-t', '5s', 'info'], { env, encoding: 'utf8' });
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /answered/);
   });

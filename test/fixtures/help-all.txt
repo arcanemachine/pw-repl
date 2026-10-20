@@ -19,7 +19,7 @@ Common tasks:
   record requests and console together    capture on, then capture off
   find what makes the page slow           profile on, then profile off; profile reload for a load
   fake a backend response                 route <glob> <status> <json>, route <glob> abort
-  change or slow an API response          route <glob> patch <json>, route <glob> delay <secs>
+  change or slow an API response          route <glob> patch <json>, route <glob> delay <time>
   cut or slow the whole network           network off, network slow, then network on
   record a video of the page              record on, then record off (help video for a take)
   show a pointer where the agent acts     cursor on, then cursor off
@@ -30,6 +30,9 @@ Common tasks:
 Modes (watch, capture, profile, record, route, network off or slow, emulate, viewport, highlight, cursor
 and toast) stay on until turned off; the prompt shows the selected tab's: (watch routes:1) pw>. Each of
 them on its own, and modes, shows its state and what you can run next.
+
+Times are in milliseconds, as in Playwright, or in seconds with an s: wait .done 30000, or wait .done
+30s.
 
 Topics (help <topic>):
   tabs      open, select, close, navigate        network   requests, bodies, console, fakes, network off
@@ -357,12 +360,12 @@ Output is capped; --all right after the command, or at the end, shows everything
       (the first of a page's repeated ids), and a for= label on a checkbox toggles it rather than checks it.
       In an open shadow root, an element's selector is its host's, then its own; a closed one is out of reach.
 
-  profile on [secs] | off | reload | save <file>       what slows the tab: long tasks, layouts, input, frames
+  profile on [time] | off | reload | save <file>       what slows the tab: long tasks, layouts, input, frames
       Arguments:
-        on                  starts a performance trace of the selected tab, until profile off (at most 120
-                            seconds).
-        [secs]              records that long (1 to 120), then prints. Other commands wait until it ends. Over
-                            20, give send time too: pw-repl send -t 70 profile on 60.
+        on                  starts a performance trace of the selected tab, until profile off (at most 120s;
+                            give it a time for longer).
+        [time]              records that long (1s or more), then prints. Other commands wait until it ends.
+                            Over 20s, give send time too: pw-repl send -t 70s profile on 60s.
         off                 stops it and prints the summary.
         reload              reloads the tab and profiles its load, until its network is idle (at most 10s
                             after load) and half a second more. For work that starts later (a timer): profile
@@ -399,7 +402,7 @@ Output is capped; --all right after the command, or at the end, shows everything
 
       Size: a busy page fills Chrome's trace buffer in under a minute (one that restyles many elements as it
       draws, sooner), which stops the profile there, and the summary says so. Stopping a long one takes a
-      while, as Chrome writes out its trace: give send time, pw-repl send -t 60 profile off. If send gives up
+      while, as Chrome writes out its trace: give send time, pw-repl send -t 60s profile off. If send gives up
       first, the profile still ends, and profile shows it.
 
       One profile runs at a time, in a browser: Chrome traces one at a time, the whole browser's, so another
@@ -452,14 +455,15 @@ Output is capped; --all right after the command, or at the end, shows everything
       that is a radio); its role says what it is, and type is a native control's own. What a field holds is
       never shown.
 
-  screenshot [<ref>] [--full] [-d <secs>] [name]       save a PNG of the viewport, --full page or an element
+  screenshot [<ref>] [--full] [-d <time>] [name]       save a PNG of the viewport, --full page or an element
       Arguments:
         [<ref>]             only that element, from a snapshot ref: screenshot e5.
         [name]              saved as screenshot-<name>.png; letters, digits, underscores and hyphens. Default:
                             a timestamp.
       Options:
         --full              the whole page, not only the viewport; --full-page too.
-        -d, --delay <secs>  counts down out loud first, up to 60, so someone can hold a hover or open a menu.
+        -d, --delay <time>  counts down out loud first, in seconds, up to 60s, so someone can hold a hover or
+                            open a menu.
         --filename=<file>   saves it there instead (a JPEG if it ends in .jpg). Relative to the REPL's folder;
                             through pw-repl send, the sender's. It never replaces a file.
 
@@ -546,17 +550,17 @@ Output is capped; --all right after the command, or at the end, shows everything
       and sends no touch events. Dark, light and timezone apply at once, but what the page already drew with
       them (times, colors set by its script) changes only when it reloads.
 
-  wait [text|request] <what> [--gone] [secs]           wait for an element, text, a response or a load (10s)
+  wait [text|request] <what> [--gone] [time]           wait for an element, text, a response or a load (10s)
       Arguments:
         <selector>          for a matching element to be visible.
         text <text>         for text to be visible: any part of an element's text, any case. Quote text that
-                            ends in a number, or the number is taken as the seconds: wait text "Showing 1".
+                            ends in a number, or the number is taken as the time: wait text "Showing 1".
         request <part>      for a matching response (a URL part or a glob), counting one that finished since
                             the previous command began, or is still under way: click, then wait request, does
                             not miss it.
         load                for the page to finish loading (its load event), counting a navigation that began
                             since the previous command began: click a link, then wait load.
-        [secs]              how long, up to 120. Default: 10.
+        [time]              how long, with no limit (give send time too: send -t). Default: 10s.
       Options:
         --gone              until nothing matching is visible (removed or hidden): wait .spinner --gone. Done
                             at once if nothing matches yet, so wait for it to appear first if it may not have.
@@ -564,7 +568,7 @@ Output is capped; --all right after the command, or at the end, shows everything
       A page that changes its own URL without loading (an app's own routing) is not a load: wait for something
       on the new view instead. A wait that times out is an error; the REPL carries on.
 
-  sleep <ms>                                           wait a fixed time, in milliseconds (maximum 3600000)
+  sleep <time>                                         wait a fixed time: sleep 1500, or sleep 1.5s
       While recording, each action is already followed by a pause (help record): a sleep adds to it.
 
 == video ==
@@ -598,14 +602,14 @@ up for as long as the viewer needs to read it. After a step that loads a page, w
 result shows (wait text ...), not a heading the page always has, and not wait load: a single-page app
 loads nothing.
 
-record on --steps also saves when and where each step ran, in the video's seconds and pixels, for
+record on --steps also saves when and where each step ran, in seconds into the video and its pixels, for
 editing it afterwards.
 
 The user's own screen, with their real pointer, takes a screen recorder they run (OBS, ffmpeg -f
 x11grab, macOS screencapture -v): ask first. playwright-cli itself is a separate tool that records a
 clean browser of its own (here, its video-start is record on).
 
-  record [on [file] [seconds] [options] | off [file]]  record the selected tab's page to a video
+  record [on [file] [time] [options] | off [file]]  record the selected tab's page to a video
       Arguments:
         on | off            on starts recording the selected tab; off stops it, saves the file and says its
                             path, length, size and bytes. Neither: says whether it is recording, and how your
@@ -613,16 +617,16 @@ clean browser of its own (here, its video-start is record on).
         [file]              clip.webm or clip.mp4; its ending picks the format. Relative to the REPL's folder;
                             through pw-repl send, the sender's. Default: recording-<timestamp>.webm where
                             screenshot saves. On record off: saves it under that name instead.
-        [seconds]           stops by itself after them, 1 to 3600. Default: 3600.
+        [time]              stops by itself after it, 1s or more. Default: 1 hour (3600s).
       Options (record on):
         --steps             also save clip.steps.txt next to clip.webm: when and where each command ran
                             (Steps, below). Default: off.
         --pause=<ms>        a pause after each action, and each highlight drawn, so the viewer sees it.
                             Default: 750; 0 none.
-        --lead=<ms>         still page recorded before record on returns. Default: 1000; counts toward the
-                            seconds.
+        --lead=<ms>         still page recorded before record on returns. Default: 1000; counts toward its
+                            time.
         --tail=<ms>         still page recorded after record off, before it stops. Default: 1000; none when it
-                            stops at its seconds.
+                            stops at its time.
         --filename=<file>   the file, as playwright-cli writes it.
 
       What it records: the page only, from inside the browser, at the viewport's size in CSS pixels (set it
@@ -663,15 +667,15 @@ clean browser of its own (here, its video-start is record on).
       wide, less sharp than the phone draws it.
 
       How it ended: record on its own, or record off when nothing is recording, says how your last recording
-      ended (record off, its seconds, its tab closing or the REPL stopping) with what record off would have
-      said. tab close says what became of a recording it ended. A REPL stopped with pw-repl stop cannot be
-      asked: stop prints what became of each recording it ended, and of one that ended by itself that record
-      has not shown since.
+      ended (record off, its time, its tab closing or the REPL stopping) with what record off would have said.
+      tab close says what became of a recording it ended. A REPL stopped with pw-repl stop cannot be asked:
+      stop prints what became of each recording it ended, and of one that ended by itself that record has not
+      shown since.
 
       A name given to record off that does not end as its file does, or cannot be used, is refused, and it
       goes on recording. There is no --mp4 or --webm: the file's ending picks the format.
 
-  cursor [on [<selector> | <x> <y>] | off]             draw a pointer where the REPL acts, for videos
+  cursor [on [<selector> | <x> <y>] | off]          draw a pointer where the REPL acts, for videos
       Arguments:
         on                  fades it in where the mouse last went, or the middle.
         on <selector>       fades it in on the element (a video's first, say); when it is on already, glides
@@ -699,7 +703,7 @@ clean browser of its own (here, its video-start is record on).
       the same spot, and shows in screenshots and recordings. Selectors, snapshot and text don't see it, it
       takes no clicks, and it points at elements inside frames too.
 
-  toast <text> [options] | toast off                   show a line of text over the page, to narrate a video
+  toast <text> [options] | toast off                show a line of text over the page, to narrate a video
       Arguments:
         <text>              the rest of the line, quotes around all of it removed; it wraps at 80% of the
                             page's width.
@@ -780,11 +784,11 @@ requests and console record all the time; a capture records only while it runs.
       A page brought back from the back/forward cache (back, forward) reports its earlier messages again, at
       the time it comes back, though nothing loaded again.
 
-  capture on [requests|console] [secs] | off  record requests and console together, in time order
+  capture on [requests|console] [time] | off  record requests and console together, in time order
       Arguments:
         on                  records both until capture off, which prints them.
         requests | console  records only one.
-        [secs]              records that long (1 to 3600), then prints. Other commands wait until it ends.
+        [time]              records that long (1s or more), then prints. Other commands wait until it ends.
         (none)              says whether one is running, or shows the last one.
 
       A timed capture suits recording what someone does in the browser; around your own commands, use capture
@@ -800,8 +804,8 @@ requests and console record all the time; a capture records only while it runs.
                             lets it through, then changes its JSON response: a JSON Merge Patch, where objects
                             merge, null removes a key and anything else replaces; one that is not an object
                             (an array) replaces the whole body.
-        <glob> delay <secs>
-                            holds it for up to 120 seconds, then lets it through.
+        <glob> delay <time>
+                            holds it that long, then lets it through.
         <glob> abort        fails it as if the connection broke.
         off <glob> | --all  removes one route, or all.
         (none)              lists the selected tab's routes.
@@ -828,7 +832,7 @@ requests and console record all the time; a capture records only while it runs.
         on                  restores it.
 
       Per tab; lasts until network on or the REPL exits. Routes still answer while it is off or slow. To slow
-      one API, use route <glob> delay <secs>. Stopping a service is not the same as network off: a dev proxy
+      one API, use route <glob> delay <time>. Stopping a service is not the same as network off: a dev proxy
       in front of it usually holds the request open, so the page spins instead of failing.
 
 == devtools ==

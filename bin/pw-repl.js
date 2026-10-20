@@ -2,6 +2,7 @@
 // The one command: pw-repl run | serve | attach | stop | send | where | help | skill.
 
 const { looksLikeEndpoint } = require('../lib/client');
+const { longDuration } = require('../lib/util');
 
 const USAGE = `Usage:
   pw-repl run [--launch [--headed]] [start-url] [-- <chromium flags>]
@@ -19,7 +20,7 @@ const USAGE = `Usage:
       stop a background REPL, and say what became of each recording it ended; its socket is removed, its
       log stays
 
-  pw-repl send [-e endpoint | -s session] [-c client] [-t seconds] [--no-vars]
+  pw-repl send [-e endpoint | -s session] [-c client] [-t time] [--no-vars]
                <command...> | --file <file>
       run one command in a running REPL and print its output; --file runs a file of them, one per line
 
@@ -56,13 +57,14 @@ serves on that same one: $PW_ENDPOINT, then $PW_SOCKET, then the default.
 send -c <client> (or $PW_CLIENT) sends as a client of the REPL's with a selected tab of its own, so
 several agents can share one REPL; pw-repl help session has the rest.
 
-send's options can also follow the command, as in pw-repl send open <url> -t 30; after a -- before the
-command, every word is the command's, -t 30 included.
+send's options can also follow the command, as in pw-repl send open <url> -t 30s; after a -- before the
+command, every word is the command's, -t 30s included.
 
 Exit status: 0 ok, 1 command error, 2 completion not confirmed, 64 usage or unreachable. -t is how long
-send waits for the answer (default 20s); it does not lengthen a command's own limits, such as the 5s an
-action waits for its element. Over the server, giving up cancels the command: one still queued is never
-run, and one running is no longer waited for, though what it began in the page may go on.
+send waits for the answer, in milliseconds or with s for seconds (default 20s: 20000); it does not
+lengthen a command's own limits, such as the 5s an action waits for its element. Over the server, giving
+up cancels the command: one still queued is never run, and one running is no longer waited for, though
+what it began in the page may go on.
 
 --file <file> runs each line of a file as a command, in order, as if typed at the REPL's prompt: quoted
 as the prompt reads it (no shell), with a file it records, uploads or saves relative to this folder, as
@@ -106,10 +108,10 @@ function shellLine(words) {
 }
 
 // -e, -s, -c and -t, then the command words (unquoted words are one command), and send's options again
-// at the end, as an agent types them (send open <url> -t 30); after --, every word is the command.
+// at the end, as an agent types them (send open <url> -t 30s); after --, every word is the command.
 function parseSendArgs(args, subcommand) {
   const allowCommand = subcommand === 'send';
-  const options = { endpoint: null, session: null, client: null, timeout: 20, command: '', file: null };
+  const options = { endpoint: null, session: null, client: null, timeout: 20000, command: '', file: null };
   const given = new Set();
   const take = (arg, value, after) => {
     if (value === undefined) usage(`${arg} needs a value`, subcommand);
@@ -121,8 +123,7 @@ function parseSendArgs(args, subcommand) {
     if (arg === '-s') options.session = value;
     if (arg === '-c') options.client = value;
     if (arg === '-t') {
-      if (!/^\d+$/.test(value) || Number(value) < 1) usage(`-t takes whole seconds, 1 or more (got ${value})`, subcommand);
-      options.timeout = Number(value);
+      try { options.timeout = longDuration(value, '-t'); } catch (error) { usage(error.message, subcommand); }
     }
   };
   let i = 0;
@@ -297,7 +298,7 @@ async function main() {
     case '--help':
       return console.log(`${USAGE}\n\n${REPL_HELP}`);
     default: {
-      // An option before the subcommand (pw-repl -t 30 send ...): say where it goes, with the line fixed.
+      // An option before the subcommand (pw-repl -t 30s send ...): say where it goes, with the line fixed.
       if (subcommand.startsWith('-')) {
         const all = [subcommand, ...args];
         const named = all.find(word => SUBCOMMANDS.includes(word));

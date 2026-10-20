@@ -93,7 +93,7 @@ client of your own: `PW_CLIENT=<name>` (or `send -c <name>`), with a name that s
   as `[server:<name>]` lines.
 - `modes` and `tab` say which client turned each mode on and opened each tab. `modes off --mine` turns
   off only what you turned on; `tab close <url-part>` closes a tab you opened.
-- Commands run one at a time, from every client: a long one (`capture on 60`, `sleep`) holds the rest.
+- Commands run one at a time, from every client: a long one (`capture on 60s`, `sleep`) holds the rest.
 
 A REPL of your own, on a socket of its own, is for a browser of your own (`--launch`), or when you are
 asked for one. Several REPLs on one browser each see every tab but list only their own modes, and can
@@ -105,8 +105,11 @@ A REPL in a terminal stops at its prompt (`quit`, or Ctrl-C); `send quit` is ref
 
 ```bash
 pw-repl send tab
-pw-repl send -t 90 'screenshot -d 60'   # wait longer than the 20s default
+pw-repl send -t 90s 'screenshot -d 60s'   # wait longer than the 20s default
 ```
+
+Times, in send's `-t` and in every command, are in milliseconds, as in Playwright, or in seconds with an
+`s`: `-t 90000` or `-t 90s`.
 
 Always send commands with `pw-repl send`; don't type into the pane yourself, except `quit` at the prompt
 of a REPL of your own, which `send` refuses. The words after `send` are the command. For `fill`, `type`,
@@ -114,7 +117,7 @@ of a REPL of your own, which `send` refuses. The words after `send` are the comm
 (`pw-repl send fill "text=Your name" Ada`, `pw-repl send wait text "Showing 1"`); other commands get the words as they are, joined by
 spaces (`pw-repl send eval "document.title + ' x'"`). A command that takes only a selector takes the
 whole line, spaces and all: `pw-repl send click "text=Your name"`. `send`'s own options (`-t`, `-c`, `-e`,
-`-s`, `--no-vars`) go before the command or after it (`pw-repl send open <url> -t 30`); after `--`, every
+`-s`, `--no-vars`) go before the command or after it (`pw-repl send open <url> -t 30s`); after `--`, every
 word is the command's. It works however the REPL was started:
 
 - `run` (in tmux): `send` types the command into the tmux pane and reads the result back off the screen.
