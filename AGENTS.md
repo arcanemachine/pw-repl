@@ -53,7 +53,9 @@ If you hit a limitation or write a workaround, consider adding the capability to
   shown by `help <command> --all` and `help --all`. An error about something in `more` ends by naming it
   (`help record --all`). Paragraphs are plain: `wrap()` lays each out at 104 columns, and keeps as written
   a paragraph with a bullet, a table or an indented example. `test/fixtures` holds the rendered help;
-  after an intended change to it, save it again (the command is in `test/units.test.js`).
+  after an intended change to it, save it again (the command is in `test/units.test.js`). The common
+  tasks and modes on help's front page (`TASKS` and `MODES`) are the README's too: change both, as a
+  unit test compares them.
 - Time each full run, and put the result in the body of the commit it tests (`npm test: 151 tests, 79s`).
   Compare with the last commit that has one (`git log --grep='npm test:'`): a run that grew by more than
   a few seconds means a slow test crept in, usually one waiting out a real timeout (5s for a click).
