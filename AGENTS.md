@@ -66,38 +66,13 @@ If you hit a limitation or write a workaround, consider adding the capability to
   (frames drawn, not clicks timed). A click waits for its element to hold still for two frames.
 - For anything the tests can't reach, exercise the change in a running REPL of your own: on a socket of
   your own, with `--launch` unless the change needs the user's browser, and then in a tab of your own.
+  One started before a change to `lib/` runs the old code: restart it after a change. Stop a process by
+  its pid, after checking what it is; a broad `pkill -f` pattern can match your own shell, or a REPL
+  someone else is using.
 - `skill/SKILL.md` is how agents learn to use the REPL: keep it in step with a change to how it is
   used, and leave its Custom rules section empty. Keep its `<!-- pw-repl skill stamp -->` line: `pw-repl
   skill` replaces it with the version and a hash of the skill's text, which `where` reports, so agents
   can tell a saved copy is out of date.
-
-## Waves
-
-Work goes in waves, and each one ends with a release that is ready to push.
-
-1. Build what was asked, with tests, and try it in a running REPL. For anything the user will look at
-   (a cursor, an overlay, a video), show them a demo while it is still a prototype (a recording or
-   screenshots they can open) and get their go-ahead on how it looks before writing tests or
-   building on it.
-2. Try it on a fresh agent that has not seen the code or the change (a guinea pig), on something real: a
-   small local page whose planted bugs need the change to find.
-   - Brief it with goals only: what to find out or do in the browser, never the commands.
-   - First it reads back its plan, learned from `pw-repl skill` and help alone: the commands, where it
-     found them, and what is unclear. It runs nothing yet.
-   - A wrong or unsure plan means the docs or the brief were unclear: find out which, fix that, then
-     ask again.
-   - Then it carries the plan out, in a browser and on a socket of its own, and reports as it goes:
-     above all, where the tool did something other than what the docs led it to expect.
-   - Once it has confirmed the fixes work, it reviews them as a second pair of eyes: anything important
-     they miss or get wrong, not nitpicks.
-3. Triage what it reports. Fix what matters, and what is small and useful; don't put off something
-   useful for later. Leave trivia alone, and say why.
-4. Repeat 2 and 3, with a fresh agent each time, until a pass comes back clean: no real bugs, and
-   nothing unclear in the docs or the brief that changed the plan. A pass after fixes tries the fixes,
-   and something not tried yet.
-5. Only then cut the release (Releasing, steps 1-3), and say it is ready. The maintainer pushes and
-   publishes it, and the next wave starts from what they find. A release cut too early and not pushed
-   yet is undone (its commit and tag) and cut again after the fixes.
 
 ## Releasing
 
@@ -107,9 +82,9 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `fe
 
 1. `npm test` passes and the working tree is clean.
 2. `npm outdated` and `npm audit` show nothing that needs doing first. Dependencies are always the newest
-   stable release, never pinned back (user ruling). When the newest breaks a test, fix it in our code;
-   only a regression of the dependency's own, with the fix already in its next release, keeps the version
-   before it, until that release ships. playwright-core stays at 1.63 for that reason: on 1.64.1 a click
+   stable release, never pinned back. When the newest breaks a test, fix it in our code; only a
+   regression of the dependency's own, with the fix already in its next release, keeps the version before
+   it, until that release ships. playwright-core stays at 1.63 for that reason: on 1.64.1 a click
    on a link to a 204 hangs at "waiting for scheduled navigations to finish" until its timeout, in plain
    Playwright too (chromium.launch, a page with a link to a 204, page.click on it); 1.65's alphas fix it.
    The test "waits for the page to load, counting a navigation that just began" shows it: move up once it
@@ -118,5 +93,7 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `fe
    `package-lock.json`, commits it as `chore: release X.Y.Z`, and tags that commit `vX.Y.Z`.
 4. `git push --follow-tags` pushes the commits and the tag.
 5. `npm publish` publishes it; `prepublishOnly` runs the tests again first.
+
+A release cut too early and not pushed yet is undone (its commit and tag) and cut again after the fixes.
 
 Pushing and publishing need the maintainer's GitHub and npm credentials.
