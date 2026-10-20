@@ -193,8 +193,9 @@ blindly retry a change), `64` usage or the REPL is not reachable. `pw-repl --hel
 ## Learn the commands
 
 Run `pw-repl send help`. It lists seven topics; `help <topic>` lists their commands, `help <command>`
-gives usage and caveats: read it before you use a command, since this file does not repeat them. `help
---all` prints everything at once. pw-repl answers help itself: it needs no running REPL, and never
+gives usage and caveats: read it before you use a command, since this file does not repeat them. When a
+command fails or does something you did not expect, read its `help <command>` before working around it.
+`help --all` prints everything at once. pw-repl answers help itself: it needs no running REPL, and never
 reaches one. If you know playwright-cli, its command names work too (`help playwright-cli` lists them).
 
 ### Coming from playwright-cli
