@@ -19,7 +19,8 @@ const USAGE = `Usage:
       stop a background REPL, and say what became of each recording it ended; its socket is removed, its
       log stays
 
-  pw-repl send [-e endpoint | -s session] [-c client] [-t seconds] [--no-vars] <command...> | --file <file>
+  pw-repl send [-e endpoint | -s session] [-c client] [-t seconds] [--no-vars]
+               <command...> | --file <file>
       run one command in a running REPL and print its output; --file runs a file of them, one per line
 
   pw-repl where [-e endpoint | -s session]
@@ -31,10 +32,24 @@ const USAGE = `Usage:
   pw-repl skill
       print an agent skill (SKILL.md) that teaches an agent to use the REPL
 
+A browser: --launch starts a Chromium of the REPL's own, headless unless --headed, in a temporary
+profile, on a free port of its own (pw-repl where names it). It prints the command it ran, and stops
+with the REPL (Ctrl-C while it starts too); stop returns once it has exited. Flags after -- go to it,
+and only flags (a start URL goes before --); a --user-data-dir=<dir> among them is used instead of the
+temporary profile, and kept. PW_CHROME picks which Chromium. Without --launch, the REPL connects to a
+browser running with --remote-debugging-port, at $PW_CDP_URL (default http://localhost:9222).
+
 send uses the server when -e, $PW_ENDPOINT, or the socket ($PW_SOCKET, default /tmp/pw-repl.sock) is
-there, and the tmux session (-s, $PW_TMUX_SESSION, default pw-repl) otherwise. If the socket exists but
-nothing answers, send fails rather than fall back. serve without an endpoint serves on that same one:
-$PW_ENDPOINT, then $PW_SOCKET, then the default.
+there, and the tmux session where pw-repl run runs otherwise (-s, $PW_TMUX_SESSION, default pw-repl).
+serve without an endpoint serves on that same socket. send exit status: 0 ok, 1 command error, 2
+completion not confirmed, 64 usage or unreachable. pw-repl send --help has the rest: clients, -t,
+--file and variables.`;
+
+// pw-repl send --help: what send does beyond its usage line.
+const SEND_HELP = `send uses the server when -e, $PW_ENDPOINT, or the socket ($PW_SOCKET, default /tmp/pw-repl.sock) is
+there, and the tmux session (-s, $PW_TMUX_SESSION, default pw-repl) otherwise, where pw-repl run runs.
+If the socket exists but nothing answers, send fails rather than fall back. serve without an endpoint
+serves on that same one: $PW_ENDPOINT, then $PW_SOCKET, then the default.
 
 send -c <client> (or $PW_CLIENT) sends as a client of the REPL's with a selected tab of its own, so
 several agents can share one REPL; pw-repl help session has the rest.
@@ -42,36 +57,23 @@ several agents can share one REPL; pw-repl help session has the rest.
 send's options can also follow the command, as in pw-repl send open <url> -t 30; after a -- before the
 command, every word is the command's, -t 30 included.
 
-send exit status: 0 ok, 1 command error, 2 completion not confirmed, 64 usage or unreachable. send -t is
-how long send waits for the answer (default 20s); it does not lengthen a command's own limits, such as
-the 5s an action waits for its element.
+Exit status: 0 ok, 1 command error, 2 completion not confirmed, 64 usage or unreachable. -t is how long
+send waits for the answer (default 20s); it does not lengthen a command's own limits, such as the 5s an
+action waits for its element.
 
-send --file <file> runs each line of a file as a command, in order, as if typed at the REPL's prompt:
-quoted as the prompt reads it (no shell), with a file it records, uploads or saves relative to this
-folder, as on send's command line, and # comments and blank lines skipped. It stops at the first
-command that fails, saying its line, with its exit status. -t is each command's own limit. Other
-clients' commands can run between its lines, on their own tabs.
+--file <file> runs each line of a file as a command, in order, as if typed at the REPL's prompt: quoted
+as the prompt reads it (no shell), with a file it records, uploads or saves relative to this folder, as
+on send's command line, and # comments and blank lines skipped. It stops at the first command that
+fails, saying its line, with its exit status. -t is each command's own limit. Other clients' commands
+can run between its lines, on their own tabs.
 
-A {{ PW_NAME }} in a command, or in a line of the file, is a variable: send takes its value from its own
-environment (PW_NAME) and passes it along with the command, not in it, e.g. a password kept out of the
-file and out of the command as the REPL logs it. In a file: fill '#password' "{{ PW_PASSWORD }}",
-run with PW_PASSWORD=... pw-repl send --file login.txt; or one command: PW_PASSWORD=... pw-repl send
-fill '#password' "{{ PW_PASSWORD }}". Only names starting PW_ are variables: any other {{ ... }}, as in a
-page's template text, is sent as written. In a file, put it in double quotes: there its value is
-escaped as they read it (in single quotes, which escape nothing, a value with a ' is refused). The REPL
-puts it in only as it runs the command, and its pane and log show the command as written. A variable that
-is not set stops the command, or the file at that line, before it is sent. --no-vars sends
-{{ PW_NAME }} as it is. Variables need the command server (pw-repl serve), not the tmux pane.
-
-The browser must be running with --remote-debugging-port (default http://localhost:9222; set $PW_CDP_URL).
-
---launch is the quick start instead: it starts a Chromium of the REPL's own (headless unless --headed, in
-a temporary profile, on a free port of its own, which pw-repl where names), prints the command it ran,
-and stops it with the REPL (Ctrl-C while it starts too); stop returns once that Chromium has exited.
-Flags after -- go to it, and only flags; a --user-data-dir=<dir> among them is used instead of the temporary profile, and
-kept. PW_CHROME picks which one. To set a browser up your own way, start it yourself and use PW_CDP_URL.
-
-In a tmux session named pw-repl, pw-repl send reaches pw-repl run without the server.`;
+Variables: a {{ PW_NAME }} in a command, or in a line of the file, takes its value from send's own
+environment (PW_NAME), passed along with the command, not in it, so a password stays out of the file
+and out of the REPL's log: PW_PASSWORD=... pw-repl send fill '#password' "{{ PW_PASSWORD }}". Only PW_
+names are variables; any other {{ ... }} is sent as written. In a file, put one in double quotes (in
+single quotes, a value with a ' is refused). One that is not set stops the command, or the file at
+that line, before it is sent; --no-vars sends {{ PW_NAME }} as it is. Variables need the command server
+(pw-repl serve), not the tmux pane.`;
 
 const REPL_HELP = `The REPL's own commands: help at the pw> prompt, or pw-repl send help here (no REPL needed).
 
@@ -230,6 +232,12 @@ function skill() {
 
 async function main() {
   let [subcommand, ...args] = process.argv.slice(2);
+  // -h after send, where, attach or stop is a request for help, never a command to send.
+  if (['send', 'where', 'attach', 'stop'].includes(subcommand) && /^(?:-h|--help)$/.test(args[0] || '')) {
+    if (subcommand !== 'send') return console.log(`${USAGE}\n\n${REPL_HELP}`);
+    const block = USAGE.split('\n\n').find(b => b.startsWith('  pw-repl send '));
+    return console.log(`Usage:\n${block}\n\n${SEND_HELP}`);
+  }
   // Bare pw-repl explains itself rather than connect to someone's browser.
   if (subcommand === undefined) return console.log(`${USAGE}\n\n${REPL_HELP}`);
   switch (subcommand) {

@@ -106,7 +106,7 @@ describe('pw-repl send help', () => {
     const early = pwRepl(['-t', '30', 'send', 'open https://example.com'], { env });
     assert.equal(early.status, 64);
     assert.equal(early.stdout, '');
-    assert.match(early.stderr, /^pw-repl: -t is an option of a subcommand, and goes after it: pw-repl send -t 30 'open https:\/\/example\.com'\nUsage:\n  pw-repl send \[[^\n]*\n      run one command[^\n]*\npw-repl --help has the rest\.\n$/, 'the line put right, and send\'s usage alone');
+    assert.match(early.stderr, /^pw-repl: -t is an option of a subcommand, and goes after it: pw-repl send -t 30 'open https:\/\/example\.com'\nUsage:\n  pw-repl send \[[^\n]*\n {15}<command[^\n]*\n      run one command[^\n]*\npw-repl --help has the rest\.\n$/, 'the line put right, and send\'s usage alone');
     assert.match(pwRepl(['-c', 'me'], { env }).stderr, /^pw-repl: -c is an option of a subcommand, and goes after it: pw-repl send -c me <command>\n/);
     const cases = [
       [['send', '-t', '30s', 'tab'], /^pw-repl: -t takes whole seconds, 1 or more \(got 30s\)\nUsage:\n  pw-repl send /],
@@ -130,7 +130,11 @@ describe('pw-repl send help', () => {
       assert.match(result.stderr, expected, args.join(' '));
       assert.doesNotMatch(result.stderr, /PW_PASSWORD/, `${args.join(' ')}: not the whole usage`);
     }
-    assert.match(pwRepl(['serve', '--help'], { env }).stderr, /PW_PASSWORD/, '--help after a subcommand is still the whole usage');
+    assert.match(pwRepl(['serve', '--help'], { env }).stderr, /pw-repl skill\n/, '--help after a subcommand is still the whole usage');
+    const sendHelp = pwRepl(['send', '--help'], { env });
+    assert.equal(sendHelp.status, 0);
+    assert.match(sendHelp.stdout, /^Usage:\n  pw-repl send [\s\S]*\n--file <file> runs each line[\s\S]*Variables: a \{\{ PW_NAME \}\}/, 'send --help is send\'s own page, never sent to a REPL');
+    assert.match(pwRepl(['where', '-h'], { env }).stdout, /^Usage:\n  pw-repl run /);
   });
 
   it('says why it stops when its input ends', { skip: SKIP }, async () => {
