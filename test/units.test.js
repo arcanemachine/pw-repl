@@ -34,7 +34,9 @@ describe('help', () => {
 
   it('renders topics and commands, and nothing for unknown names', () => {
     assert.match(help.render('network'), /route <glob>/);
-    assert.match(help.render('network'), /\nnetwork \[on\|off\|slow [^\n]*— [\s\S]*dev proxy/, 'a topic and a command of the same name');
+    assert.match(help.render('network'), /\n\nnetwork is also a command: help network --command$/, 'a topic and a command of the same name');
+    assert.doesNotMatch(help.render('network'), /dev proxy/, 'the command\'s help is not run into the topic');
+    assert.match(help.render('network --command'), /^network \[on\|off\|slow [^\n]*— [\s\S]*dev proxy/);
     assert.match(help.render('route'), /^route <glob> <how> \| off <glob>\|--all — [\s\S]*<glob> patch <json>/);
     assert.equal(help.render('nope'), null);
     // A command's rarer details: a pointer to them, and all of it with --all.
