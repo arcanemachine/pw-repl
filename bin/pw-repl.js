@@ -61,7 +61,8 @@ command, every word is the command's, -t 30 included.
 
 Exit status: 0 ok, 1 command error, 2 completion not confirmed, 64 usage or unreachable. -t is how long
 send waits for the answer (default 20s); it does not lengthen a command's own limits, such as the 5s an
-action waits for its element.
+action waits for its element. Over the server, giving up cancels the command: one still queued is never
+run, and one running is no longer waited for, though what it began in the page may go on.
 
 --file <file> runs each line of a file as a command, in order, as if typed at the REPL's prompt: quoted
 as the prompt reads it (no shell), with a file it records, uploads or saves relative to this folder, as

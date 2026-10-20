@@ -70,6 +70,18 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match(kept.output, /SyntaxError/, 'after --, the command\'s own');
   });
 
+  it('cancels a command whose sender gave up, and drops one still queued', async () => {
+    const start = repl.stdout.length;
+    const hung = pwSend(['-t', '3', 'eval', 'new Promise(() => {})']);
+    await waitFor(() => repl.stdout.slice(start).includes('new Promise(() => {})'), 'the hung eval running');
+    const queued = await pwSend(['-t', '1', 'eval', 'window.droppedRan = 1']);
+    assert.equal(queued.status, 2, queued.output);
+    assert.equal((await hung).status, 2);
+    await waitFor(() => /new Promise\(\(\) => \{\}\): cancelled, its sender gave up; it may still be acting on the page/.test(repl.stdout.slice(start)), 'the cancel in the pane');
+    assert.match(repl.stdout.slice(start), /window\.droppedRan = 1: dropped, its sender gave up before it ran/);
+    assert.equal(await ok('eval String(window.droppedRan)'), 'undefined', 'the queue moved on, and the dropped one never ran');
+  });
+
   it('says a pw-repl subcommand sent as a command is run at the shell', async () => {
     const where = await repl.run('where');
     assert.equal(where.status, 'error');
