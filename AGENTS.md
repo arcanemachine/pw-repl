@@ -56,9 +56,10 @@ If you hit a limitation or write a workaround, consider adding the capability to
   after an intended change to it, save it again (the command is in `test/units.test.js`). The common
   tasks and modes on help's front page (`TASKS` and `MODES`) are the README's too: change both, as a
   unit test compares them.
-- Time each full run, and put the result in the body of the commit it tests (`npm test: 151 tests, 79s`).
-  Compare with the last commit that has one (`git log --grep='npm test:'`): a run that grew by more than
-  a few seconds means a slow test crept in, usually one waiting out a real timeout (5s for a click).
+- Time each full run, and put the result in the body of the commit it tests (`npm test: 151 tests, 79s`),
+  with the load average (`uptime`) when it is high. Compare with the last commit that has one (`git log
+  --grep='npm test:'`): a run that grew by more than a few seconds, at a like load (a busy machine slows
+  every test), means a slow test crept in, usually one waiting out a real timeout (5s for a click).
   Find it (each test prints its time) and make it faster, or say why it can't be, before committing.
 - Don't race the clock in a test: a page that changes on a timer, or a command timed against a budget,
   fails on a busy machine. Have the page change when the test asks (eval), or measure the thing itself
