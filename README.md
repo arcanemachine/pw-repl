@@ -199,7 +199,10 @@ pw-repl where           # which REPL send would reach
 
 `pw-repl send` sends one command and prints its result, through the server when one is running, and
 through the `pw-repl` tmux session otherwise. Chain several in the shell: `&&` stops at the first that
-fails or is not confirmed (exit 1 or 2), and `;` carries on.
+fails or is not confirmed (exit 1 or 2), and `;` carries on. `-t` is how long it waits for the answer
+(default 20s). Times, there and in every command, are in milliseconds, as in Playwright, or in seconds
+with an `s`: `-t 90000` or `-t 90s`. A send that gives up cancels its command: one still queued never
+runs, and one running is no longer waited for.
 
 Several agents can share one REPL. `pw-repl send -c <name>` (or `PW_CLIENT=<name>`) sends as a client
 with a selected tab of its own, shown in the REPL as `[server:<name>]`. `modes` says which client turned
@@ -227,7 +230,8 @@ The body may also have `"client": "<name>"`, and `"vars": {"PW_NAME": "<value>"}
 "error", "output": "..."}`, plus `"unconfirmed": true` when the command may or may not have done what it
 was sent to do (it timed out, or the REPL quit while it ran and it was not read-only). While the REPL
 starts, `/run` answers 503 with `"starting": true`: retry. `GET /health` says `"status": "starting"` until
-it serves, then `"ok"`. `pw-repl serve <port>` serves TCP on 127.0.0.1; other addresses are refused.
+it serves, then `"ok"`. A client that closes its connection before the answer cancels the command, as
+`send` does when it gives up. `pw-repl serve <port>` serves TCP on 127.0.0.1; other addresses are refused.
 
 ## How it differs from playwright-cli
 
@@ -237,6 +241,7 @@ playwright-cli's command names and most of their options work here too (`help pl
 them). Where pw-repl differs, it is mostly because someone else may be using the browser:
 
 - `open` and `close` open a tab and turn off your modes; they never start, close or wipe a browser.
+  `close` also lists the files you wrote that are still there.
 - Routes, network and emulation apply to one tab, not the whole browser.
 - File pickers are not caught, since they may be the user's: `upload` names the input instead.
 - There is no snapshot after every command, since the user reads the REPL too; `snapshot` shows one.
