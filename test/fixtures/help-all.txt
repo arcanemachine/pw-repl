@@ -805,6 +805,9 @@ show sensitive data (cdp Network.getCookies shows cookie values).
         <function> <ref>    calls it with that element: eval "el => el.textContent" e5. Quoted, its \n is a
                             newline and its \" a quote: write \\n for a JS string's \n.
       Options:
+        --file=<path>       the JavaScript is the file's text: anything the line takes, over many lines and
+                            with // comments. With a <ref> after the path, it is a function called with that
+                            element. Over send, a relative path is from your folder.
         --all               the whole result, not capped.
 
       eval fetch(...) sends a new request, which can change state on the server; it cannot read one that

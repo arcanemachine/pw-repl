@@ -116,6 +116,33 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     }
   });
 
+  it('evaluates a file of JavaScript, over many lines, from the sender\'s folder', async () => {
+    const os = require('os');
+    const path = require('path');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-repl-eval '));
+    try {
+      fs.writeFileSync(path.join(dir, 'check.js'), '// what the page says\nconst h = document.title; // its title\n[h,\n  "two\\nlines"].join("|")\n');
+      fs.writeFileSync(path.join(dir, 'fn.js'), '(el) =>\n  // the field id\n  el.id\n');
+      const { spawnSync } = require('child_process');
+      const send = (...args) => spawnSync(process.execPath, [path.join(__dirname, '..', 'bin', 'pw-repl.js'), 'send', '-e', repl.socket, ...args], { encoding: 'utf8', cwd: dir });
+      const relative = send('eval', '--file=check.js');
+      assert.equal(relative.status, 0, relative.stdout + relative.stderr);
+      assert.equal(relative.stdout, 'Fixture|two\nlines\n', 'a relative path from the sender\'s folder, which has a space in it');
+      const ref = /textbox "Name" \[ref=(e\d+)\]/.exec(await ok('snapshot'))[1];
+      const onRef = send('eval', '--file', 'fn.js', ref);
+      assert.equal(onRef.status, 0, onRef.stderr);
+      assert.equal(onRef.stdout, 'name\n');
+      fs.writeFileSync(path.join(dir, 'take.txt'), 'eval --file=check.js\n');
+      const file = spawnSync(process.execPath, [path.join(__dirname, '..', 'bin', 'pw-repl.js'), 'send', '-e', repl.socket, '--file', 'take.txt'], { encoding: 'utf8', cwd: dir });
+      assert.equal(file.status, 0, file.stdout + file.stderr);
+      assert.match(file.stdout, /^Fixture\|two$/m, 'a send file\'s line too');
+      assert.match((await repl.run(`eval --file="${path.join(dir, 'check.js')}" and more`)).output, /Usage: eval --file=<path> \[<ref>\]/);
+      assert.match((await repl.run(`eval --file="${path.join(dir, 'gone.js')}"`)).output, /eval --file: cannot read .*gone\.js \(ENOENT\)/);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('drags one element onto another, HTML5 or by pointer events', async () => {
     await ok(`eval document.body.innerHTML = '<p draggable="true" id="item">Item 1</p><div id="bin" style="height:80px">Done list</div><div id="knob" style="width:40px;height:40px;background:red"></div><div id="rail" style="height:40px"></div><p id="log"></p>'`);
     await ok('eval bin.ondragover = e => e.preventDefault(); bin.ondrop = e => { e.preventDefault(); log.textContent += "drop "; }; item.ondragstart = e => { e.dataTransfer.setData("text/plain", "x"); log.textContent += "dragstart "; }');
