@@ -214,6 +214,15 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       assert.match((await repl.run('mousemove 50')).output, /Usage: mousemove <x> <y>/);
       assert.match((await repl.run('mousedown sideways')).output, /Usage: mousedown \[left\|right\|middle\]/);
       assert.match((await repl.run('mousewheel a b')).output, /Usage: mousewheel <dx> <dy>/);
+      await ok('eval log.textContent = ""');
+      assert.equal(await ok('mousedown --button=right'), 'Pressed the right button');
+      assert.equal(await ok('mouseup --button right'), 'Released the right button');
+      const sent = await pwSend(['mouseclick', '60', '340', '--button', 'right']);
+      assert.equal(sent.output, 'Clicked the right button at 60, 340\n', 'as click takes it, over send too');
+      assert.match((await repl.run('mouseclick 60 340 right --button=left')).output, /the button goes once, as a word or as --button, not both/);
+      assert.match((await repl.run('mouseclick 60 340 --buton right')).output, /Usage: mouseclick .*; --buton is not one of its options/);
+      assert.match((await repl.run('mousedblclick 60 340 --count=2')).output, /Usage: mousedblclick .*; --count is not one of its options/);
+      assert.equal(await ok('eval log.textContent.trim()'), 'mousedown:2@50,350 mouseup:2@50,350 mousedown:2@60,340 mouseup:2@60,340', 'nothing sent for a refused line');
     } finally {
       await ok('tab close');
     }
@@ -296,7 +305,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.equal(sent.status, 0, sent.output);
     assert.equal(await ok('dblclick "#go" --button=middle'), 'Double-clicked: #go, middle button', 'the selector as written, without its quotes');
     assert.equal(await ok('eval clicks.join(" ")'), 'contextmenu:2:false auxclick:2:false auxclick:1:false auxclick:1:false', 'after a selector that is not quoted, over send too');
-    assert.match((await repl.run(`click ${ref} right --button=left`)).output, /the button goes once, as a word after the selector or as --button, not both/);
+    assert.match((await repl.run(`click ${ref} right --button=left`)).output, /the button goes once, as a word or as --button, not both/);
     assert.match((await repl.run('click #go --button=sideways')).output, /--button is left, right or middle, once/);
   });
 

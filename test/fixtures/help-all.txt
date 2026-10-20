@@ -201,6 +201,7 @@ its element into view first, as Playwright does; profile counts that scroll in t
         <x> <y>             CSS pixels from the top left of the tab's viewport, as for mousemove.
         [button]            left, right or middle. Default: left.
       Options:
+        --button=<button>   the button, as click's: mouseclick 400 300 --button=right.
         --click-count=<n>   as click's: 2 is a double-click (as mousedblclick), 3 a triple-click. 1 to 3.
                             Default: 1.
         --delay=<ms>        holds the button down this long between press and release, as Playwright's
@@ -215,13 +216,19 @@ its element into view first, as Playwright does; profile counts that scroll in t
       Arguments:
         <x> <y>             CSS pixels from the top left of the tab's viewport, as for mousemove.
         [button]            left, right or middle. Default: left.
+      Options:
+        --button=<button>   the button, as click's.
 
       mouseclick --click-count=2, as Playwright's mouse.dblclick is: the page gets two clicks and a dblclick.
       Two mouseclicks are two single clicks, which fire no dblclick. For a triple-click: mouseclick <x> <y>
       --click-count=3.
 
   mousedown [button]                                  press a mouse button at the mouse (left, right, middle)
+      The button is a word or --button=<button>, as for mouseclick.
+
   mouseup [button]                                    release a mouse button where the mouse is
+      The button is a word or --button=<button>, as for mouseclick.
+
   mousewheel <dx> <dy>                                turn the wheel where the mouse is
       Arguments:
         <dx> <dy>           CSS pixels; positive dy scrolls down.
