@@ -211,8 +211,9 @@ pw-repl send -c <name> click e5
 pw-repl send -c <name> close                        # your modes off; tab close <url-part> closes yours
 ```
 
-- There is no browser of your own to open or close: `open` opens a tab in the one the REPL uses, and
-  `close` turns off the modes you turned on and leaves every tab open.
+- There is no browser of your own to open or close: `open` opens a new tab in the one the REPL uses,
+  each time, so use it once and `goto <url>` after that, which navigates the selected tab. `close` turns
+  off the modes you turned on and leaves every tab open.
 - Instead of `-s=<session>`, send as a client: `-c <name>`, with a selected tab of its own, in a browser
   whose cookies and storage are shared.
 - `upload <selector> <file>` names the file input or the button that opens it; do not click a file

@@ -572,6 +572,8 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       assert.equal(bad.status, 'error');
       assert.match(bad.output, /No device "nokia-3310"[\s\S]*The new tab stays open and selected; tab close closes it\./);
       assert.match((await as('cli-open', 'open')).output, /New tab created and selected/);
+      assert.match((await as('cli-open-2', 'open')).output, /^\(playwright-cli's open is tab new \[url\], a new tab each time; goto <url> navigates the selected tab here\)/, 'and says what navigates instead');
+      await as('cli-open-2', 'tab close');
     } finally {
       await as('cli-open', 'close');
       for (let i = 0; i < 3; i++) await as('cli-open', 'tab close');
