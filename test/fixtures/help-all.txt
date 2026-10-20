@@ -27,7 +27,7 @@ emulate and modes on their own show their state and what you can run next.
 Topics (help <topic>):
   tabs      open, select, close, navigate        network   requests, bodies, console, fakes, network off
   interact  click, fill, type, press, select     devtools  eval, CDP commands, cookie and storage names
-  inspect   snapshot, watch, text, screenshots   session   modes, markers, server, quitting
+  inspect   snapshot, watch, wait, screenshots   session   modes, server, clients, quitting
   video     record a take, with a pointer
 
 help <command> for usage and caveats (e.g. help route), help <command> --all for all of it; help --all
@@ -852,11 +852,6 @@ show sensitive data (cdp Network.getCookies shows cookie values).
       --all lists every key, not capped. eval localStorage.getItem("<key>") shows a value.
 
 == session ==
-Completion: @<id> <command> makes the REPL print [[pw-done:<id>:ok|error]] when it finishes.
-
-Unknown outcome: a command that timed out after it began acting on the page may or may not have done it.
-It says so (pw-repl send exits 2), and the REPL carries on.
-
 Server: pw-repl serve also takes commands on /tmp/pw-repl.sock; they show here as [server] lines.
 
 Clients: pw-repl send -c <name> (or $PW_CLIENT) sends as a client of its own. It has a selected tab of
@@ -873,6 +868,11 @@ Times (requests, console, watch) are local, with their UTC offset: 18:16:15.721-
 
 Dialogs are reported and never answered on their own; dialog accept or dismiss answers one, from any
 client, whoever opened it.
+
+Unknown outcome: a command that timed out after it began acting on the page may or may not have done it.
+It says so (pw-repl send exits 2), and the REPL carries on.
+
+Completion: @<id> <command> makes the REPL print [[pw-done:<id>:ok|error]] when it finishes.
 
   modes [off [--mine]]              the modes on in every tab; modes off turns them all off
       Arguments:
