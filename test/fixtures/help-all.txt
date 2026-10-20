@@ -119,6 +119,9 @@ its element into view first, as Playwright does; profile counts that scroll in t
       Examples: fill #name Ada Lovelace, fill "text=Your name" Ada, fill e7 Ada. It sets the whole value at
       once, even while recording: type shows it being typed.
 
+      In double quotes, \n, \t and \r are a newline, a tab and a carriage return (fill #notes "line 1\nline
+      2"), and \\ is a backslash. Over send, the shell's own newlines and tabs go through as they are.
+
   type [--delay=<ms>] [<selector>] <text> [--submit]  type key by key after what the field holds
       Arguments:
         [<selector>]        as for fill. Without it (one word, or one quoted), into what has focus: type
@@ -777,7 +780,8 @@ show sensitive data (cdp Network.getCookies shows cookie values).
       Arguments:
         <JavaScript>        the rest of the line. Promises are awaited, await works at the top level, and a
                             function (() => document.title) is called.
-        <function> <ref>    calls it with that element: eval "el => el.textContent" e5.
+        <function> <ref>    calls it with that element: eval "el => el.textContent" e5. Quoted, its \n is a
+                            newline and its \" a quote: write \\n for a JS string's \n.
       Options:
         --all               the whole result, not capped.
 

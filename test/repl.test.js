@@ -169,6 +169,22 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.equal(await ok(value), '""', 'an empty word through send clears the field');
   });
 
+  it('fills newlines and tabs through send, and a backslash as it was typed', async () => {
+    await ok('eval document.body.append(Object.assign(document.createElement("textarea"), { id: "lines" }))');
+    const value = 'eval JSON.stringify(document.querySelector("#lines").value)';
+    const controls = await pwSend(['fill', '#lines', 'a\nb\tc\rd "e"']);
+    assert.equal(controls.status, 0, controls.output);
+    assert.equal(await ok(value), '"a\\nb\\tc\\nd \\"e\\""', 'the textarea makes its \\r a \\n');
+    const backslash = await pwSend(['fill', '#lines', 'a\\nb']);
+    assert.equal(backslash.status, 0, backslash.output);
+    assert.equal(await ok(value), '"a\\\\nb"');
+    const spaced = await pwSend(['fill', '#lines', 'a\\n b']);
+    assert.equal(spaced.status, 0, spaced.output);
+    assert.equal(await ok(value), '"a\\\\n b"', 'quoted again, its backslash kept');
+    await ok('fill #lines "x\\ny"');
+    assert.equal(await ok(value), '"x\\ny"', 'at the prompt, \\n in double quotes is a newline');
+  });
+
   it('takes key names in any case, as playwright-cli does', async () => {
     await ok('fill #name ab');
     await ok('press #name arrowleft');
