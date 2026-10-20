@@ -136,9 +136,9 @@ example the Docker bridge gateway, `ip route | awk '/default/ {print $3}'`).
 | ------------------------------------- | ------------------------------------------------------------------------------------ |
 | see where I am                        | `tab` (it marks the tab you are looking at `(visible)`), `info`                      |
 | see what is on the page               | `snapshot`, `screenshot`                                                             |
-| do something on it                    | `click`, `fill`, `type`, `press`                                                     |
-| click what has no selector (a canvas) | `mouseclick <x> <y>`                                                                 |
-| run some JavaScript in the page       | `eval document.title`                                                                |
+| do something on it                    | `click`, `fill`, `type`, `press`, `drag`                                             |
+| click what has no selector (a canvas) | `mouseclick <x> <y>`, `mousedblclick <x> <y>`                                        |
+| run some JavaScript in the page       | `eval document.title`; `eval --file=check.js` for a long script                      |
 | wait for a page or element            | `wait load`, `wait <selector>`, `wait <selector> --gone`, `wait text <text>`         |
 | choose a file in a file input         | `upload <selector> <file>`                                                           |
 | see it as a phone, or in dark mode    | `emulate mobile`, `emulate dark` (also `emulate locale`, `emulate timezone`)         |
