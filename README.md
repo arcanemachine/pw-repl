@@ -24,41 +24,6 @@ pw> reload
 pw> console error                       # and see how the page copes
 ```
 
-## Why use it
-
-- **Your browser, as it is.** It connects to a running Chromium, with your tabs, logins and state, and
-  leaves it running when it stops. Nothing is reset to a fresh profile.
-- **One session, seen by everyone.** You and any number of agents drive the same browser, each with a
-  selected tab of its own, and every command shows in the REPL.
-- **What you did, for an agent to read.** `watch` records each step you take in a tab, with the requests
-  it caused. Reproduce a bug by hand and the agent sees exactly what happened. `watch save` keeps the
-  steps as a file of commands that runs them again.
-- **Breaking things on purpose.** Fake, patch, delay or fail responses, cut or slow the network, emulate a
-  phone, a locale or a timezone. All of it applies to one tab, so your other tabs are left alone.
-- **Videos that explain themselves.** Record a tab with a pointer that glides to each click, captions on
-  screen, boxes around what matters, and pacing for a viewer.
-
-## What it can do
-
-- **Read the page:** accessibility snapshots with clickable refs, text, HTML, attributes, links, form
-  controls, event listeners, screenshots (viewport, full page or one element).
-- **Act on it:** click, fill, type, press keys, select, check, upload files, move the mouse, scroll the
-  wheel, answer dialogs.
-- **Watch the network:** every request and response body, console messages and page errors, all recorded
-  as they happen.
-- **Change the network:** fake a response (`route`), patch its JSON, delay it, fail it, or cut or slow the
-  whole tab's network.
-- **Emulate:** a phone, dark mode, a locale, a timezone, a viewport size.
-- **Run code:** `eval` any JavaScript in the page, or send a raw CDP command with `cdp`.
-- **Wait:** for an element, some text, a response or a page load.
-- **Record:** what someone does in a tab (`watch`), a timeline of requests and console (`capture`), or a
-  video of the tab (`record`), with a virtual pointer (`cursor`), captions (`toast`) and highlights
-  (`highlight`).
-- **Profile:** what keeps a page's main thread busy (`profile`): long tasks and the function behind each,
-  forced style and layout, each click's or key's time to the next paint, and dropped frames.
-- **Share:** many clients on one REPL, each with its own tab; a command server on a Unix socket or a local
-  port, with an HTTP+JSON protocol.
-
 ## Quick start
 
 You need Node.js 20 or newer. pw-repl can use a Chromium-based browser you already have (Chrome,
@@ -92,9 +57,46 @@ Commands act on the selected tab. `tab` lists the tabs, with `*` on the selected
 
 With `npx`, use `npx pw-repl@latest` the same way every time, so every command runs the same version.
 
+## Why use it
+
+- **Your browser, as it is.** It connects to a running Chromium, with your tabs, logins and state, and
+  leaves it running when it stops. Nothing is reset to a fresh profile.
+- **One session, seen by everyone.** You and any number of agents drive the same browser, each with a
+  selected tab of its own, and every command shows in the REPL.
+- **What you did, for an agent to read.** `watch` records each step you take in a tab, with the requests
+  it caused. Reproduce a bug by hand and the agent sees exactly what happened. `watch save` keeps the
+  steps as a file of commands that runs them again.
+- **Breaking things on purpose.** Fake, patch, delay or fail responses, cut or slow the network, emulate a
+  phone, a locale or a timezone. All of it applies to one tab, so your other tabs are left alone.
+- **Videos that explain themselves.** Record a tab with a pointer that glides to each click, captions on
+  screen, boxes around what matters, and pacing for a viewer.
+
+## What it can do
+
+- **Read the page:** accessibility snapshots with clickable refs, text, HTML, attributes, links, form
+  controls, event listeners, screenshots (viewport, full page or one element).
+- **Act on it:** click, double-click, fill, type, press keys, select, check, drag and drop, upload files,
+  click or drag at a point, scroll the wheel, answer dialogs.
+- **Watch the network:** every request and response body, console messages and page errors, all recorded
+  as they happen.
+- **Change the network:** fake a response (`route`), patch its JSON, delay it, fail it, or cut or slow the
+  whole tab's network.
+- **Emulate:** a phone, dark mode, a locale, a timezone, a viewport size.
+- **Run code:** `eval` any JavaScript in the page, a line or a file of it, or send a raw CDP command with
+  `cdp`.
+- **Wait:** for an element, some text, a response or a page load.
+- **Record:** what someone does in a tab (`watch`), a timeline of requests and console (`capture`), or a
+  video of the tab (`record`), with a virtual pointer (`cursor`), captions (`toast`) and highlights
+  (`highlight`).
+- **Profile:** what keeps a page's main thread busy (`profile`): long tasks and the function behind each,
+  forced style and layout, each click's or key's time to the next paint, and dropped frames.
+- **Share:** many clients on one REPL, each with its own tab; a command server on a Unix socket or a local
+  port, with an HTTP+JSON protocol.
+
 ## Use your own browser
 
-Start Chrome with remote debugging, then run the REPL without `--launch`:
+Start Chrome with remote debugging (on Linux it may be `google-chrome` or `chromium`), then run the REPL
+without `--launch`:
 
 ```bash
 chrome --remote-debugging-port=9222 --user-data-dir="$HOME/.config/chrome-debug"
@@ -126,7 +128,8 @@ example the Docker bridge gateway, `ip route | awk '/default/ {print $3}'`).
   it. `pw-repl where` says what is running and how `send` will reach it.
 - For `send` to reach `run`, start it in tmux: `tmux new -s pw-repl`, then `pw-repl run` there.
 - A URL after the command opens in a new tab: `pw-repl serve http://localhost:3000`.
-- `--launch` works with each of them. Flags after `--` go to that Chromium (flags only; a start URL goes before `--`).
+- `--launch` works with each of them. Flags after `--` go to that Chromium (flags only; a start URL goes
+  before `--`).
 - A REPL of your own goes on a socket of its own: `-e /tmp/mine.sock` on every command, `serve`
   included, or set `PW_SOCKET`. `serve <port>` listens on TCP, on 127.0.0.1 only.
 
@@ -164,10 +167,10 @@ example the Docker bridge gateway, `ip route | awk '/default/ {print $3}'`).
 ### Modes
 
 Some commands turn on a mode that stays on until you turn it off: `watch`, `capture`, `profile`,
-`record`, `route`, `network off` or `slow`, `emulate`, `viewport`, `highlight`, `cursor` and `toast`. While
-any are on in the selected tab, the prompt shows them: `(watch network:off routes:2) pw>`. `modes` lists
-them for every tab, and `modes off` turns them all off. Each of these commands on its own shows its state
-and what you can run next.
+`record`, `route`, `network off` or `slow`, `emulate`, `viewport`, `highlight`, `cursor` and `toast`.
+While any are on in the selected tab, the prompt shows them: `(watch network:off routes:2) pw>`. `modes`
+lists them for every tab, and `modes off` turns them all off. Each of these commands on its own shows
+its state and what you can run next.
 
 ## For agents and scripts
 
@@ -205,12 +208,10 @@ each mode on, and `modes off --mine` turns off only the sender's own.
 `send --file take.txt` runs a file of commands, one per line, and stops at the first that fails: a
 repro to keep, or a video take.
 
-**Passwords:** type one as a variable: `PW_PASSWORD=... pw-repl send fill '#password' "{{ PW_PASSWORD
-}}"`, or the same line in a file run with `send --file`, as `watch save` writes it. `send` passes the
-value along with the command, and the REPL puts it in only as it runs the command, so the file, the
-REPL's output, its log and its history never hold it. Output that reads it back can: `snapshot`, `html`
-and `attrs` hide a password field's value, but `eval` on the field, a field that a Show password button
-made plain text, or page text that repeats it do not. Only `PW_` names are variables.
+**Passwords:** type one as a variable, so it is never in the command, a file of commands or the REPL's
+log: `PW_PASSWORD=... pw-repl send fill '#password' "{{ PW_PASSWORD }}"` (`watch save` writes them that
+way). What reads the page back can still show it: `snapshot`, `html` and `attrs` hide a password field's
+value; `eval` on the field does not.
 
 ### The HTTP protocol
 
