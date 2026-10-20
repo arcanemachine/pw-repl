@@ -266,6 +266,13 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await ok('click "text=Hold --modifiers Shift"');
     assert.equal(await ok('eval window.held'), 'false', 'kept whole in quotes: its text, no Shift');
     await ok('eval document.querySelector("#hold").remove(); 0');
+    await ok('eval clicks.length = 0');
+    const sent = await pwSend(['click', '#go', '--button=right']);
+    assert.equal(sent.status, 0, sent.output);
+    await ok('dblclick #go --button=middle');
+    assert.equal(await ok('eval clicks.join(" ")'), 'contextmenu:2:false auxclick:2:false auxclick:1:false auxclick:1:false', 'after a selector that is not quoted, over send too');
+    assert.match((await repl.run(`click ${ref} right --button=left`)).output, /the button goes once, as a word after the selector or as --button, not both/);
+    assert.match((await repl.run('click #go --button=sideways')).output, /--button is left, right or middle, once/);
   });
 
   it('keeps a tab in the background drawing after input, so clicks there are not delayed', async () => {

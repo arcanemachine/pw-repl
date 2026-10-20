@@ -93,6 +93,9 @@ its element into view first, as Playwright does; profile counts that scroll in t
         [button]            left, right or middle, after a ref or a quoted selector: click e5 right. Default:
                             left.
       Options:
+        --button=<button>   the button, after any selector: click #menu --button=right. Over send, the shell
+                            takes the quotes, so pw-repl send click '#menu' right clicks a selector "#menu
+                            right": use --button, or quote it twice ('"#menu"').
         --modifiers=<keys>  keys held down meanwhile, comma-separated: Alt, Control, ControlOrMeta, Meta,
                             Shift.
 
@@ -105,7 +108,7 @@ its element into view first, as Playwright does; profile counts that scroll in t
       Timed out after it began acting, it says what stopped it (e.g. <div class="overlay"> intercepts pointer
       events) and that the outcome is unknown; Playwright's full call log goes to the REPL's pane or log.
 
-  dblclick <selector> [button]                        double-click, choosing the match as click does
+  dblclick <selector> [button]                        double-click, as click does, with its options
   hover <selector>                                    hover, choosing the match as click does
   drag <from> <to>                                    drag one element onto another
       Arguments:
