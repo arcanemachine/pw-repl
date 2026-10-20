@@ -9,7 +9,8 @@ const USAGE = `Usage:
 
   pw-repl serve [--background] [--launch [--headed]] [[-e] endpoint] [start-url] [-- <chromium flags>]
       the same, plus a command server (socket, port, or 127.0.0.1:port; default /tmp/pw-repl.sock);
-      --background runs it detached, with its output in a log next to the socket
+      --background runs it detached, with its output in a log next to the socket; a socket's folder is
+      made if it is missing
 
   pw-repl attach [-e endpoint]
       see everything a background REPL does, and type commands to it; Ctrl-C leaves it running
@@ -235,6 +236,16 @@ async function main() {
     case 'run':
     case 'serve': {
       const options = startOptions(args, subcommand === 'serve');
+      // A socket of one's own is often in a folder of its own (/tmp/<name>/repl.sock): made here, before
+      // the log, the pid file or the socket go in it, whichever way serve runs. Owner-only, as the socket is.
+      const socket = subcommand === 'serve' ? require('../lib/client').parseEndpoint(options.endpoint).socket : null;
+      if (socket) {
+        const folder = require('path').dirname(socket);
+        try { require('fs').mkdirSync(folder, { recursive: true, mode: 0o700 }); } catch (error) {
+          console.error(`pw-repl: cannot create ${folder} for the socket (${error.code === 'EEXIST' ? 'a file is there' : error.code || error.message})`);
+          process.exit(64);
+        }
+      }
       if (options.background) process.exit(await require('../lib/background').start(options));
       return require('../lib/start').start(options);
     }

@@ -119,6 +119,8 @@ describe('pw-repl send help', () => {
       [['run', 'a', 'b'], /^pw-repl: one start URL at most \(got a b\)\n/],
       [['serve', '--launch', '--', '--disable-gpu', 'http://localhost:9222'], /^pw-repl: http:\/\/localhost:9222 after -- would go to Chromium as a page to open; only flags go after --\. A start URL goes before --/],
       [['run', '--launch', '--', '--user-data-dir', '/tmp/p'], /^pw-repl: \/tmp\/p after -- would go to Chromium as a page to open: it takes a switch's value as --user-data-dir=\/tmp\/p\nUsage:\n  pw-repl run /],
+      [['serve', '--background', '-e', '/etc/passwd/r.sock'], /^pw-repl: cannot create \/etc\/passwd for the socket \(a file is there\)\n$/],
+      [['serve', '-e', '/etc/passwd/r.sock'], /^pw-repl: cannot create \/etc\/passwd for the socket \(a file is there\)\n$/],
       [['serve', '--background', '--launch', '--', 'http://localhost:9222'], /^pw-repl: http:\/\/localhost:9222 after -- would go to Chromium as a page to open; only flags go after --\. A start URL goes before --; for a browser already running, leave out --launch and set PW_CDP_URL\nUsage:\n  pw-repl serve /],
     ];
     for (const [args, expected] of cases) {
@@ -227,12 +229,14 @@ describe('pw-repl send help', () => {
 
   it('launches a private Chromium with --launch, passes flags after --, and stops it with the REPL', { skip: SKIP }, async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-launch-test-'));
-    const socket = path.join(dir, 'repl.sock');
+    // In a folder not made yet, which serve makes.
+    const socket = path.join(dir, 'made', 'repl.sock');
     const env = { ...process.env, PW_SOCKET: socket, PW_ENDPOINT: '', PW_CDP_URL: 'http://127.0.0.1:9' };
     try {
       // -e names the socket, as send, attach, stop and where take it.
       assert.equal(pwRepl(['serve', '--background', '--launch', '-e', socket, '--', '--window-size=900,700'], { env, timeout: 40000 }).status, 0);
-      const log = fs.readFileSync(path.join(dir, 'repl.log'), 'utf8');
+      assert.equal(fs.statSync(path.join(dir, 'made')).mode & 0o777, 0o700);
+      const log = fs.readFileSync(path.join(dir, 'made', 'repl.log'), 'utf8');
       const command = /^  (\S+ .*--user-data-dir=(\S+).*--window-size=900,700 about:blank)$/m.exec(log);
       assert.ok(command, `the command it ran:\n${log}`);
       const url = /Another REPL reaches it with PW_CDP_URL=(\S+)/.exec(log)[1];
