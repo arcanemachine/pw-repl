@@ -264,9 +264,9 @@ Output is capped; --all right after the command, or at the end, shows everything
                             case), each with the named elements around it.
         --regex <pattern>   --grep by a regular expression: snapshot --regex "Total: \d+".
 
-      Refs: a ref (e3, or f1e3 in newer Playwright) works as a selector in any command: click e3. It belongs
-      to the tab whose snapshot gave it, and can change when the page changes (e102 may become f4e98): take a
-      new snapshot after it does.
+      Refs: a ref (e3; f1e3, f2e3 once the page has loaded again, when the old refs stop working) works as a
+      selector in any command: click e3. It belongs to the tab whose snapshot gave it, and can change when the
+      page changes (e102 may become f4e98): take a new snapshot after it does.
 
       Quotes: some names and text are quoted, YAML-style, as one with a quote mark in it is, and their quotes
       are escaped: paragraph: "Say \"hi\"" is the text Say "hi" on the page, with no backslashes.
