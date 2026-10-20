@@ -23,9 +23,10 @@ describe('help', () => {
   });
 
   it('starts with common tasks, and names only commands that exist', () => {
-    const tasks = /Common tasks:\n([\s\S]*?)\n\n/.exec(help.render())[1];
-    const named = tasks.split('\n').flatMap(line => line.slice(36).split(/, (?:then )?|, click around, then /)).map(part => part.split(' ')[0]);
-    for (const name of named) assert.ok(Object.hasOwn(help.COMMANDS, name), name);
+    assert.match(help.render(), /^[^\n]+\n[^\n]+\n\nCommon tasks:\n  see where I am /);
+    const named = help.TASKS.flatMap(([, commands]) => commands.split(/, (?:click around, )?(?:then )?|; /)).map(part => part.split(' ')[0]);
+    // pw-repl send --file is the command line's, not the REPL's.
+    for (const name of named) assert.ok(name === 'pw-repl' || Object.hasOwn(help.COMMANDS, name), name);
   });
 
   it('names every topic in the overview', () => {
@@ -66,6 +67,15 @@ describe('help', () => {
   // A saved copy, so a change to how the entries are written (not what they say) shows as a diff.
   // After an intended change to the help, save it again:
   //   node -e "const fs=require('fs'),h=require('./lib/help');for(const v of ['--all','playwright-cli','video'])fs.writeFileSync('test/fixtures/help'+(v==='--all'?'-all':'-'+v)+'.txt',h.render(v)+'\n')"
+  it('lists the same common tasks and modes as the README', () => {
+    const readme = fs.readFileSync(path.join(__dirname, '..', 'README.md'), 'utf8');
+    const table = readme.slice(readme.indexOf('| I want to'), readme.indexOf('\n\n', readme.indexOf('| I want to')));
+    const rows = table.split('\n').slice(2).map(row => row.split('|').slice(1, -1).map(cell => cell.trim().replace(/`/g, '')));
+    assert.deepEqual(rows, help.TASKS);
+    const modes = /Some commands turn on a mode that stays on until you turn it off: ([^.]*)\./.exec(readme)[1];
+    assert.equal(modes.replace(/`/g, '').replace(/\s+/g, ' '), help.MODES);
+  });
+
   it('renders exactly as saved in test/fixtures', () => {
     const fs = require('node:fs');
     const path = require('node:path');

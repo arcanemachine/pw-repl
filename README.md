@@ -132,41 +132,42 @@ example the Docker bridge gateway, `ip route | awk '/default/ {print $3}'`).
 
 ## Common tasks
 
-| I want to…                            | Commands                                                                             |
-| ------------------------------------- | ------------------------------------------------------------------------------------ |
-| see where I am                        | `tab` (it marks the tab you are looking at `(visible)`), `info`                      |
-| see what is on the page               | `snapshot`, `screenshot`                                                             |
-| do something on it                    | `click`, `fill`, `type`, `press`, `drag`                                             |
-| click what has no selector (a canvas) | `mouseclick <x> <y>`, `mousedblclick <x> <y>`                                        |
-| run some JavaScript in the page       | `eval document.title`; `eval --file=check.js` for a long script                      |
-| wait for a page or element            | `wait load`, `wait <selector>`, `wait <selector> --gone`, `wait text <text>`         |
-| choose a file in a file input         | `upload <selector> <file>`                                                           |
-| see it as a phone, or in dark mode    | `emulate mobile`, `emulate dark` (also `emulate locale`, `emulate timezone`)         |
-| see what the page requested           | `requests`, then `body <#>` for what one got back                                    |
-| see console messages and errors       | `console`                                                                            |
-| show an agent what I do               | `watch on`, click around in the browser, then `watch`                                |
-| see each step as I click              | `watch on --live`                                                                    |
-| replay what I clicked through         | `watch on`, click around, `watch save flow.txt`, then `pw-repl send --file flow.txt` |
-| record requests and console together  | `capture on`, then `capture off`                                                     |
-| find what makes the page slow         | `profile on`, then `profile off`; `profile reload` for a page load                   |
-| fake a backend response               | `route <glob> <status> <json>`, `route <glob> abort`                                 |
-| change or slow an API response        | `route <glob> patch <json>`, `route <glob> delay <secs>`                             |
-| cut or slow the whole network         | `network off`, `network slow`, then `network on`                                     |
-| record a video of the page            | `record on`, then `record off` (`help video` for a take with a pointer)              |
-| show a pointer where the agent acts   | `cursor on`, then `cursor off` (in screenshots and videos)                           |
-| say what is happening on screen       | `toast <text>`, then `toast off` (`--duration=3s` hides it by itself)                |
-| point something out on the page       | `highlight <ref>` draws a box; `highlight off` hides it                              |
-| clean up                              | `modes off`                                                                          |
+| I want to…                            | Commands                                                      |
+| ------------------------------------- | ------------------------------------------------------------- |
+| see where I am                        | `tab`, `info`                                                 |
+| see what is on the page               | `snapshot`, `screenshot`                                      |
+| do something on it                    | `click`, `fill`, `type`, `press`, `drag`                      |
+| click what has no selector (a canvas) | `mouseclick <x> <y>`, `mousedblclick <x> <y>`                 |
+| run some JavaScript in the page       | `eval document.title`; `eval --file=check.js` for a long one  |
+| wait for a page or element            | `wait load`, `wait <selector> [--gone]`, `wait text <text>`   |
+| choose a file in a file input         | `upload <selector> <file>`                                    |
+| see it as a phone, or in dark mode    | `emulate mobile`, `emulate dark`                              |
+| see what the page requested           | `requests`, then `body <#>` for what one got back             |
+| see console messages and errors       | `console`                                                     |
+| show an agent what I do               | `watch on`, click around, then `watch`                        |
+| see each step as I click              | `watch on --live`                                             |
+| watch a tab someone will open         | `watch on --next-tab [url-part]`                              |
+| replay what I clicked through         | `watch save flow.txt`, then `pw-repl send --file flow.txt`    |
+| record requests and console together  | `capture on`, then `capture off`                              |
+| find what makes the page slow         | `profile on`, then `profile off`; `profile reload` for a load |
+| fake a backend response               | `route <glob> <status> <json>`, `route <glob> abort`          |
+| change or slow an API response        | `route <glob> patch <json>`, `route <glob> delay <secs>`      |
+| cut or slow the whole network         | `network off`, `network slow`, then `network on`              |
+| record a video of the page            | `record on`, then `record off` (`help video` for a take)      |
+| show a pointer where the agent acts   | `cursor on`, then `cursor off`                                |
+| say what is happening on screen       | `toast <text>`, then `toast off`                              |
+| point something out on the page       | `highlight <ref>`, then `highlight off`                       |
+| clean up                              | `modes off`                                                   |
 
 `help <topic>` lists the rest, and `help <command>` has usage and caveats.
 
 ### Modes
 
-Some commands turn on a mode that stays on until you turn it off: `watch`, `capture`, `profile`, `route`,
-`network off` or `slow`, `emulate`, `viewport`, `record`, `highlight`, `cursor` and `toast`. While any
-are on in the selected tab, the prompt shows them: `(watch network:off routes:2) pw>`. `modes` lists them
-for every tab, and `modes off` turns them all off. Each of these commands on its own shows its state and
-what you can run next.
+Some commands turn on a mode that stays on until you turn it off: `watch`, `capture`, `profile`,
+`record`, `route`, `network off` or `slow`, `emulate`, `viewport`, `highlight`, `cursor` and `toast`. While
+any are on in the selected tab, the prompt shows them: `(watch network:off routes:2) pw>`. `modes` lists
+them for every tab, and `modes off` turns them all off. Each of these commands on its own shows its state
+and what you can run next.
 
 ## For agents and scripts
 
