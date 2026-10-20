@@ -32,12 +32,12 @@ const USAGE = `Usage:
   pw-repl skill
       print an agent skill (SKILL.md) that teaches an agent to use the REPL
 
-A browser: --launch starts a Chromium of the REPL's own, headless unless --headed, in a temporary
-profile, on a free port of its own (pw-repl where names it). It prints the command it ran, and stops
-with the REPL (Ctrl-C while it starts too); stop returns once it has exited. Flags after -- go to it,
-and only flags (a start URL goes before --); a --user-data-dir=<dir> among them is used instead of the
-temporary profile, and kept. PW_CHROME picks which Chromium. Without --launch, the REPL connects to a
-browser running with --remote-debugging-port, at $PW_CDP_URL (default http://localhost:9222).
+A browser: --launch starts a Chromium of the REPL's own, headless unless --headed, 1280x800, in a
+temporary profile, on a free port of its own (pw-repl where names it). It prints the command it ran, and
+stops with the REPL (Ctrl-C while it starts too); stop returns once it has exited. Flags after -- go to
+it, and only flags (a start URL goes before --); a --user-data-dir=<dir> among them is used instead of
+the temporary profile, and kept. PW_CHROME picks which Chromium. Without --launch, the REPL connects to
+a browser running with --remote-debugging-port, at $PW_CDP_URL (default http://localhost:9222).
 
 send uses the server when -e, $PW_ENDPOINT, or the socket ($PW_SOCKET, default /tmp/pw-repl.sock) is
 there, and the tmux session where pw-repl run runs otherwise (-s, $PW_TMUX_SESSION, default pw-repl).

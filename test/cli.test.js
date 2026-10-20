@@ -245,6 +245,7 @@ describe('pw-repl send help', () => {
       const log = fs.readFileSync(path.join(dir, 'made', 'repl.log'), 'utf8');
       const command = /^  (\S+ .*--user-data-dir=(\S+).*--window-size=900,700 about:blank)$/m.exec(log);
       assert.ok(command, `the command it ran:\n${log}`);
+      assert.doesNotMatch(command[1], /1280,800/, 'a size given after -- is the only one');
       const url = /Another REPL reaches it with PW_CDP_URL=(\S+)/.exec(log)[1];
       assert.equal(pwRepl(['send', 'tab new about:blank'], { env }).status, 0, 'PW_CDP_URL is not used when it launches');
       assert.match(pwRepl(['where'], { env }).stdout, new RegExp(`^browser: ${url.replace(/[.]/g, '\\.')} answers \\(.*, launched by this REPL\\)$`, 'm'));
@@ -326,6 +327,7 @@ describe('pw-repl send help', () => {
         const result = pwRepl(['serve', '--launch', path.join(dir, 'repl.sock')], { env, timeout: 20000 });
         assert.equal(result.status, 1);
         assert.match(result.stdout + result.stderr, /Chromium did not start \(it exited with code 3\)/);
+        assert.match(result.stdout + result.stderr, / --window-size=1280,800 /, 'a laptop\'s window by default');
         await waitFor(() => !alive(readPid(path.join(dir, 'helper.pid'))), 'the helper to be stopped', 3000);
       } finally {
         const helper = readPid(path.join(dir, 'helper.pid'));

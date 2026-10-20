@@ -513,7 +513,9 @@ Output is capped; --all right after the command, or at the end, shows everything
 
       The window's size here is the size of the page in it. Chromium's --window-size flag sizes the whole
       window, frame included, so the page is smaller: --window-size=1280,900 gives 1280x757 in a headless one.
-      For a page of an exact size, use viewport <W>x<H>.
+      --launch starts its Chromium at --window-size=1280,800 (a page of 1280x657 headless), unless the flags
+      after -- give one; a profile it was given and has used before may keep its own last size. For a page of
+      an exact size, use viewport <W>x<H>.
 
   emulate [<what> [off] | off]                         emulate a phone, dark mode, a locale or a timezone
       Arguments:

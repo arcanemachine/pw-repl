@@ -33,8 +33,9 @@ Chromium, ...), or Playwright's own: `npx playwright-core install chromium` down
 npx pw-repl@latest run --launch https://example.com
 ```
 
-`--launch` starts a private headless Chromium for the REPL and stops it when the REPL quits. Add
-`--headed` to see that browser and click in it yourself. The page opens, and a `pw>` prompt waits:
+`--launch` starts a private headless Chromium for the REPL, in a 1280x800 window, and stops it when
+the REPL quits. Add `--headed` to see that browser and click in it yourself. The page opens, and a
+`pw>` prompt waits:
 
 ```text
 pw> help                          # common tasks and topics; help <topic>, help <command>, help --all
