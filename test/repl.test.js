@@ -1705,15 +1705,15 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
   it('assumes http:// for localhost, and shows the window size as the viewport', async () => {
     const port = new URL(site.url).port;
     assert.match(await ok(`goto localhost:${port}/`), /^http:\/\/localhost:\d+\/ — Fixture$/);
-    assert.match(await ok('info'), /Viewport: \d+x\d+ \(the window's size\)$/m);
+    assert.match(await ok('info'), /Viewport: \d+x\d+ \(the window's page area\)$/m);
     await ok('viewport 900x700');
     assert.equal(await ok('viewport'), '900x700 (set with viewport)');
     await ok(`goto ${site.url}/`);
   });
 
   it('unsets a viewport, which counts as a mode, and keeps it through a screenshot', async () => {
-    const windowSize = /^(\d+x\d+) \(the window's size\)$/.exec(await ok('viewport'))[1];
-    assert.equal(await ok('viewport off'), `No viewport is set in the selected tab: ${windowSize} (the window's size)`);
+    const windowSize = /^(\d+x\d+) \(the window's page area\)$/.exec(await ok('viewport'))[1];
+    assert.equal(await ok('viewport off'), `No viewport is set in the selected tab: ${windowSize} (the window's page area)`);
     assert.equal((await repl.run('viewport 1280')).output, 'Error: A size is <width>x<height>, e.g. viewport 1280x900 (got 1280). Usage: viewport [<width>x<height> | off]');
     assert.equal((await repl.run('viewport 0x0')).output, 'Error: A width and a height are 1 or more (got 0x0)');
     await ok('viewport 700X500');
@@ -1724,15 +1724,15 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     fs.unlinkSync(shot);
     assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [700, 500]);
     assert.equal(await ok('eval innerWidth + "x" + innerHeight'), '700x500', 'the screenshot kept it');
-    assert.equal(await ok('viewport off'), `Viewport off: ${windowSize} (the window's size)`);
+    assert.equal(await ok('viewport off'), `Viewport off: ${windowSize} (the window's page area)`);
     assert.equal(await ok('eval innerWidth + "x" + innerHeight'), windowSize);
     await ok('viewport 640x480');
     assert.match(await ok('modes off'), /viewport off/);
-    assert.equal(await ok('viewport'), `${windowSize} (the window's size)`);
+    assert.equal(await ok('viewport'), `${windowSize} (the window's page area)`);
   });
 
   it('screenshots a viewport wider than the window at its size after a navigation', async () => {
-    const [windowWidth] = /^(\d+)x\d+ \(the window's size\)$/.exec(await ok('viewport'))[1].split('x').map(Number);
+    const [windowWidth] = /^(\d+)x\d+ \(the window's page area\)$/.exec(await ok('viewport'))[1].split('x').map(Number);
     assert.ok(windowWidth < 1200, `the window (${windowWidth} wide) is narrower than the viewport`);
     const { PNG } = require('playwright-core/lib/utilsBundle');
     // Blue where it is drawn, white where Chrome left the shot blank.
