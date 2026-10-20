@@ -34,8 +34,7 @@ npx pw-repl@latest run --launch https://example.com
 ```
 
 `--launch` starts a private headless Chromium for the REPL and stops it when the REPL quits. Add
-`--headed` to see that browser and click in it yourself. The page opens in a new tab, and a `pw>`
-prompt waits:
+`--headed` to see that browser and click in it yourself. The page opens, and a `pw>` prompt waits:
 
 ```text
 pw> help                          # common tasks and topics; help <topic>, help <command>, help --all

@@ -239,7 +239,8 @@ describe('pw-repl send help', () => {
     const env = { ...process.env, PW_SOCKET: socket, PW_ENDPOINT: '', PW_CDP_URL: 'http://127.0.0.1:9' };
     try {
       // -e names the socket, as send, attach, stop and where take it.
-      assert.equal(pwRepl(['serve', '--background', '--launch', '-e', socket, '--', '--window-size=900,700'], { env, timeout: 40000 }).status, 0);
+      assert.equal(pwRepl(['serve', '--background', '--launch', '-e', socket, 'data:text/html,<title>Start</title>', '--', '--window-size=900,700'], { env, timeout: 40000 }).status, 0);
+      assert.match(pwRepl(['send', 'tab'], { env }).stdout, /^\* \[0\] data:text\/html,<title>Start<\/title> {2}\((?:visible, )?the start URL\)\n {8}"Start"\n\n {2}tab /, 'the start URL in its first tab, not a second one behind a blank');
       assert.equal(fs.statSync(path.join(dir, 'made')).mode & 0o777, 0o700);
       const log = fs.readFileSync(path.join(dir, 'made', 'repl.log'), 'utf8');
       const command = /^  (\S+ .*--user-data-dir=(\S+).*--window-size=900,700 about:blank)$/m.exec(log);

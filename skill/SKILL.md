@@ -43,7 +43,8 @@ and check the skill it names against the top of this file. It says whether a REP
 `send` reaches it, or that one is still starting (retry shortly; it exits 64 until the REPL serves, as
 when none is running). Right after you start one, for a moment before its process is up, it can still
 say none is there: retry for a few seconds before taking that as a failed start. There are three ways to
-run one; each takes an optional start URL, which opens in a new tab.
+run one; each takes an optional start URL, which opens in a new tab (with `--launch`, in its browser's
+first tab).
 
 - `pw-repl serve --background` runs it detached, with a command server on `/tmp/pw-repl.sock`
   (owner-only) and its output in `/tmp/pw-repl.log`. `pw-repl attach` shows everything it does and
