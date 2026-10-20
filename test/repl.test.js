@@ -116,6 +116,22 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     }
   });
 
+  it('double-clicks at a point, where two clicks make no dblclick', async () => {
+    await ok(`tab new ${site.url}/pick`);
+    try {
+      await ok('eval window.dbl = []; addEventListener("dblclick", e => dbl.push(`${e.button}@${e.clientX},${e.clientY}`))');
+      await ok('mouseclick 50 350');
+      await ok('mouseclick 50 350');
+      assert.equal(await ok('eval dbl.length'), '0');
+      assert.equal(await ok('mousedblclick 50 350'), 'Double-clicked the left button at 50, 350');
+      assert.equal(await ok('eval dbl.join()'), '0@50,350');
+      assert.match((await repl.run('mousedblclick 50')).output, /Usage: mousedblclick <x> <y>/);
+      assert.match((await repl.run('mousedblclick 50 350 sideways')).output, /Usage: mousedblclick <x> <y> \[left\|right\|middle\]/);
+    } finally {
+      await ok('tab close');
+    }
+  });
+
   it('moves the mouse, presses its buttons and turns its wheel at a point', async () => {
     await ok(`tab new ${site.url}/pick`);
     try {
