@@ -873,6 +873,19 @@ show sensitive data (cdp Network.getCookies shows cookie values).
       The session is detached afterwards, so subscriptions and settings do not persist. Browser.close and
       Target.closeTarget are refused, and so is Page.handleJavaScriptDialog: dialog answers one.
 
+  clipboard [--all] [--shared-clipboard]        print the text on the clipboard, as a Copy button left it
+      Options:
+        --shared-clipboard  reads it in a browser with a window too, whose clipboard is the computer's
+                            (below).
+        --all               the whole text, not capped.
+
+      It reads through the selected tab, which must be a secure page (https, or http on localhost), granting
+      it clipboard-read only while it reads. Check a Copy button: click it, then clipboard.
+
+      A headless browser, as --launch starts, has a clipboard of its own, holding only what its pages copied.
+      One with a window reads the computer's: whatever its user last copied, a password too. There it refuses
+      without --shared-clipboard; ask the user before giving it.
+
   cookies [--all]                               cookie names, domains and flags; values are omitted
       --all lists every cookie, not capped. cdp Network.getCookies {} shows the values.
 

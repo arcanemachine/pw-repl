@@ -83,7 +83,7 @@ With `npx`, use `npx pw-repl@latest` the same way every time, so every command r
   whole tab's network.
 - **Emulate:** a phone, dark mode, a locale, a timezone, a viewport size.
 - **Run code:** `eval` any JavaScript in the page, a line or a file of it, or send a raw CDP command with
-  `cdp`.
+  `cdp`; read what a Copy button put on the clipboard (`clipboard`).
 - **Wait:** for an element, some text, a response or a page load.
 - **Record:** what someone does in a tab (`watch`), a timeline of requests and console (`capture`), or a
   video of the tab (`record`), with a virtual pointer (`cursor`), captions (`toast`) and highlights

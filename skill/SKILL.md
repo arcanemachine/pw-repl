@@ -1,6 +1,6 @@
 ---
 name: pw-repl
-description: Inspect and drive a Chromium browser, possibly one the user is using, through the pw-repl REPL - tabs, page snapshots, clicks and typing, the mouse at a point (moves, buttons, wheel), requests and their bodies, console messages, waiting for pages and elements, choosing files, faking, patching or delaying responses, cutting or slowing the network, emulating a phone, dark mode, a locale or a timezone, recording what the user does, profiling what makes a page slow (long tasks, forced layouts, input delay, dropped frames), and recording a video of a tab, with a pointer and on-screen captions. Use when asked to look at, debug or test something in a web page, in an existing Chromium with remote debugging or in one it starts itself.
+description: Inspect and drive a Chromium browser, possibly one the user is using, through the pw-repl REPL - tabs, page snapshots, clicks and typing, the mouse at a point (moves, buttons, wheel), requests and their bodies, console messages, what a page copied to the clipboard, waiting for pages and elements, choosing files, faking, patching or delaying responses, cutting or slowing the network, emulating a phone, dark mode, a locale or a timezone, recording what the user does, profiling what makes a page slow (long tasks, forced layouts, input delay, dropped frames), and recording a video of a tab, with a pointer and on-screen captions. Use when asked to look at, debug or test something in a web page, in an existing Chromium with remote debugging or in one it starts itself.
 allowed-tools: Bash(pw-repl:*) Bash(npx pw-repl@latest:*)
 ---
 
@@ -230,6 +230,9 @@ pw-repl send -c <name> close                        # your modes off; tab close 
   lists what is on in every tab (the prompt shows the selected tab's, e.g. `(watch routes:1) pw>`);
   `modes off` turns off every mode in every tab.
 - Someone may be attached to the REPL's tmux session; killing the session ends it for them too.
+- What a page copied (a Copy button): click it, then `clipboard` prints it. In a headless browser
+  (`--launch`) that is the browser's own clipboard. In one with a window it is the user's, which may
+  hold a password, so `clipboard` refuses there without `--shared-clipboard`: ask the user first.
 - To point something out, to the user or in a screenshot, `highlight <ref|selector>` draws a box over it
   without changing the page (`--style=<css>` restyles it; `highlight off` hides them), without
   Playwright's locator label unless `highlight --labels on`.

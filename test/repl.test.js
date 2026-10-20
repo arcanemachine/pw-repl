@@ -181,6 +181,19 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match((await repl.run('eval --timeout=soon 1')).output, /Usage: eval --timeout=<time> <JavaScript>/);
   });
 
+  it('reads what a page copied, granting the tab the clipboard only while it reads', async () => {
+    await ok(`eval document.body.innerHTML = '<button id="copy" onclick="navigator.clipboard.writeText(\\'copied-\\' + location.port)">Copy</button>'; 0`);
+    const state = 'eval navigator.permissions.query({ name: "clipboard-read" }).then(s => s.state)';
+    const before = await ok(state);
+    await ok('click #copy');
+    const port = new URL(site.url).port;
+    assert.equal(await ok('clipboard'), `copied-${port}`);
+    assert.equal(await ok(state), before, 'the grant taken back');
+    assert.match((await repl.run('clipboard --mine')).output, /Usage: clipboard \[--shared-clipboard\]/);
+    await ok('goto about:blank');
+    assert.match((await repl.run('clipboard')).output, /The selected tab \(about:blank\) is not a secure page/);
+  });
+
   it('drags one element onto another, HTML5 or by pointer events', async () => {
     await ok(`eval document.body.innerHTML = '<p draggable="true" id="item">Item 1</p><div id="bin" style="height:80px">Done list</div><div id="knob" style="width:40px;height:40px;background:red"></div><div id="rail" style="height:40px"></div><p id="log"></p>'`);
     await ok('eval bin.ondragover = e => e.preventDefault(); bin.ondrop = e => { e.preventDefault(); log.textContent += "drop "; }; item.ondragstart = e => { e.dataTransfer.setData("text/plain", "x"); log.textContent += "dragstart "; }');
