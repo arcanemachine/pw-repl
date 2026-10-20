@@ -5,7 +5,7 @@ playwright-cli's command names, and what they run here (each says so the first t
   tab-select             tab <index>, by index only
   tab-close              tab close [url-part], or tab <index> then tab close
   open                   tab new [url] (goto <url> navigates); --mobile, --device=<name>: emulate mobile
-  close                  modes off --mine, and tabs stay open
+  close                  modes off --mine; tabs stay open; lists the files you wrote
   go-back                back
   go-forward             forward
   find                   snapshot --grep <text>

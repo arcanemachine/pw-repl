@@ -255,6 +255,8 @@ pw-repl send -c <name> close                        # your modes off; tab close 
   not by `send`. Without it, a REPL on a socket of its own saves them next to its socket, and any other
   in `/tmp`. `screenshot` prints each file's path; other REPLs may save theirs in the same place. Remove
   only your own, and keep those too if they are needed, e.g. as evidence or as something to hand over.
+  `close` (as a client, `-c <name>`) lists every file you wrote that is still there: screenshots,
+  videos, saved profiles and watches.
 - `PW_ENDPOINT` / `PW_TMUX_SESSION` — defaults for `send -e` / `-s`. `PW_SOCKET` — the socket `serve`
   serves on and `send` looks for when neither is given (default `/tmp/pw-repl.sock`).
 

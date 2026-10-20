@@ -954,3 +954,7 @@ Completion: @<id> <command> makes the REPL print [[pw-done:<id>:ok|error]] when 
 
   quit                              disconnect, leaving Chromium running (one --launch started stops too)
       Runs immediately, even while another command is waiting. Only available at the prompt.
+
+      As it stops (quit, or pw-repl stop), it says, for each client, how many of the files it wrote are still
+      there, how large, and in which folders: Files left by cart-bug: 3 files, 48 MB (2 screenshots, 1 video)
+      in /tmp/. pw-repl send -c <name> close lists a client's own in full.

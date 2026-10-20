@@ -223,6 +223,8 @@ describe('pw-repl send help', () => {
       assert.match(stopped.stdout, /^Stopped the background REPL \(pid \d+\) on \S+repl\.sock; its log stays at \S+\n/);
       assert.match(stopped.stdout, /\nA recording ended before the REPL stopped, unseen since: It reached its 1s and stopped\. Saved: \S+ended\.webm \(/, 'and says what became of each recording');
       assert.match(stopped.stdout, /\nThe REPL stopped, which ended a recording\. Saved: \S+\/my dir\/stopped\.webm \(/);
+      assert.match(stopped.stdout, /\nFiles left by other: 1 file, [\d.]+ [KM]B \(1 video\) in \S+pw-[^/\n]+\/\n/, 'and the files each client left');
+      assert.match(stopped.stdout, /\nFiles left without a client name: 2 files, [\d.]+ [KM]B \(2 videos\) in \S+\/out\/ and \S+\/my dir\/\n/);
       assert.equal(fs.existsSync(socket), false);
       assert.equal(fs.existsSync(path.join(dir, 'repl.pid')), false);
       assert.equal(pwRepl(['stop', '-e', socket], { env }).status, 64);

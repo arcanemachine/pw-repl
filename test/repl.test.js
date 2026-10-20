@@ -82,6 +82,19 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.equal(await ok('eval String(window.droppedRan)'), 'undefined', 'the queue moved on, and the dropped one never ran');
   });
 
+  it('lists the files a client wrote that are still there when it closes', async () => {
+    await repl.runAs('files-a', `tab new ${site.url}/?files-a`);
+    await repl.runAs('files-b', `tab new ${site.url}/?files-b`);
+    const shot = /^Saved: (\S+)$/m.exec((await repl.runAs('files-a', 'screenshot')).output)[1];
+    const other = /^Saved: (\S+)$/m.exec((await repl.runAs('files-b', 'screenshot')).output)[1];
+    fs.rmSync(other);
+    const closed = (await repl.runAs('files-a', 'close')).output;
+    assert.match(closed, new RegExp(`^Files you wrote that are still there; remove what is no longer needed:\n  ${shot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\(\\d+ KB\\)$`, 'm'));
+    assert.equal(closed.match(/\.png/g).length, 1, 'only its own');
+    fs.rmSync(shot);
+    assert.doesNotMatch((await repl.runAs('files-a', 'close')).output, /Files you wrote/, 'nothing once it is gone');
+  });
+
   it('says a pw-repl subcommand sent as a command is run at the shell', async () => {
     const where = await repl.run('where');
     assert.equal(where.status, 'error');
