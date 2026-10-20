@@ -822,7 +822,7 @@ show sensitive data (cdp Network.getCookies shows cookie values).
         --file=<path>       the JavaScript is the file's text: anything the line takes, over many lines and
                             with // comments. With a ref or a selector after the path, it is a function called
                             with that element (the first match). Over send, a relative path is from your
-                            folder.
+                            shell's current folder.
         --all               the whole result, not capped.
 
       eval fetch(...) sends a new request, which can change state on the server; it cannot read one that

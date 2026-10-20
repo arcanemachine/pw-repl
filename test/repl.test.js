@@ -168,6 +168,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     const selected = 'eval (f => `${f.selectionStart}-${f.selectionEnd}`)(document.querySelector("#name"))';
     const sent = await pwSend(['click', '#name', '--click-count=3']);
     assert.equal(sent.status, 0, sent.output);
+    assert.equal(sent.output, 'Clicked: #name, 3 times\n');
     assert.equal(await ok(selected), '0-12', 'all of it, not the word a double-click selects');
     await ok('eval document.querySelector("#name").setSelectionRange(0, 0)');
     const at = JSON.parse(await ok('eval JSON.stringify((r => [Math.round(r.x + 5), Math.round(r.y + r.height / 2)])(document.querySelector("#name").getBoundingClientRect()))'));
@@ -274,9 +275,9 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
   it('clicks with a button and modifiers', async () => {
     await ok('eval window.clicks = []; for (const t of ["click", "contextmenu", "auxclick", "dblclick"]) document.querySelector("#go").addEventListener(t, e => clicks.push(`${t}:${e.button}:${e.shiftKey}`)); 0');
     const ref = /button "Go" \[ref=((?:f\d+)?e\d+)\]/.exec(await ok('snapshot'))[1];
-    assert.equal(await ok(`click ${ref} right`), `Clicked: ${ref} right`);
+    assert.equal(await ok(`click ${ref} right`), `Clicked: ${ref}, right button`);
     await ok(`click "#go" middle`);
-    await ok(`click ${ref} --modifiers="shift"`);
+    assert.equal(await ok(`click ${ref} --modifiers="shift"`), `Clicked: ${ref}, with Shift`);
     await ok(`dblclick ${ref}`);
     assert.equal(await ok('eval clicks.join(" ")'), 'contextmenu:2:false auxclick:2:false auxclick:1:false click:0:true click:0:false click:0:false dblclick:0:false');
     assert.match((await repl.run(`click ${ref} --modifiers=Hyper`)).output, /Not a modifier: Hyper/);
@@ -287,7 +288,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await ok('eval clicks.length = 0');
     const sent = await pwSend(['click', '#go', '--button=right']);
     assert.equal(sent.status, 0, sent.output);
-    await ok('dblclick #go --button=middle');
+    assert.equal(await ok('dblclick "#go" --button=middle'), 'Double-clicked: #go, middle button', 'the selector as written, without its quotes');
     assert.equal(await ok('eval clicks.join(" ")'), 'contextmenu:2:false auxclick:2:false auxclick:1:false auxclick:1:false', 'after a selector that is not quoted, over send too');
     assert.match((await repl.run(`click ${ref} right --button=left`)).output, /the button goes once, as a word after the selector or as --button, not both/);
     assert.match((await repl.run('click #go --button=sideways')).output, /--button is left, right or middle, once/);
