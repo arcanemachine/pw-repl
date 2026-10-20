@@ -839,7 +839,7 @@ requests and console record all the time; a capture records only while it runs.
 Cookie and storage listings omit values. eval, cdp, html, screenshots, recordings and URLs can still
 show sensitive data (cdp Network.getCookies shows cookie values).
 
-  eval [--all] <JavaScript>           evaluate JavaScript in the selected tab and print the result
+  eval [--all] [--timeout=<time>] <JavaScript>  evaluate JavaScript in the selected tab and print the result
       Arguments:
         <JavaScript>        the rest of the line. Promises are awaited, await works at the top level, and a
                             function (() => document.title) is called.
@@ -850,12 +850,20 @@ show sensitive data (cdp Network.getCookies shows cookie values).
                             with // comments. With a ref or a selector after the path, it is a function called
                             with that element (the first match). Over send, a relative path is from your
                             shell's current folder.
+        --timeout=<time>    how long the page has to answer, before --file. Default: 15s. Past 20s, give send
+                            time too, or it gives up first and cancels the eval: pw-repl send -t 70s eval
+                            --timeout=60s ...
         --all               the whole result, not capped.
 
       eval fetch(...) sends a new request, which can change state on the server; it cannot read one that
       already happened (requests lists those).
 
-  cdp [--all] <method> <JSON object>  send one CDP command through a temporary session
+      Long work (--timeout): every other command waits while an eval runs, the other clients' too. For work of
+      minutes, or in a browser others are using, start it without awaiting it, keep its result on window, and
+      read it back: eval "window.__done = null; run().then(r => window.__done = r); 'started'", then eval
+      window.__done until it is set.
+
+  cdp [--all] <method> <JSON object>            send one CDP command through a temporary session
       Arguments:
         <method>            a CDP method: Network.getCookies.
         <JSON object>       its parameters: {} for none.
@@ -865,10 +873,10 @@ show sensitive data (cdp Network.getCookies shows cookie values).
       The session is detached afterwards, so subscriptions and settings do not persist. Browser.close and
       Target.closeTarget are refused, and so is Page.handleJavaScriptDialog: dialog answers one.
 
-  cookies [--all]                     cookie names, domains and flags; values are omitted
+  cookies [--all]                               cookie names, domains and flags; values are omitted
       --all lists every cookie, not capped. cdp Network.getCookies {} shows the values.
 
-  storage [--all]                     localStorage keys; values are omitted
+  storage [--all]                               localStorage keys; values are omitted
       --all lists every key, not capped. eval localStorage.getItem("<key>") shows a value.
 
 == session ==

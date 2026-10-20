@@ -166,9 +166,19 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       assert.match(file.stdout, /^Fixture\|two$/m, 'a send file\'s line too');
       assert.match((await repl.run(`eval --file=${path.join(dir, 'check.js')}`)).output, /eval --file: cannot read .*pw-repl-eval \(ENOENT\); quote a path with spaces$/m, 'unquoted, the path stops at its space');
       assert.match((await repl.run(`eval --file="${path.join(dir, 'gone.js')}"`)).output, /eval --file: cannot read .*gone\.js \(ENOENT\)/);
+      const timed = send('eval', '--timeout=30s', '--file=check.js');
+      assert.equal(timed.stdout, 'Fixture|two\nlines\n', 'a --timeout before --file, the file still the sender\'s');
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
+  });
+
+  it('gives an eval the time --timeout says, and says how to give it more', async () => {
+    assert.equal(await ok('eval --timeout=3s new Promise(r => setTimeout(() => r("done"), 100))'), 'done');
+    const short = await repl.run('eval --timeout=300 new Promise(() => {})');
+    assert.equal(short.status, 'error');
+    assert.match(short.output, /^Error: Page evaluation timed out after 300ms: eval --timeout=<time> waits longer \(and send -t with it\)/);
+    assert.match((await repl.run('eval --timeout=soon 1')).output, /Usage: eval --timeout=<time> <JavaScript>/);
   });
 
   it('drags one element onto another, HTML5 or by pointer events', async () => {
