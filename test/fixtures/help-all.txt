@@ -144,7 +144,8 @@ its element into view first, as Playwright does; profile counts that scroll in t
       Arguments:
         [<selector>]        as for fill. Without it (one word, or one quoted), into what has focus: type
                             "garden hose".
-        <text>              the rest of the line, as fill's value.
+        <text>              the rest of the line, as fill's value: a newline in it (\n in double quotes)
+                            presses Enter, which in a textarea starts a new line.
       Options:
         --delay=<ms>        right after type: the gap between keys. Default: none, or 60 while the tab
                             records.
