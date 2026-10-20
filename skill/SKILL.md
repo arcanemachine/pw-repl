@@ -53,14 +53,14 @@ first tab).
 - `pw-repl serve` runs the same in a terminal, where the pane shows every command. Its prompt is
   `pw[serve]>`. It stops at that prompt (`quit`, or Ctrl-C); `pw-repl stop` is for a background one.
 - Add `--launch` to `run` or `serve` (with or without `--background`) to have it start a Chromium of its
-  own instead of connecting to one: headless unless `--headed`, in a temporary profile, on a free port
-  of its own (never 9222). It stops with the REPL, Ctrl-C while it starts included, and `stop` returns
-  once it has exited. It prints the command it ran; flags after `--` are passed to that Chromium (only
-  flags: a start URL goes before `--`), and a `--user-data-dir=<dir>` among them is used instead of the
-  temporary profile, and kept. Started again in a kept profile, Chromium picks up where it left off, as
-  it would for the user, headless too: its tabs come back, and session cookies with them, so a login
-  stays. They start loading before the REPL is attached, so `requests` and `console` have only what
-  came after, often nothing: `reload` for a full record.
+  own instead of connecting to one: headless unless `--headed`, in a 1280x800 window, in a temporary
+  profile, on a free port of its own (never 9222). It stops with the REPL, Ctrl-C while it starts
+  included, and `stop` returns once it has exited. It prints the command it ran; flags after `--` are
+  passed to that Chromium (only flags: a start URL goes before `--`), and a `--user-data-dir=<dir>`
+  among them is used instead of the temporary profile, and kept. Started again in a kept profile,
+  Chromium picks up where it left off, as it would for the user, headless too: its tabs come back, and
+  session cookies with them, so a login stays. They start loading before the REPL is attached, so
+  `requests` and `console` have only what came after, often nothing: `reload` for a full record.
 - `pw-repl run` runs it in a terminal with no server; `send` then reaches it through tmux, if it runs in
   the tmux session `pw-repl`:
 
@@ -137,9 +137,10 @@ line, not in it; the REPL puts it in only as it runs the line, and its pane and 
 written, so neither the file nor the line as logged holds the secret. Only `PW_` names are variables;
 any other `{{ ... }}` (a page's template text) is sent as written. One that is not set stops the file;
 `--no-vars` sends it as written. A single `send` takes them too: `PW_PASSWORD=... pw-repl send fill
-'#password' "{{ PW_PASSWORD }}"` types a password without it in the command. What reads it back can
-still show it: `snapshot`, `html` and `attrs` hide a password field's value, `eval` on the field does
-not.
+'#password' "{{ PW_PASSWORD }}"` types a password without it in the command. Give the value without
+typing it, from a file only you can read: `PW_PASSWORD="$(cat <file>)" pw-repl send ...`. What reads it
+back can still show it: `snapshot`, `html` and `attrs` hide a password field's value, `eval` on the
+field does not.
 
 `send` takes one command; chain several in your shell. Use `&&` when a step only makes sense if the one
 before it worked: it stops at any exit status but 0, a failure and an outcome not confirmed included.

@@ -36,8 +36,10 @@ A browser: --launch starts a Chromium of the REPL's own, headless unless --heade
 temporary profile, on a free port of its own (pw-repl where names it). It prints the command it ran, and
 stops with the REPL (Ctrl-C while it starts too); stop returns once it has exited. Flags after -- go to
 it, and only flags (a start URL goes before --); a --user-data-dir=<dir> among them is used instead of
-the temporary profile, and kept. PW_CHROME picks which Chromium. Without --launch, the REPL connects to
-a browser running with --remote-debugging-port, at $PW_CDP_URL (default http://localhost:9222).
+the temporary profile, and kept. PW_CHROME picks which Chromium.
+
+Without --launch, the REPL connects to a browser running with --remote-debugging-port, at $PW_CDP_URL
+(default http://localhost:9222).
 
 send uses the server when -e, $PW_ENDPOINT, or the socket ($PW_SOCKET, default /tmp/pw-repl.sock) is
 there, and the tmux session where pw-repl run runs otherwise (-s, $PW_TMUX_SESSION, default pw-repl).
@@ -68,12 +70,13 @@ fails, saying its line, with its exit status. -t is each command's own limit. Ot
 can run between its lines, on their own tabs.
 
 Variables: a {{ PW_NAME }} in a command, or in a line of the file, takes its value from send's own
-environment (PW_NAME), passed along with the command, not in it, so a password stays out of the file
-and out of the REPL's log: PW_PASSWORD=... pw-repl send fill '#password' "{{ PW_PASSWORD }}". Only PW_
-names are variables; any other {{ ... }} is sent as written. In a file, put one in double quotes (in
-single quotes, a value with a ' is refused). One that is not set stops the command, or the file at
-that line, before it is sent; --no-vars sends {{ PW_NAME }} as it is. Variables need the command server
-(pw-repl serve), not the tmux pane.`;
+environment (PW_NAME), passed along with the command, not in it, so a password stays out of the file and
+out of the REPL's log: PW_PASSWORD=... pw-repl send fill '#password' "{{ PW_PASSWORD }}", or
+PW_PASSWORD="$(cat <file>)" to give it from a file without typing it. Only PW_ names are variables; any
+other {{ ... }} is sent as written. In a file, put one in double quotes (in single quotes, a value with
+a ' is refused). One that is not set stops the command, or the file at that line, before it is sent;
+--no-vars sends {{ PW_NAME }} as it is. Variables need the command server (pw-repl serve), not the tmux
+pane.`;
 
 const REPL_HELP = `The REPL's own commands: help at the pw> prompt, or pw-repl send help here (no REPL needed).
 
