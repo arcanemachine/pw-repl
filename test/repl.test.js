@@ -116,6 +116,12 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     }
   });
 
+  it('says a page\'s own error, without Playwright\'s method or stack', async () => {
+    assert.equal((await repl.run('eval ((')).output, 'Error: SyntaxError: Unexpected end of input');
+    assert.equal((await repl.run('eval nope.x')).output, 'Error: ReferenceError: nope is not defined');
+    assert.equal((await repl.run('cdp Nope.method {}')).output, "Error: Protocol error (Nope.method): 'Nope.method' wasn't found");
+  });
+
   it('evaluates a file of JavaScript, over many lines, from the sender\'s folder', async () => {
     const os = require('os');
     const path = require('path');
