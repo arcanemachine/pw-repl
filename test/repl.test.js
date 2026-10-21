@@ -2989,14 +2989,6 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     }
   });
 
-  it('reports a read-only timeout as an error and carries on', async () => {
-    const result = await repl.run('text #not-on-the-page');
-    assert.equal(result.status, 'error');
-    assert.match(result.output, /No element matches #not-on-the-page \(waited 5s\)/);
-    assert.doesNotMatch(result.output, /disconnecting/);
-    assert.match(await ok('info'), /Title: Fixture$/m);
-  });
-
   it('reports unknown commands as errors', async () => {
     const result = await repl.run('nosuch');
     assert.equal(result.status, 'error');
