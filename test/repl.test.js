@@ -201,6 +201,9 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match(short.output, /^Error: Page evaluation timed out after 300ms: eval --timeout=<time> waits longer \(and send -t with it\)/);
     assert.match((await repl.run('eval --timeout=soon 1')).output, /Usage: eval --timeout=<time> <JavaScript>/);
     assert.doesNotMatch(await ok('eval --timeout=3s --all "x".repeat(13000)'), /truncated/, '--all after --timeout is an option, not JavaScript');
+    const late = await repl.run(`eval "'abc' + ''" --timeout=5s --all`);
+    assert.match(late.output, /SyntaxError[\s\S]*\n\(--timeout after the JavaScript is read as JavaScript: eval's options go before it\)$/m, 'an option after it, said when the page cannot read it');
+    assert.equal(await ok('eval let all = 3; 1 - --all + 0'), '-1', 'JavaScript that reads as an option, and runs, gets no hint');
   });
 
   it('reads what a page copied, granting the tab the clipboard only while it reads', async () => {
@@ -1636,6 +1639,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match(await ok('wait request /api/data 5s'), /#\d+ GET 200 \S+\/api\/data/);
     await ok('click #load');
     assert.match(await ok('wait request **/api/* 5s'), /\/api\/data/, 'globs work too');
+    const late = await repl.run('wait request /never 1s');
     assert.equal(late.status, 'error');
     const never = await repl.run('wait text "never shown" 1s');
     assert.equal(never.output, 'Error: No visible text matches never shown within 1s', 'said plainly');
