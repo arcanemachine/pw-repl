@@ -400,7 +400,7 @@ describe('profile summary', () => {
   });
 });
 
-describe('times', () => {
+describe('clock', () => {
   const t = Date.UTC(2026, 8, 25, 0, 16, 15, 721);
   const withZone = (zone, fn) => {
     const saved = process.env.TZ;

@@ -20,9 +20,11 @@ const pwReplAsync = (args, { timeout = 30000, ...options } = {}) => new Promise(
   child.on('close', status => { clearTimeout(timer); resolve({ status, stdout, stderr }); });
 });
 
+// No REPL to reach, by any of send's ways.
+const env = { ...process.env, PW_SOCKET: '/nonexistent/pw-sh-test.sock', PW_TMUX_SESSION: 'pw-sh-test-no-such-session', PW_ENDPOINT: '' };
+const help = require('../lib/help');
+
 describe('pw-repl send help', () => {
-  const env = { ...process.env, PW_SOCKET: '/nonexistent/pw-sh-test.sock', PW_TMUX_SESSION: 'pw-sh-test-no-such-session', PW_ENDPOINT: '' };
-  const help = require('../lib/help');
 
   it('answers help with no REPL running, from the same help text', () => {
     const overview = pwRepl(['send', 'help'], { env, encoding: 'utf8' });
@@ -77,7 +79,9 @@ describe('pw-repl send help', () => {
     assert.equal(result.stderr, '', 'the save hint is for a terminal only');
     assert.match(pwRepl(['skill', 'extra']).stderr, /Usage:/);
   });
+});
 
+describe('pw-repl command line', () => {
   it('shows the usage on its own, and runs the prompt only with run', () => {
     const env = { ...process.env, PW_CDP_URL: 'http://127.0.0.1:9' };
     const bare = pwRepl([], { env });
@@ -227,7 +231,9 @@ describe('pw-repl send help', () => {
       await chrome.stop();
     }
   });
+});
 
+describe('pw-repl --launch', () => {
   it('launches a private Chromium with --launch, passes flags after --, and stops it with the REPL', { skip: SKIP }, async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-launch-test-'));
     // In a folder not made yet, which serve makes.
@@ -396,7 +402,9 @@ cp ${dir}/helper.pid ${dir}/first; echo 'No usable sandbox!' >&2; exit 1`);
       }
     });
   });
+});
 
+describe('pw-repl usage errors', () => {
   it('refuses Chromium flags without --launch', () => {
     assert.match(pwRepl(['run', '--', '--lang=fr']).stderr, /Usage:/);
     assert.match(pwRepl(['run', '--headed']).stderr, /Usage:/);
