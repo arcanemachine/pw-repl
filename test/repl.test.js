@@ -316,7 +316,6 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     }
   });
 
-
   it('takes the selector as the first word, quoted if it has spaces, and the value as the rest', async () => {
     const value = 'eval document.querySelector("#name").value';
     await ok('fill #name Ada Lovelace');
@@ -2403,14 +2402,11 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.equal(await ok(fetchStatus), '200');
   });
 
-  it('refuses statuses a response cannot have', async () => {
-    assert.match((await repl.run('route **/x 101 {}')).output, /200 to 599/);
-  });
-
   it('rejects a route body that is not JSON, unless its type is given', async () => {
     const result = await repl.run('route **/api/data 500 {nope');
     assert.equal(result.status, 'error');
     assert.match(result.output, /not valid JSON: .*; for another kind, give its type: route <url-glob> <status> --content-type=text\/plain <body>/);
+    assert.match((await repl.run('route **/x 101 {}')).output, /200 to 599/, 'a status a response cannot have');
     const text = 'eval fetch("/api/data").then(async r => `${r.status} ${r.headers.get("content-type")} ${await r.text()}`)';
     await ok('route "**/api/data" 503 --content-type=text/plain down for now');
     assert.match(await ok(text), /^503 text\/plain down for now$/m, 'a quoted glob matches as if unquoted');
@@ -2598,16 +2594,6 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.equal((await repl.run('capture on requests console')).status, 'error');
   });
 
-  it('cuts and restores the network', async () => {
-    assert.match(await ok('network'), /network is on\.\n\n +network off/);
-    await ok('network off');
-    assert.match(await ok('network'), /network is off \(offline\)\.\n\n +network on/);
-    assert.match(await ok(fetchStatus), /Failed to fetch/);
-    await ok('network on');
-    assert.equal(await ok(fetchStatus), '200');
-    assert.equal((await repl.run('network offline')).status, 'error');
-  });
-
   it('slows the network, and restores it', async () => {
     const timed = 'eval (async () => { const t = performance.now(); await fetch("/api/data?" + Math.random()); return Math.round(performance.now() - t); })()';
     assert.match(await ok('network'), /network slow \[<ms> \[<kbps>\]\] +slow it \(default 563ms latency/);
@@ -2625,7 +2611,10 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
   });
 
   it('cuts the network per tab', async () => {
+    assert.match(await ok('network'), /network is on\.\n\n +network off/);
+    assert.equal((await repl.run('network offline')).status, 'error');
     await ok('network off');
+    assert.match(await ok('network'), /network is off \(offline\)\.\n\n +network on/);
     await ok(`tab new ${site.url}/`);
     assert.equal(await ok(fetchStatus), '200', 'a new tab is not offline');
     await ok('network off');
