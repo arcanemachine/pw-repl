@@ -52,9 +52,10 @@ If you hit a limitation or write a workaround, consider adding the capability to
   is turned off after it; a test whose REPL quits, times out or is killed goes in
   `test/repl-alone.test.js`, with a Chromium of its own.
 - A command's help (`lib/help.js`) follows playwright-cli's layout: `usage` and `summary`; `args` and
-  `options`, one `[name, text]` each, with the default in its text (`Default: 750; 0 none.`); `detail`,
-  short paragraphs on what most callers need, a paragraph on one theme starting with a label (`Steps
-  (--steps):`); and `more`, with `moreAbout` naming what is in it, for what only goes wrong now and then,
+  `options`, one `[name, text]` each, with the default in its text (`Default: 750; 0 none.`), and a short
+  form in its name (`-d, --delay <time>`); a second long name gets a line of its own (`alias for
+  --full-page.`), never a mention in another's text; `detail`, short paragraphs on what most callers
+  need, a paragraph on one theme starting with a label (`Steps (--steps):`); and `more`, with `moreAbout` naming what is in it, for what only goes wrong now and then,
   shown by `help <command> --all` and `help --all`. An error about something in `more` ends by naming it
   (`help record --all`). Paragraphs are plain: `wrap()` lays each out at 104 columns, and keeps as written
   a paragraph with a bullet, a table or an indented example. `test/fixtures` holds the rendered help;
