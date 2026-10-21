@@ -300,6 +300,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       const off = await repl.run('mouse click 60 -40');
       assert.equal(off.status, 'error');
       assert.match(off.output, new RegExp(`^Error: 60, -40 is outside the viewport \\(${size}\\); nothing was clicked\\. A point is in CSS pixels`));
+      assert.match(off.output, /scroll what you want into view \(eval document\.querySelector\(<selector>\)\.scrollIntoView\(\), or mouse wheel\)/, 'and says how to scroll');
       assert.match((await repl.run('mouse dblclick 99999 10')).output, /99999, 10 is outside the viewport .*nothing was clicked/);
       assert.equal(await ok('mouse move 60 -40'), `Moved the mouse to 60, -40 (outside the viewport, ${size})`);
       assert.match((await repl.run('mouse down')).output, new RegExp(`^Error: The mouse is at 60, -40, outside the viewport \\(${size}\\); nothing was pressed\\. mouse move to a point inside it first, or scroll what you want into view`));
@@ -1635,7 +1636,6 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match(await ok('wait request /api/data 5s'), /#\d+ GET 200 \S+\/api\/data/);
     await ok('click #load');
     assert.match(await ok('wait request **/api/* 5s'), /\/api\/data/, 'globs work too');
-    const late = await repl.run('wait request /never 1s');
     assert.equal(late.status, 'error');
     const never = await repl.run('wait text "never shown" 1s');
     assert.equal(never.output, 'Error: No visible text matches never shown within 1s', 'said plainly');
