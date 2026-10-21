@@ -10,6 +10,7 @@ Common tasks:
   wait for a page or element              wait load, wait <selector> [--gone], wait text <text>
   choose a file in a file input           upload <selector> <file>
   see it as a phone, or in dark mode      emulate mobile, emulate dark
+  tap, swipe or pinch as a finger         touch tap <x> <y>, touch pinch <x> <y> <scale>
   see what the page requested             requests, then body <#> for what one got back
   see console messages and errors         console
   show an agent what I do                 watch on, click around, then watch
@@ -253,6 +254,31 @@ its element into view first, as Playwright does; profile counts that scroll in t
       The events go to the mouse's point (mousemove puts it there): a map zooms around it, so mousemove 400
       300, then mousewheel 0 -300 zooms in. It returns once the events are sent, not once the page has
       scrolled or redrawn. While recording, it scrolls in eased steps over up to 1s (help record).
+
+  touch <gesture> <x> <y> ...                         tap, swipe or pinch at a point, as a finger
+      Arguments:
+        tap <x> <y>         a tap: the page gets pointer and touch events, then click.
+        doubletap <x> <y>   two taps: a dblclick after them.
+        longpress <x> <y> [time]
+                            held down this long, then lifted. Default: 800ms. In headless Chromium it is still
+                            a tap, with click and no contextmenu; a page's own timer on pointerdown sees it
+                            held.
+        swipe <x> <y> <dx> <dy>
+                            one finger down at x,y, moved by dx,dy in small steps about a frame apart, then
+                            lifted.
+        pinch <x> <y> <scale>
+                            two fingers side by side about x,y, 100px apart, moved apart until they are scale
+                            times that far apart, then lifted: 2 zooms in, under 1 (0.5) pinches in.
+
+      <x> <y> are CSS pixels from the top left of the viewport, as for mouse commands. It needs a touch
+      screen: emulate mobile, then reload, so the page sees one; without it, touch refuses.
+
+      Chromium takes a tap sent soon after a swipe or pinch as part of it, with no click: up to a few seconds
+      after (sleep 3s). A page that pans or zooms itself on touch (no touch-action: none) ends a swipe with
+      pointercancel, not pointerup, as it would for a finger.
+
+      For what these do not make (one finger lifted mid-pinch, the other moving on): cdp
+      Input.dispatchTouchEvent, one event at a time (help cdp).
 
 == inspect ==
 Output is capped; --all right after the command, or at the end, shows everything (text --all body).

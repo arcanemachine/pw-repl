@@ -145,6 +145,7 @@ example the Docker bridge gateway, `ip route | awk '/default/ {print $3}'`).
 | wait for a page or element            | `wait load`, `wait <selector> [--gone]`, `wait text <text>`   |
 | choose a file in a file input         | `upload <selector> <file>`                                    |
 | see it as a phone, or in dark mode    | `emulate mobile`, `emulate dark`                              |
+| tap, swipe or pinch as a finger       | `touch tap <x> <y>`, `touch pinch <x> <y> <scale>`            |
 | see what the page requested           | `requests`, then `body <#>` for what one got back             |
 | see console messages and errors       | `console`                                                     |
 | show an agent what I do               | `watch on`, click around, then `watch`                        |

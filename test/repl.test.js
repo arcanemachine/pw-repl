@@ -392,6 +392,30 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.equal(await events('pointerup'), 'pointerdown pointermove pointerup', 'a drag, not a tap');
   });
 
+  it('taps, double-taps, long-presses, swipes and pinches as a finger, under emulate mobile', async () => {
+    assert.match((await repl.run('touch tap 60 100')).output, /touch needs a touch screen: emulate mobile first, then reload/);
+    await ok('emulate mobile');
+    await ok(`goto ${site.url}/touch`);
+    // Read once the last event looked for has come, or after 1s: a tap's click comes a moment after its pointerup.
+    const events = last => ok(`eval (async () => { for (let i = 0; i < 40 && events[events.length - 1] !== ${JSON.stringify(last)}; i++) await new Promise(r => setTimeout(r, 25)); return events.splice(0).join(" "); })()`);
+    assert.equal(await ok('touch tap 60 100'), 'Tapped at 60, 100');
+    assert.equal(await events('click'), 'pointerdown pointerup click');
+    await ok('sleep 1000');
+    assert.equal(await ok('touch doubletap 60 100'), 'Double-tapped at 60, 100');
+    assert.match(await events('dblclick'), /^pointerdown pointerup (?:click )?pointerdown pointerup click dblclick$/);
+    await ok('sleep 1000');
+    assert.equal(await ok('touch longpress 60 100 0.5s'), 'Long-pressed at 60, 100 for 500ms');
+    assert.equal(await events('click'), 'pointerdown pointerup click', 'in headless, still a tap');
+    await ok('sleep 1000');
+    // Last, as a tap soon after a swipe or pinch is taken as part of it.
+    assert.equal(await ok('touch swipe 60 100 120 80'), 'Swiped from 60, 100 to 180, 180');
+    assert.equal(await events('pointerup'), 'pointerdown pointermove pointerup');
+    assert.equal(await ok('touch pinch 200 300 2'), 'Pinched at 200, 300 to 2x');
+    assert.equal(await events('pointerup'), 'pointerdown pointerdown pointermove pointerup pointerup', 'two fingers');
+    assert.match((await repl.run('touch pinch 200 300 0')).output, /a scale above 0/);
+    assert.match((await repl.run('touch fly 1 2')).output, /^Error: Usage: touch tap\|doubletap\|longpress\|swipe\|pinch /m);
+  });
+
   it('clicks an aria-disabled element with --force, as Playwright\'s force', async () => {
     assert.equal(await ok('click #greyed --force'), 'Clicked: #greyed, forced');
     assert.equal(await ok('text #greyed'), 'Greyed, clicked');
