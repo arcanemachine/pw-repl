@@ -394,6 +394,13 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await touch('touchMove', [[90, 130]]);
     await touch('touchEnd');
     assert.equal(await events('pointerup'), 'pointerdown pointermove pointerup', 'a drag, not a tap');
+    // One of two fingers lifted, as help touch shows: touchEnd lists the lifted one, and the other moves on.
+    const fingers = (type, points) => ok(`cdp Input.dispatchTouchEvent ${JSON.stringify({ type, touchPoints: points.map(([x, y, id]) => ({ x, y, id })) })}`);
+    await fingers('touchStart', [[150, 300, 0], [250, 300, 1]]);
+    await fingers('touchEnd', [[150, 300, 0]]);
+    await fingers('touchMove', [[290, 340, 1]]);
+    await fingers('touchEnd', []);
+    assert.equal(await events('pointerup'), 'pointerdown pointerdown pointerup pointermove pointerup');
   });
 
   it('taps, double-taps, long-presses, swipes and pinches as a finger, under emulate mobile', async () => {
