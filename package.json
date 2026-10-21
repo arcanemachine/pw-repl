@@ -30,7 +30,10 @@
   "scripts": {
     "start": "node bin/pw-repl.js run",
     "test": "node --test 'test/*.test.js'",
-    "prepublishOnly": "npm test"
+    "preversion": "npm test",
+    "release": "npm version -m \"chore: release %s\"",
+    "deploy": "node scripts/check-tagged.js && git push --follow-tags && npm publish",
+    "prepublishOnly": "node scripts/check-tagged.js"
   },
   "engines": {
     "node": ">=20"

@@ -80,8 +80,8 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `fe
 `test:`, `chore:` and so on, with an optional scope (`fix(watch): ...`). Versions follow semver; before
 1.0, a change that breaks how the REPL is used is a minor bump (0.2.0 to 0.3.0), anything else a patch.
 
-1. `npm test` passes and the working tree is clean.
-2. `npm outdated` and `npm audit` show nothing that needs doing first. Dependencies are always the newest
+1. `npm outdated` and `npm audit` show nothing that needs doing first: a dependency bumped after the tag
+   means cutting the release again. Dependencies are always the newest
    stable release, never pinned back. When the newest breaks a test, fix it in our code; only a
    regression of the dependency's own, with the fix already in its next release, keeps the version before
    it, until that release ships. playwright-core stays at 1.63 for that reason: on 1.64.1 a click
@@ -89,10 +89,14 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `fe
    Playwright too (chromium.launch, a page with a link to a 204, page.click on it); 1.65's alphas fix it.
    The test "waits for the page to load, counting a navigation that just began" shows it: move up once it
    passes on the newest release.
-3. `npm version <patch|minor|major> -m "chore: release %s"` sets the version in `package.json` and
-   `package-lock.json`, commits it as `chore: release X.Y.Z`, and tags that commit `vX.Y.Z`.
-4. `git push --follow-tags` pushes the commits and the tag.
-5. `npm publish` publishes it; `prepublishOnly` runs the tests again first.
+2. `npm run release <patch|minor|major>` cuts it: `npm version` refuses a working tree with changes, runs
+   the checks in the `preversion` script (`npm test`), then sets the version in `package.json` and
+   `package-lock.json`, commits it as `chore: release X.Y.Z`, and tags that commit `vX.Y.Z`. A failed
+   check leaves no commit and no tag. `preversion` is an npm script that runs only on a release, not a git
+   hook: commits are never checked.
+3. `npm run deploy` pushes the commits and the tag, then publishes. It, and `npm publish` on its own
+   (`prepublishOnly`), refuse unless HEAD is the commit tagged `vX.Y.Z` and the tree is clean, untracked
+   files included (`scripts/check-tagged.js`): what is published is the commit `release` checked.
 
 A release cut too early and not pushed yet is undone (its commit and tag) and cut again after the fixes.
 
