@@ -564,3 +564,34 @@ describe('skill stamp', () => {
     assert.notEqual(hashOf(text.replace('## Start it', '## Start it now')), hash, 'but any change to the skill itself');
   });
 });
+
+describe('release check', () => {
+  const { spawnSync } = require('node:child_process');
+
+  // What deploy and prepublishOnly run: in a repo of its own, with its own package.json beside it.
+  it('passes only at the tagged commit, in a clean tree', () => {
+    const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'pw-repl-tagged-'));
+    const git = (/** @type {string[]} */ ...args) => spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...args], { cwd: repo, encoding: 'utf8' });
+    const check = () => spawnSync(process.execPath, ['scripts/check-tagged.js'], { cwd: repo, encoding: 'utf8' });
+    try {
+      fs.mkdirSync(path.join(repo, 'scripts'));
+      fs.copyFileSync(path.join(__dirname, '..', 'scripts', 'check-tagged.js'), path.join(repo, 'scripts', 'check-tagged.js'));
+      fs.writeFileSync(path.join(repo, 'package.json'), '{ "version": "1.2.3" }\n');
+      git('init', '-q');
+      git('add', '-A');
+      git('commit', '-qm', 'release');
+      assert.match(check().stderr, /there is no tag v1\.2\.3/);
+      git('tag', 'v1.2.3');
+      assert.equal(check().status, 0, 'at the tag');
+      fs.writeFileSync(path.join(repo, 'stray.js'), '');
+      assert.match(check().stderr, /the working tree is not clean/, 'an untracked file would ship');
+      git('add', '-A');
+      git('commit', '-qm', 'after');
+      const past = check();
+      assert.equal(past.status, 1);
+      assert.match(past.stderr, /HEAD is not the commit tagged v1\.2\.3/);
+    } finally {
+      fs.rmSync(repo, { recursive: true, force: true });
+    }
+  });
+});
