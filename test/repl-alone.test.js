@@ -127,6 +127,15 @@ describe('watch on --changes on a page too busy to snapshot', { skip: SKIP }, ()
     assert.equal(repl.exited, false);
     assert.equal((await repl.run('info')).status, 'ok');
   });
+
+  it('says a read-only command that timed out changed nothing', async () => {
+    // Busy past snapshot's 5s, which Playwright reports as a plain timeout, as it does for one that acted.
+    await repl.run('eval setTimeout(() => { const t = Date.now(); while (Date.now() - t < 6000); }); 0');
+    const result = await repl.run('snapshot');
+    assert.equal(result.status, 'error');
+    assert.match(result.output, /Timeout 5000ms exceeded/);
+    assert.doesNotMatch(result.output, /Outcome unknown/);
+  });
 });
 
 describe('quitting at the prompt while a sent command runs', { skip: SKIP }, () => {
