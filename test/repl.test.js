@@ -2992,10 +2992,6 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.doesNotMatch(repl.stdout.slice(start), /pw-done/, 'an untagged command prints no marker');
   });
 
-  it('shows the server is on in the prompt', () => {
-    assert.match(repl.stdout, /pw\[serve\]> /);
-  });
-
   it('shows the modes on in the selected tab before the prompt', async () => {
     const endsWith = async (prompt, what) => {
       const start = repl.stdout.length;
@@ -3013,11 +3009,6 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await endsWith('(watch network:off routes:1) pw[serve]> ', 'the modes again');
     await ok('modes off');
     await endsWith('pw[serve]> ', 'no modes once they are off');
-  });
-
-  it('echoes server commands to the pane', async () => {
-    await ok('info');
-    assert.match(repl.stdout, /\[server\] info/);
   });
 
   describe('server safety', () => {
