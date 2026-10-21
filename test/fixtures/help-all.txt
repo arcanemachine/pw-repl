@@ -866,10 +866,11 @@ show sensitive data (cdp Network.getCookies shows cookie values).
                             with // comments. With a ref or a selector after the path, it is a function called
                             with that element (the first match). Over send, a relative path is from your
                             shell's current folder.
-        --timeout=<time>    how long the page has to answer, before --file. Default: 15s. Past 20s, give send
-                            time too, or it gives up first and cancels the eval: pw-repl send -t 70s eval
-                            --timeout=60s ...
+        --timeout=<time>    how long the page has to answer. Default: 15s. Past 20s, give send time too, or it
+                            gives up first and cancels the eval: pw-repl send -t 70s eval --timeout=60s ...
         --all               the whole result, not capped.
+
+      Its options go before the JavaScript, in any order; after it, only --all at the very end.
 
       eval fetch(...) sends a new request, which can change state on the server; it cannot read one that
       already happened (requests lists those).

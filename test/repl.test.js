@@ -185,6 +185,10 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       assert.match((await repl.run(`eval --file="${path.join(dir, 'gone.js')}"`)).output, /eval --file: cannot read .*gone\.js \(ENOENT\)/);
       const timed = send('eval', '--timeout=30s', '--file=check.js');
       assert.equal(timed.stdout, 'Fixture|two\nlines\n', 'a --timeout before --file, the file still the sender\'s');
+      for (const order of [['--timeout=30s', '--all', '--file=check.js'], ['--all', '--file=check.js', '--timeout=30s'], ['--file', 'check.js', '--all']]) {
+        const any = send('eval', ...order);
+        assert.equal(any.stdout, 'Fixture|two\nlines\n', `options in any order: ${order.join(' ')}`);
+      }
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -196,6 +200,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.equal(short.status, 'error');
     assert.match(short.output, /^Error: Page evaluation timed out after 300ms: eval --timeout=<time> waits longer \(and send -t with it\)/);
     assert.match((await repl.run('eval --timeout=soon 1')).output, /Usage: eval --timeout=<time> <JavaScript>/);
+    assert.doesNotMatch(await ok('eval --timeout=3s --all "x".repeat(13000)'), /truncated/, '--all after --timeout is an option, not JavaScript');
   });
 
   it('reads what a page copied, granting the tab the clipboard only while it reads', async () => {
