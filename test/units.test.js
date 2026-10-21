@@ -40,6 +40,9 @@ describe('help', () => {
     assert.match(help.render('network --command'), /^network \[on\|off\|slow [^\n]*— [\s\S]*dev proxy/);
     assert.match(help.render('route'), /^route <glob> <how> \| off <glob>\|--all — [\s\S]*<glob> patch <json>/);
     assert.equal(help.render('nope'), null);
+    assert.equal(help.notFound('swipe'), 'swipe is touch swipe: help touch', 'an action of touch, found under it');
+    assert.equal(help.notFound('up'), 'up is mouse up: help mouse', 'one of a | pair');
+    assert.match(help.notFound('nope'), /^No help for nope\. Topics: /);
     // A command's rarer details: a pointer to them, and all of it with --all.
     assert.match(help.render('record'), /\nMore, on [^\n]+[\s\S]*help record --all\.$/);
     assert.doesNotMatch(help.render('record'), /no --mp4 or --webm/);
