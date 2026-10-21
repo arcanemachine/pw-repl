@@ -208,7 +208,8 @@ pad.addEventListener('wheel', e => { e.preventDefault(); log.textContent += 'whe
       return res.end(`<!doctype html><title>Slow map</title><body style="margin:0">
 <div id="map" style="width:400px;height:300px;background:#cde"></div><button id="heavy">Heavy</button><p id="shown">loading</p>
 <script>
-function spin(ms) { const t = performance.now(); while (performance.now() - t < ms); }
+// Arithmetic between clock reads, so spin's own time outweighs the built-in now() in a CPU profile.
+function spin(ms) { const t = performance.now(); let x = 0; while (performance.now() - t < ms) for (let i = 0; i < 2000; i++) x += i; return x; }
 function drawLayers(layers) { spin(70); shown.textContent = layers.length + ' layers'; }
 function measure() { map.style.width = (380 + Math.random() * 40) + 'px'; return map.offsetWidth; }
 function onWheel(e) { e.preventDefault(); spin(60); measure(); }
