@@ -212,6 +212,8 @@ describe('a REPL whose browser goes away', { skip: SKIP }, () => {
     await chrome.stop();
     await waitFor(() => repl.exited, 'the REPL to exit');
     assert.match(repl.stdout, new RegExp(`Chromium connection lost; queued commands will not run\\. Start the REPL again to carry on: pw-repl serve ${repl.socket}`));
+    assert.equal(repl.code, 1, 'a failure, to whatever started it');
+    assert.ok(!fs.existsSync(repl.socket), 'no socket left for where and send to find');
   });
 });
 

@@ -258,10 +258,10 @@ async function startRepl(cdpUrl, env = {}) {
     env: { ...process.env, ...env, PW_CDP_URL: cdpUrl },
     stdio: ['pipe', 'pipe', 'pipe'],
   });
-  const repl = { socket, proc, stdout: '', exited: false };
+  const repl = { socket, proc, stdout: '', exited: false, code: null };
   proc.stdout.on('data', d => { repl.stdout += d; });
   proc.stderr.on('data', d => { repl.stdout += d; });
-  proc.on('exit', () => { repl.exited = true; });
+  proc.on('exit', code => { repl.exited = true; repl.code = code; });
   await waitFor(() => repl.stdout.includes('Serving commands on') || repl.exited, 'the REPL to start');
   if (repl.exited) throw new Error(`REPL exited during startup:\n${repl.stdout}`);
 
