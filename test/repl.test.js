@@ -287,6 +287,17 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       assert.match((await repl.run('mouse click 60 340 --buton right')).output, /Usage: mouse click .*; --buton is not one of its options/);
       assert.match((await repl.run('mouse dblclick 60 340 --count=2')).output, /Usage: mouse dblclick .*; --count is not one of its options/);
       assert.equal(await ok('eval log.textContent.trim()'), 'mousedown:2@50,350 mouseup:2@50,350 mousedown:2@60,340 mouseup:2@60,340', 'nothing sent for a refused line');
+      // Outside the viewport nothing gets a press: refused, not reported done. A move or a release goes there.
+      const size = await ok('eval `${innerWidth}x${innerHeight}`');
+      const off = await repl.run('mouse click 60 -40');
+      assert.equal(off.status, 'error');
+      assert.match(off.output, new RegExp(`^Error: 60, -40 is outside the viewport \\(${size}\\); nothing was clicked\\. A point is in CSS pixels`));
+      assert.match((await repl.run('mouse dblclick 99999 10')).output, /99999, 10 is outside the viewport .*nothing was clicked/);
+      assert.equal(await ok('mouse move 60 -40'), `Moved the mouse to 60, -40 (outside the viewport, ${size})`);
+      assert.match((await repl.run('mouse down')).output, new RegExp(`^Error: The mouse is at 60, -40, outside the viewport \\(${size}\\); nothing was pressed\\. mouse move <x> <y> puts it in view first`));
+      assert.match((await repl.run('mouse wheel 0 100')).output, /The mouse is at 60, -40, .*nothing was scrolled/);
+      assert.equal(await ok('mouse up'), `Released the left button (outside the viewport, ${size})`, 'never refused: a drag may end out there');
+      await ok('mouse move 50 350');
     } finally {
       await ok('tab close');
     }
@@ -429,6 +440,8 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.equal(await ok('touch pinch 200 300 2'), 'Pinched at 200, 300 to 2x');
     assert.equal(await events('pointerup'), 'pointerdown pointerdown pointermove pointerup pointerup', 'two fingers');
     assert.match((await repl.run('touch pinch 200 300 0')).output, /a scale above 0/);
+    assert.match((await repl.run('touch tap 60 -40')).output, /^Error: 60, -40 is outside the viewport \(\d+x\d+\); nothing was touched\./m);
+    assert.match((await repl.run('touch swipe 60 100000 0 -10')).output, /outside the viewport .*nothing was touched/);
     assert.match((await repl.run('touch fly 1 2')).output, /^Error: Usage: touch tap\|doubletap\|longpress\|swipe\|pinch /m);
   });
 

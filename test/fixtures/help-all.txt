@@ -223,8 +223,10 @@ first, as Playwright does; profile counts that scroll in the action's step.
 
       For what has no selector, such as a marker drawn on a canvas; anything a selector finds is better
       clicked with click, which waits for it. The mouse stays where it went, for a mouse wheel or mouse down
-      after it. The cursor (help cursor) moves there first and shows a ring at a press. Under emulate mobile
-      it is still the mouse; touch sends a finger's events (help touch).
+      after it. A click, or a mouse down or wheel, outside the viewport is refused: nothing there gets it.
+      mouse move and mouse up go there and say so, as a drag the page holds on to can. The cursor (help
+      cursor) moves there first and shows a ring at a press. Under emulate mobile it is still the mouse; touch
+      sends a finger's events (help touch).
 
       A snapshot has no coordinates; eval of getBoundingClientRect gives an element's centre:
       eval (r => [r.x + r.width / 2, r.y + r.height / 2])(document.querySelector("#map")
@@ -247,8 +249,9 @@ first, as Playwright does; profile counts that scroll in the action's step.
                             two fingers side by side about x,y, 100px apart, moved apart until they are scale
                             times that far apart, then lifted: 2 zooms in, under 1 (0.5) pinches in.
 
-      <x> <y> are CSS pixels from the top left of the viewport, as for mouse commands. It needs a touch
-      screen: emulate mobile, then reload, so the page sees one; without it, touch refuses.
+      <x> <y> are CSS pixels from the top left of the viewport, as for mouse commands. A finger put down
+      outside the viewport is refused; a swipe may end outside it. It needs a touch screen: emulate mobile,
+      then reload, so the page sees one; without it, touch refuses.
 
       Chromium takes a tap sent soon after a swipe or pinch as part of it, with no click: up to a few seconds
       after (sleep 3s). A page that pans or zooms itself on touch (no touch-action: none) ends a swipe with
