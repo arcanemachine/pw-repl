@@ -547,11 +547,14 @@ describe('pw-repl send typing into a tmux pane', { skip: HAS_TMUX ? false : 'tmu
     sessions.push(session);
     const script = `process.stdout.write(${JSON.stringify(line)}); setInterval(() => {}, 1000)`;
     spawnSync('tmux', ['new-session', '-d', '-s', session, `${process.execPath} -e '${script}'`]);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await shown(session, line);
     return session;
   }
 
   after(() => sessions.forEach(session => spawnSync('tmux', ['kill-session', '-t', session])));
+
+  const shown = (/** @type {string} */ session, /** @type {string} */ line) =>
+    waitFor(() => spawnSync('tmux', ['capture-pane', '-t', session, '-p'], { encoding: 'utf8' }).stdout.includes(line), `the pane to show ${line}`);
 
   const refuses = session => {
     const result = pwRepl(['send', '-s', session, 'info'], { env, encoding: 'utf8' });
@@ -587,7 +590,7 @@ describe('pw-repl send typing into a tmux pane', { skip: HAS_TMUX ? false : 'tmu
     sessions.push(session);
     const script = `const p = "(watch routes:1) pw> "; process.stdout.write(p); require("readline").createInterface({ input: process.stdin }).on("line", l => { const id = /^@(\\S+)/.exec(l)[1]; process.stdout.write("answered\\n[[pw-done:" + id + ":ok]]\\n" + p); })`;
     spawnSync('tmux', ['new-session', '-d', '-s', session, `${process.execPath} -e '${script}'`]);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await shown(session, '(watch routes:1) pw>');
     const result = pwRepl(['send', '-s', session, '-t', '5s', 'info'], { env, encoding: 'utf8' });
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /answered/);
