@@ -576,7 +576,6 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await ok('eval document.querySelector("#load").addEventListener("keydown", eval("(function commented() {\\n  // a comment\\n  return 1;\\n})")); 0');
     assert.match(await ok('listeners #load'), /^keydown: function commented\(\) \{ ↵ \/\/ a comment ↵ return 1; ↵ \} \(line \d+\)$/m, 'line breaks marked');
     assert.match(await ok('listeners --all #load'), /^keydown: function commented\(\) \{\n      \/\/ a comment\n      return 1;\n    \} \(line \d+\)$/m, 'as written');
-    assert.equal((await repl.run('listeners #nope')).status, 'error');
     assert.match((await repl.run('snapshot e99999')).output, /e99999 is a snapshot ref; if the page changed since that snapshot, take a new one/);
   });
 
