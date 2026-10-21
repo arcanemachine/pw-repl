@@ -88,7 +88,8 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `fe
    on a link to a 204 hangs at "waiting for scheduled navigations to finish" until its timeout, in plain
    Playwright too (chromium.launch, a page with a link to a 204, page.click on it); 1.65's alphas fix it.
    The test "waits for the page to load, counting a navigation that just began" shows it: move up once it
-   passes on the newest release.
+   passes on the newest release. `@types/node` stays on the major of the oldest Node in `engines`, so that
+   type-checking flags an API that Node lacks: move it up when `engines` does.
 2. `npm run release <patch|minor|major>` cuts it: `npm version` refuses a working tree with changes, runs
    the checks in the `preversion` script (`npm test`), then sets the version in `package.json` and
    `package-lock.json`, commits it as `chore: release X.Y.Z`, and tags that commit `vX.Y.Z`. A failed
