@@ -879,7 +879,7 @@ show sensitive data (cdp Network.getCookies shows cookie values).
                             gives up first and cancels the eval: pw-repl send -t 70s eval --timeout=60s ...
         --all               the whole result, not capped.
 
-      Its options go before the JavaScript, in any order; after it, only --all at the very end.
+      Its options go before the JavaScript, in any order; --all may also go at the very end, after it.
 
       eval fetch(...) sends a new request, which can change state on the server; it cannot read one that
       already happened (requests lists those).

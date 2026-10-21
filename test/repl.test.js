@@ -302,7 +302,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       assert.match(off.output, new RegExp(`^Error: 60, -40 is outside the viewport \\(${size}\\); nothing was clicked\\. A point is in CSS pixels`));
       assert.match((await repl.run('mouse dblclick 99999 10')).output, /99999, 10 is outside the viewport .*nothing was clicked/);
       assert.equal(await ok('mouse move 60 -40'), `Moved the mouse to 60, -40 (outside the viewport, ${size})`);
-      assert.match((await repl.run('mouse down')).output, new RegExp(`^Error: The mouse is at 60, -40, outside the viewport \\(${size}\\); nothing was pressed\\. mouse move <x> <y> puts it in view first`));
+      assert.match((await repl.run('mouse down')).output, new RegExp(`^Error: The mouse is at 60, -40, outside the viewport \\(${size}\\); nothing was pressed\\. mouse move to a point inside it first, or scroll what you want into view`));
       assert.match((await repl.run('mouse wheel 0 100')).output, /The mouse is at 60, -40, .*nothing was scrolled/);
       assert.equal(await ok('mouse up'), `Released the left button (outside the viewport, ${size})`, 'never refused: a drag may end out there');
       await ok('mouse move 50 350');
