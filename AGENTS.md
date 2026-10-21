@@ -39,6 +39,11 @@ If you hit a limitation or write a workaround, consider adding the capability to
   accepts theirs too (`lib/cli-names.js`, `help playwright-cli`). Deviate only where it is necessary, as
   where sharing a browser with a user needs it, and say why in the help.
 - Comment the *why* when it isn't obvious from the code.
+- `npm run typecheck` type-checks `bin/` and `lib/` (`tsc` over the JavaScript, no build step): run it
+  before a commit, and keep it clean. A type goes in JSDoc where one is needed; what JSDoc cannot declare
+  (a page global on `window`, a field Node's or Playwright's types leave out) goes in
+  `types/globals.d.ts`. A gap in someone else's types is filled with a cast or that file, never by
+  changing what the code does.
 - `npm test` runs the suite (about two and a half minutes): a private headless Chromium, a local test site
   (`test/harness.js`), and the real REPL with its server. Nothing is mocked, and the shared browser is
   never touched. It finds Chromium through `PW_TEST_CHROME`, or where `--launch` looks (Playwright's
@@ -91,10 +96,10 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `fe
    passes on the newest release. `@types/node` stays on the major of the oldest Node in `engines`, so that
    type-checking flags an API that Node lacks: move it up when `engines` does.
 2. `npm run release <patch|minor|major>` cuts it: `npm version` refuses a working tree with changes, runs
-   the checks in the `preversion` script (`npm test`), then sets the version in `package.json` and
-   `package-lock.json`, commits it as `chore: release X.Y.Z`, and tags that commit `vX.Y.Z`. A failed
-   check leaves no commit and no tag. `preversion` is an npm script that runs only on a release, not a git
-   hook: commits are never checked.
+   the checks in the `preversion` script (`npm run typecheck`, then `npm test`), then sets the version in
+   `package.json` and `package-lock.json`, commits it as `chore: release X.Y.Z`, and tags that commit
+   `vX.Y.Z`. A failed check leaves no commit and no tag. `preversion` is an npm script that runs only on a
+   release, not a git hook: commits are never checked.
 3. `npm run deploy` pushes the commits and the tag, then publishes. It, and `npm publish` on its own
    (`prepublishOnly`), refuse unless HEAD is the commit tagged `vX.Y.Z` and the tree is clean, untracked
    files included (`scripts/check-tagged.js`): what is published is the commit `release` checked.
