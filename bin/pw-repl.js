@@ -90,6 +90,11 @@ const SUBCOMMANDS = ['run', 'serve', 'attach', 'stop', 'send', 'where', 'help', 
 
 // What is wrong, then only the usage of the subcommand it is about: the whole of it would bury the line
 // that matters. With no message, the whole usage (-h after a subcommand).
+/**
+ * @param {string} [message]
+ * @param {string} [subcommand]
+ * @returns {never}
+ */
 function usage(message, subcommand) {
   if (!message) {
     console.error(USAGE);
@@ -103,27 +108,38 @@ function usage(message, subcommand) {
 }
 
 // A command line to copy, quoted as a shell reads it.
+/** @param {string[]} words */
 function shellLine(words) {
   return words.map(w => (/^[\w@%+=:,./-]+$/.test(w) ? w : `'${w.replace(/'/g, "'\\''")}'`)).join(' ');
 }
 
 // -e, -s, -c and -t, then the command words (unquoted words are one command), and send's options again
 // at the end, as an agent types them (send open <url> -t 30s); after --, every word is the command.
+/**
+ * @param {string[]} args
+ * @param {string} subcommand
+ */
 function parseSendArgs(args, subcommand) {
   const allowCommand = subcommand === 'send';
-  const options = { endpoint: /** @type {string | null} */ (null), session: /** @type {string | null} */ (null), client: /** @type {string | null} */ (null), timeout: 20000, command: '', file: /** @type {string | null} */ (null) };
+  /** @type {import('../lib/send').SendOptions} */
+  const options = { endpoint: null, session: null, client: null, timeout: 20000, command: '', file: null };
   const given = new Set();
+  /**
+   * @param {string} arg
+   * @param {string | true | undefined} value true for --no-vars; undefined stops at usage
+   * @param {boolean} [after]
+   */
   const take = (arg, value, after) => {
     if (value === undefined) usage(`${arg} needs a value`, subcommand);
     // Given before the command and after it, neither silently wins.
     if (after && given.has(arg)) usage(`${arg} is given twice, ${value === true ? arg : `${arg} ${value}`} after the command; give it once`, subcommand);
     given.add(arg);
     if (arg === '--no-vars') options.noVars = true;
-    if (arg === '-e') options.endpoint = value;
-    if (arg === '-s') options.session = value;
-    if (arg === '-c') options.client = value;
+    if (arg === '-e') options.endpoint = /** @type {string} */ (value);
+    if (arg === '-s') options.session = /** @type {string} */ (value);
+    if (arg === '-c') options.client = /** @type {string} */ (value);
     if (arg === '-t') {
-      try { options.timeout = longDuration(value, '-t'); } catch (error) { usage(error.message, subcommand); }
+      try { options.timeout = longDuration(/** @type {string} */ (value), '-t'); } catch (error) { usage(error.message, subcommand); }
     }
   };
   let i = 0;
@@ -156,8 +172,8 @@ function parseSendArgs(args, subcommand) {
   while (allowCommand && !dashes) {
     const last = words.length - 1;
     if (last > 0 && words[last] === '--raw') words.pop();
-    else if (last > 0 && words[last] === '--no-vars') take(words.pop(), true, true);
-    else if (last > 1 && /^-[ecst]$/.test(words[last - 1])) { const value = words.pop(); take(words.pop(), value, true); } else break;
+    else if (last > 0 && words[last] === '--no-vars') take(/** @type {string} */ (words.pop()), true, true);
+    else if (last > 1 && /^-[ecst]$/.test(words[last - 1])) { const value = words.pop(); take(/** @type {string} */ (words.pop()), value, true); } else break;
   }
   // An address that is refused (not loopback) is a usage error, said once, not a stack trace.
   const endpoint = options.endpoint || process.env.PW_ENDPOINT;
@@ -176,13 +192,17 @@ function parseSendArgs(args, subcommand) {
   return options;
 }
 
+/**
+ * @param {string[]} args
+ * @param {boolean} serve
+ */
 function startOptions(args, serve) {
   const options = { serve, endpoint: /** @type {string | null} */ (null), startUrl: /** @type {string | null} */ (null), background: false, launch: false, headed: false, chromeArgs: /** @type {string[]} */ ([]), pidFile: process.env.PW_REPL_PID_FILE || null };
   // Whatever follows -- is for the Chromium that --launch starts.
   const split = args.indexOf('--');
   const rest = split === -1 ? [...args] : args.slice(0, split);
   if (split !== -1) options.chromeArgs = args.slice(split + 1);
-  const flag = name => { const i = rest.indexOf(name); if (i === -1) return false; rest.splice(i, 1); return true; };
+  const flag = (/** @type {string} */ name) => { const i = rest.indexOf(name); if (i === -1) return false; rest.splice(i, 1); return true; };
   if (serve) options.background = flag('--background');
   options.launch = flag('--launch');
   options.headed = flag('--headed');
@@ -204,7 +224,7 @@ function startOptions(args, serve) {
     options.endpoint = rest.splice(e, 2)[1];
     // Two endpoints, one with -e: neither silently wins.
     if (rest[0] && looksLikeEndpoint(rest[0])) usage(`two endpoints, -e ${options.endpoint} and ${rest[0]}: give one`, subcommand);
-  } else if (serve && rest[0] && looksLikeEndpoint(rest[0])) options.endpoint = rest.shift();
+  } else if (serve && rest[0] && looksLikeEndpoint(rest[0])) options.endpoint = /** @type {string} */ (rest.shift());
   // Otherwise the socket send would look for: PW_ENDPOINT, then PW_SOCKET, then the default.
   if (serve && !options.endpoint) options.endpoint = process.env.PW_ENDPOINT || process.env.PW_SOCKET || null;
   const option = rest.find(word => word.startsWith('-'));
@@ -219,11 +239,13 @@ function startOptions(args, serve) {
   return options;
 }
 
+/** @param {string} [topic] */
 function help(topic) {
   const helpText = require('../lib/help');
   const text = helpText.render(topic);
   if (text === null) {
-    console.log(`Error: ${helpText.notFound(topic)}`);
+    // render answers no topic with the overview, never null.
+    console.log(`Error: ${helpText.notFound(/** @type {string} */ (topic))}`);
     process.exit(1);
   }
   console.log(text);
