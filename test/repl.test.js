@@ -2865,15 +2865,15 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     const dir = fs.mkdtempSync(require('path').join(require('os').tmpdir(), 'pw-repl-toast-'));
     try {
       await ok(`record on ${dir}/clip.webm --steps --lead=0 --tail=0 --pause=0`);
-      await ok('toast One --read-time=1s');
-      assert.match(await ok('toast Two --read-time=1s'), /^Waited \d\.\ds for the toast's read time \(the tab is recording\)\n/);
+      await ok('toast One --read-time=500ms');
+      assert.match(await ok('toast Two --read-time=500ms'), /^Waited \d\.\ds for the toast's read time \(the tab is recording\)\n/);
       assert.match(await ok('toast off'), /^Waited \d\.\ds for the toast's read time/);
-      await ok('toast Three --read-time=1s');
+      await ok('toast Three --read-time=500ms');
       assert.match(await ok('record off'), /^Waited \d\.\ds for the toast's read time[\s\S]*Saved: /);
       // On the video's own clock: a busy machine only makes these longer.
       const steps = fs.readFileSync(`${dir}/clip.steps.txt`, 'utf8').split('\n').filter(l => / toast/.test(l)).map(l => [Number(l.split(' ')[0]), Number(l.split(' ')[1]), l.replace(/^(\S+ ){6}/, '')]);
-      assert.deepEqual(steps.map(([, , command]) => command), ['toast One --read-time=1s', 'toast Two --read-time=1s', 'toast off', 'toast Three --read-time=1s']);
-      assert.ok(steps[1][1] - steps[0][1] >= 0.95, `the second waited for the first: ${steps[0][1]}s to ${steps[1][1]}s`);
+      assert.deepEqual(steps.map(([, , command]) => command), ['toast One --read-time=500ms', 'toast Two --read-time=500ms', 'toast off', 'toast Three --read-time=500ms']);
+      assert.ok(steps[1][1] - steps[0][1] >= 0.45, `the second waited for the first: ${steps[0][1]}s to ${steps[1][1]}s`);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
