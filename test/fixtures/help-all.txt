@@ -111,6 +111,11 @@ its element into view first, as Playwright does; profile counts that scroll in t
                             1 to 3. Default: 1.
         --modifiers=<keys>  keys held down meanwhile, comma-separated: Alt, Control, ControlOrMeta, Meta,
                             Shift.
+        --force             skips Playwright's actionability checks (enabled, stable, not covered), as
+                            Playwright's force. For an element marked aria-disabled, which Playwright counts
+                            as disabled, that a page keeps clickable (a greyed menu item that says why).
+                            Several matches are still chosen from as below; a covered ref or single match is
+                            clicked where it is, so what covers it gets the click.
 
       Several matches: hidden ones and ones covered by something else (a dialog's overlay) are passed over,
       and it says which it used: Clicked: text=Buy (match 3 of 4; ...), or names the first when it was the

@@ -69,7 +69,8 @@ const PAGE = `<!doctype html><title>Fixture</title>
 <span style="position: relative"><button id="under">Under</button><span style="position: absolute; inset: 0"></span></span>
 <label>Color <select id="color"><option>Red</option><option>Blue</option></select></label>
 <button id="alerter" onclick="document.querySelector('#out').textContent = 'answered ' + confirm('sure?')">Confirm</button>
-<button id="noisy" onclick="console.log('hello-log'); console.error('bad-thing'); setTimeout(() => { throw new Error('boom-uncaught'); })">Noisy</button>`;
+<button id="noisy" onclick="console.log('hello-log'); console.error('bad-thing'); setTimeout(() => { throw new Error('boom-uncaught'); })">Noisy</button>
+<button id="greyed" aria-disabled="true" onclick="this.textContent = 'Greyed, clicked'">Greyed</button>`;
 
 // A form to watch and save as commands: two buttons with one text, a secret field a button shows as text,
 // a one-time code, an id each component reuses in its shadow root, an option with a long label, an

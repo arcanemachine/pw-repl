@@ -72,6 +72,14 @@ describe('a command that times out', { skip: SKIP }, () => {
     assert.equal((await repl.run('info')).status, 'ok');
   });
 
+  it('says an element that is not enabled may be aria-disabled, and that --force clicks it', async () => {
+    const result = await repl.run('click #greyed');
+    assert.equal(result.status, 'error');
+    assert.equal(result.unconfirmed, undefined, 'nothing was clicked');
+    assert.match(result.output, /^Error: Timed out after 5s on #greyed: element is not enabled \(its call log is in the REPL's pane or log\)\nIt may be aria-disabled, which counts as disabled; --force clicks it anyway \(help click\)\.$/m);
+    assert.doesNotMatch(result.output, /Outcome unknown/);
+  });
+
   it('reports a click on a covered element as a failure, in a line, and carries on', async () => {
     // Through send, for its exit status too.
     const { spawn } = require('child_process');

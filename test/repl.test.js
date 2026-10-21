@@ -364,6 +364,14 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match((await repl.run('click #go --button=sideways')).output, /--button is left, right or middle, once/);
   });
 
+  it('clicks an aria-disabled element with --force, as Playwright\'s force', async () => {
+    assert.equal(await ok('click #greyed --force'), 'Clicked: #greyed, forced');
+    assert.equal(await ok('text #greyed'), 'Greyed, clicked');
+    await ok('eval document.querySelector("#greyed").ondblclick = () => { window.dbl = true; }; 0');
+    assert.equal(await ok('dblclick "#greyed" --force'), 'Double-clicked: #greyed, forced');
+    assert.equal(await ok('eval window.dbl'), 'true');
+  });
+
   it('keeps a tab in the background drawing after input, so clicks there are not delayed', async () => {
     await ok(`tab new ${site.url}/?background-clicks`);
     for (let i = 0; i < 5; i++) await ok('click #go');
