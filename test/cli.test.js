@@ -32,14 +32,11 @@ describe('pw-repl send help', () => {
     assert.equal(pwRepl(['send', 'help --all '], { env, encoding: 'utf8' }).stdout.trimEnd(), help.render('--all'));
   });
 
-  it('treats unquoted words as one command', () => {
-    assert.equal(pwRepl(['send', 'help', 'quit'], { env, encoding: 'utf8' }).stdout.trimEnd(), help.render('quit'));
-  });
-
   it('takes send\'s options after the command too, unless -- says where it starts', () => {
     const quit = help.render('quit');
     assert.equal(pwRepl(['send', 'help', 'quit', '-t', '30s', '-c', 'me', '--no-vars'], { env }).stdout.trimEnd(), quit);
     assert.equal(pwRepl(['send', 'help quit', '-t', '30000'], { env }).stdout.trimEnd(), quit, 'after a command in one word');
+    assert.equal(pwRepl(['send', '--raw', 'help', 'quit'], { env }).stdout.trimEnd(), quit, 'playwright-cli\'s --raw, ignored');
     assert.equal(pwRepl(['send', 'help', 'quit', '--raw'], { env }).stdout.trimEnd(), quit, 'playwright-cli\'s --raw, after it too');
     const bad = pwRepl(['send', 'help', 'quit', '-t', '30'], { env });
     assert.equal(bad.status, 64, 'a bad value is still send\'s, not the command\'s');
@@ -51,10 +48,6 @@ describe('pw-repl send help', () => {
     assert.equal(kept.status, 1, 'after --, every word is the command');
     assert.match(kept.stdout, /No help for quit -t 30/);
     assert.match(pwRepl(['send', 'help', 'quit -t 30'], { env }).stdout, /No help for quit -t 30/, 'nor a word the shell kept whole');
-  });
-
-  it('ignores playwright-cli\'s --raw', () => {
-    assert.equal(pwRepl(['send', '--raw', 'help', 'quit'], { env }).stdout.trimEnd(), help.render('quit'));
   });
 
   it('says what playwright-cli\'s -s=<session> is here', () => {
