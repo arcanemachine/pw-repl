@@ -132,17 +132,21 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await ok(`tab new ${site.url}/pick`);
     try {
       await ok('eval window.held = []; addEventListener("mousedown", e => held.push(e.timeStamp)); addEventListener("mouseup", e => held.push(e.timeStamp))');
-      assert.equal(await ok('mouseclick 50 350'), 'Clicked the left button at 50, 350');
-      assert.equal(await ok('mouseclick 60 340 right'), 'Clicked the right button at 60, 340');
+      assert.equal(await ok('mouse click 50 350'), 'Clicked the left button at 50, 350');
+      assert.equal(await ok('mouse click 60 340 right'), 'Clicked the right button at 60, 340');
       await ok('eval held.length = 0');
-      assert.equal(await ok('mouseclick 50 350 --delay=300'), 'Clicked the left button at 50, 350');
+      assert.equal(await ok('mouse click 50 350 --delay=300'), 'Clicked the left button at 50, 350');
       assert.equal(await ok('eval log.textContent.trim()'), 'mousedown:0@50,350 mouseup:0@50,350 click:0@50,350 mousedown:2@60,340 mouseup:2@60,340 mousedown:0@50,350 mouseup:0@50,350 click:0@50,350');
       // Measured by the page's own event times, not the command's.
       assert.equal(await ok('eval held[1] - held[0] >= 290'), 'true');
-      assert.match((await repl.run('mouseclick 50')).output, /Usage: mouseclick <x> <y>/);
-      assert.match((await repl.run('mouseclick 50 350 sideways')).output, /Usage: mouseclick <x> <y> \[left\|right\|middle\]/);
-      assert.match((await repl.run('mouseclick 50 350 --delay=soon')).output, /Usage: mouseclick .*--delay=<ms>/);
-      assert.match(await ok('help mouse'), /part of help interact[\s\S]*mouseclick <x> <y>[\s\S]*mousewheel/);
+      assert.match((await repl.run('mouse click 50')).output, /Usage: mouse click <x> <y>/);
+      assert.match((await repl.run('mouse click 50 350 sideways')).output, /Usage: mouse click <x> <y> \[left\|right\|middle\]/);
+      assert.match((await repl.run('mouse click 50 350 --delay=soon')).output, /Usage: mouse click .*--delay=<ms>/);
+      assert.match(await ok('help mouse'), /^mouse <action> \.\.\.[\s\S]*click <x> <y> \[button\][\s\S]*wheel <dx> <dy>/);
+      assert.match((await repl.run('mouseclick 50 350')).output, /^Error: mouseclick is now mouse click: help mouse$/m, 'renamed, and says where it went');
+      assert.match((await repl.run('help mousedblclick')).output, /mousedblclick is now mouse dblclick: help mouse/);
+      assert.match(await ok('mousemove 50 350'), /Moved the mouse to 50, 350/, 'playwright-cli\'s name runs mouse move');
+      assert.match((await repl.run('mouse fly')).output, /Usage: mouse move\|click\|dblclick\|down\|up\|wheel/);
     } finally {
       await ok('tab close');
     }
@@ -233,10 +237,10 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.equal(await ok(selected), '0-12', 'all of it, not the word a double-click selects');
     await ok('eval document.querySelector("#name").setSelectionRange(0, 0)');
     const at = JSON.parse(await ok('eval JSON.stringify((r => [Math.round(r.x + 5), Math.round(r.y + r.height / 2)])(document.querySelector("#name").getBoundingClientRect()))'));
-    assert.equal(await ok(`mouseclick ${at[0]} ${at[1]} --click-count=3`), `Clicked the left button at ${at[0]}, ${at[1]} 3 times`);
+    assert.equal(await ok(`mouse click ${at[0]} ${at[1]} --click-count=3`), `Clicked the left button at ${at[0]}, ${at[1]} 3 times`);
     assert.equal(await ok(selected), '0-12');
     assert.match((await repl.run('click #name --click-count=4')).output, /--click-count is 1, 2 or 3, once/);
-    assert.match((await repl.run('mouseclick 5 5 --click-count=0')).output, /--click-count is 1, 2 or 3, once/);
+    assert.match((await repl.run('mouse click 5 5 --click-count=0')).output, /--click-count is 1, 2 or 3, once/);
     assert.match((await repl.run('dblclick #name --click-count=3')).output, /dblclick is a click count of 2; for another count, click --click-count=<n>/);
   });
 
@@ -244,13 +248,13 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await ok(`tab new ${site.url}/pick`);
     try {
       await ok('eval window.dbl = []; addEventListener("dblclick", e => dbl.push(`${e.button}@${e.clientX},${e.clientY}`))');
-      await ok('mouseclick 50 350');
-      await ok('mouseclick 50 350');
+      await ok('mouse click 50 350');
+      await ok('mouse click 50 350');
       assert.equal(await ok('eval dbl.length'), '0');
-      assert.equal(await ok('mousedblclick 50 350'), 'Double-clicked the left button at 50, 350');
+      assert.equal(await ok('mouse dblclick 50 350'), 'Double-clicked the left button at 50, 350');
       assert.equal(await ok('eval dbl.join()'), '0@50,350');
-      assert.match((await repl.run('mousedblclick 50')).output, /Usage: mousedblclick <x> <y>/);
-      assert.match((await repl.run('mousedblclick 50 350 sideways')).output, /Usage: mousedblclick <x> <y> \[left\|right\|middle\]/);
+      assert.match((await repl.run('mouse dblclick 50')).output, /Usage: mouse dblclick <x> <y>/);
+      assert.match((await repl.run('mouse dblclick 50 350 sideways')).output, /Usage: mouse dblclick <x> <y> \[left\|right\|middle\]/);
     } finally {
       await ok('tab close');
     }
@@ -259,24 +263,24 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
   it('moves the mouse, presses its buttons and turns its wheel at a point', async () => {
     await ok(`tab new ${site.url}/pick`);
     try {
-      assert.equal(await ok('mousemove 50 350'), 'Moved the mouse to 50, 350');
-      assert.equal(await ok('mousedown'), 'Pressed the left button');
-      assert.equal(await ok('mouseup'), 'Released the left button');
-      assert.equal(await ok('mousewheel 0 -120'), 'Turned the wheel by 0, -120');
-      await ok('mousedown right');
-      await ok('mouseup right');
+      assert.equal(await ok('mouse move 50 350'), 'Moved the mouse to 50, 350');
+      assert.equal(await ok('mouse down'), 'Pressed the left button');
+      assert.equal(await ok('mouse up'), 'Released the left button');
+      assert.equal(await ok('mouse wheel 0 -120'), 'Turned the wheel by 0, -120');
+      await ok('mouse down right');
+      await ok('mouse up right');
       assert.equal(await ok('eval log.textContent.trim()'), 'mousedown:0@50,350 mouseup:0@50,350 click:0@50,350 wheel:-120@50,350 mousedown:2@50,350 mouseup:2@50,350');
-      assert.match((await repl.run('mousemove 50')).output, /Usage: mousemove <x> <y>/);
-      assert.match((await repl.run('mousedown sideways')).output, /Usage: mousedown \[left\|right\|middle\]/);
-      assert.match((await repl.run('mousewheel a b')).output, /Usage: mousewheel <dx> <dy>/);
+      assert.match((await repl.run('mouse move 50')).output, /Usage: mouse move <x> <y>/);
+      assert.match((await repl.run('mouse down sideways')).output, /Usage: mouse down \[left\|right\|middle\]/);
+      assert.match((await repl.run('mouse wheel a b')).output, /Usage: mouse wheel <dx> <dy>/);
       await ok('eval log.textContent = ""');
-      assert.equal(await ok('mousedown --button=right'), 'Pressed the right button');
-      assert.equal(await ok('mouseup --button right'), 'Released the right button');
-      const sent = await pwSend(['mouseclick', '60', '340', '--button', 'right']);
+      assert.equal(await ok('mouse down --button=right'), 'Pressed the right button');
+      assert.equal(await ok('mouse up --button right'), 'Released the right button');
+      const sent = await pwSend(['mouse', 'click', '60', '340', '--button', 'right']);
       assert.equal(sent.output, 'Clicked the right button at 60, 340\n', 'as click takes it, over send too');
-      assert.match((await repl.run('mouseclick 60 340 right --button=left')).output, /the button goes once, as a word or as --button, not both/);
-      assert.match((await repl.run('mouseclick 60 340 --buton right')).output, /Usage: mouseclick .*; --buton is not one of its options/);
-      assert.match((await repl.run('mousedblclick 60 340 --count=2')).output, /Usage: mousedblclick .*; --count is not one of its options/);
+      assert.match((await repl.run('mouse click 60 340 right --button=left')).output, /the button goes once, as a word or as --button, not both/);
+      assert.match((await repl.run('mouse click 60 340 --buton right')).output, /Usage: mouse click .*; --buton is not one of its options/);
+      assert.match((await repl.run('mouse dblclick 60 340 --count=2')).output, /Usage: mouse dblclick .*; --count is not one of its options/);
       assert.equal(await ok('eval log.textContent.trim()'), 'mousedown:2@50,350 mouseup:2@50,350 mousedown:2@60,340 mouseup:2@60,340', 'nothing sent for a refused line');
     } finally {
       await ok('tab close');
@@ -850,8 +854,8 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       const twice = await repl.run('profile on');
       assert.equal(twice.status, 'error');
       assert.match(twice.output, /Already profiling http:\/\/127\.0\.0\.1:\d+\/slow-map; profile off stops it/);
-      await ok('mousemove 200 150');
-      for (let i = 0; i < 3; i += 1) await ok('mousewheel 0 -100');
+      await ok('mouse move 200 150');
+      for (let i = 0; i < 3; i += 1) await ok('mouse wheel 0 -100');
       await ok('click #heavy');
       await as('prof-other', 'eval otherTabWork()');
       const summary = await ok('profile off');
@@ -874,10 +878,10 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
   it('counts the frame a wheel scroll drew before the page heard of it', async () => {
     // No wheel listener: the browser scrolls and draws, and the page's scroll event comes a frame later.
     await ok('tab new data:text/html,<div style="height:8000px">tall</div>');
-    await ok('mousemove 200 200');
+    await ok('mouse move 200 200');
     await ok('profile on');
     for (let i = 0; i < 4; i += 1) {
-      await ok('mousewheel 0 300');
+      await ok('mouse wheel 0 300');
       await ok('sleep 400');
     }
     const summary = await ok('profile off');
@@ -1925,12 +1929,12 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       assert.equal(await ok(gaps), 'false', '--delay sets its own pace');
       assert.match((await repl.run('type --delay=fast #name e')).output, /^Error: Usage: type --delay=<ms>/);
       await ok('click #go');
-      await ok('mousemove 10 20');
+      await ok('mouse move 10 20');
       await ok('text #out');
       const box = await ok('eval (r => [r.x, r.y, r.width, r.height].map(Math.round).join(" "))(document.querySelector("#go").getBoundingClientRect())');
       // Scrolled in eased steps while recording, the whole distance.
       await ok('eval document.body.style.height = "3000px"');
-      await ok('mousewheel 0 240');
+      await ok('mouse wheel 0 240');
       assert.equal(await ok('eval scrollY'), '240');
       // A new page is a step of its own, without its URL.
       await ok('click text=Other');
@@ -1943,7 +1947,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       assert.ok(lines.some(l => / eval$/.test(l)), 'eval, and nothing of its code');
       assert.ok(!/abcd|efg|keys/.test(lines.join('\n')), 'no typed text, and no code');
       const steps = lines.filter(l => !l.startsWith('#') && !/ eval$/.test(l)).map(l => l.split(' '));
-      assert.deepEqual(steps.map(w => w.slice(6).join(' ')), ['type #name', 'type #name', 'type #name  # failed', 'click #go', 'mousemove 10 20', 'mousewheel 0 240', 'click text=Other', '(page)'], 'text reads the page, and is left out');
+      assert.deepEqual(steps.map(w => w.slice(6).join(' ')), ['type #name', 'type #name', 'type #name  # failed', 'click #go', 'mouse move 10 20', 'mouse wheel 0 240', 'click text=Other', '(page)'], 'text reads the page, and is left out');
       assert.ok(!/\/other/.test(lines.join('\n')), 'no URL');
       for (const [t0, t1] of steps) assert.ok(Number(t0) <= Number(t1), `${t0} ${t1}`);
       assert.ok(Number(steps[3][0]) >= Number(steps[0][1]), 'in order, on the video\'s clock');
@@ -2840,7 +2844,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
   it('draws a cursor that goes where the REPL acts and shows its clicks, as a mode of the tab', async () => {
     const drawn = 'eval (o => o?.cursor ? o.host.isConnected + " " + new DOMMatrix(getComputedStyle(o.cursor.arrow).transform).e + "," + new DOMMatrix(getComputedStyle(o.cursor.arrow).transform).f : "none")(document[Symbol.for("pw-repl-overlay")])';
     assert.equal(await ok('cursor'), 'The cursor is off in the selected tab; cursor on shows it');
-    await ok('mousemove 30 40');
+    await ok('mouse move 30 40');
     assert.match(await ok('cursor on'), /^The cursor is on, at 30, 40: /, 'where the mouse is');
     assert.equal(await ok(drawn), 'true 30,40');
     assert.match(await ok('modes'), /\(cursor\)/);
@@ -2858,7 +2862,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.equal(await ok('eval rings'), '3', 'one for each click');
     await ok('hover #name');
     assert.equal(await ok('eval rings'), '3', 'a hover is no click');
-    await ok('mousemove 5 6');
+    await ok('mouse move 5 6');
     assert.equal(await ok(drawn), 'true 5,6');
     assert.match(await ok('cursor'), /^The cursor is on in the selected tab, at 5, 6;/);
     // The glide's wait for the element is the command's, not one more before it (a real 5s timeout).

@@ -140,7 +140,7 @@ example the Docker bridge gateway, `ip route | awk '/default/ {print $3}'`).
 | see where I am                        | `tab`, `info`                                                 |
 | see what is on the page               | `snapshot`, `screenshot`                                      |
 | do something on it                    | `click`, `fill`, `type`, `press`, `drag`                      |
-| click what has no selector (a canvas) | `mouseclick <x> <y>`, `mousedblclick <x> <y>`                 |
+| click what has no selector (a canvas) | `mouse click <x> <y>`, `mouse dblclick <x> <y>`               |
 | run some JavaScript in the page       | `eval document.title`; `eval --file=check.js` for a long one  |
 | wait for a page or element            | `wait load`, `wait <selector> [--gone]`, `wait text <text>`   |
 | choose a file in a file input         | `upload <selector> <file>`                                    |

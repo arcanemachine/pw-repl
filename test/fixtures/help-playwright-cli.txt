@@ -7,6 +7,10 @@ playwright-cli's command names, and what they run here (each says so the first t
   open                   tab new [url] (goto <url> navigates); --mobile, --device=<name>: emulate mobile
   close                  modes off --mine; tabs stay open; lists the files you wrote
   go-back                back
+  mousemove              mouse move <x> <y>
+  mousedown              mouse down [button]
+  mouseup                mouse up [button]
+  mousewheel             mouse wheel <dx> <dy>
   go-forward             forward
   find                   snapshot --grep <text>
   dialog-accept          dialog accept [text]

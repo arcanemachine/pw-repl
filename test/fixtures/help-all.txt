@@ -5,7 +5,7 @@ Common tasks:
   see where I am                          tab, info
   see what is on the page                 snapshot, screenshot
   do something on it                      click, fill, type, press, drag
-  click what has no selector (a canvas)   mouseclick <x> <y>, mousedblclick <x> <y>
+  click what has no selector (a canvas)   mouse click <x> <y>, mouse dblclick <x> <y>
   run some JavaScript in the page         eval document.title; eval --file=check.js for a long one
   wait for a page or element              wait load, wait <selector> [--gone], wait text <text>
   choose a file in a file input           upload <selector> <file>
@@ -95,8 +95,8 @@ own lists them all.
 == interact ==
 Selectors are Playwright selectors (CSS, text=..., role=...) or snapshot refs such as e5. Commands use
 the first match (click, dblclick and hover the first they can use: help click); see help fill for
-selectors with spaces. mousemove and the other mouse commands act at a point instead. An action scrolls
-its element into view first, as Playwright does; profile counts that scroll in the action's step.
+selectors with spaces. mouse and touch act at a point instead. An action scrolls its element into view
+first, as Playwright does; profile counts that scroll in the action's step.
 
   click <selector> [button]                           click the first match that can be clicked
       Arguments:
@@ -141,7 +141,7 @@ its element into view first, as Playwright does; profile counts that scroll in t
       As Playwright's dragTo: it hovers the first match of <from>, presses the left button, hovers the first
       match of <to>, and releases, waiting up to 5s in all for each to be ready. An HTML5 drag (a draggable
       element) gets dragstart, dragover and drop; any other gets pointer and mouse events. A drag through
-      points of its own: mousemove, mousedown, mousemove, mouseup.
+      points of its own: mouse move, mouse down, mouse move, mouse up.
 
   fill <selector> <value> [--submit]                  clear an input and fill it
       Arguments:
@@ -202,58 +202,34 @@ its element into view first, as Playwright does; profile counts that scroll in t
       The page then does what it does with a chosen file; often that is the upload itself. The REPL reads the
       files and hands the page their contents, so they need not be where the browser runs; up to 50MB in all.
 
-  mousemove <x> <y>                                   move the mouse to a point in the viewport
+  mouse <action> ...                                  move, click or press at a point, or turn the wheel
       Arguments:
-        <x> <y>             CSS pixels from the top left of the tab's viewport (not the page), as mouse events
-                            have them.
+        move <x> <y>        moves the mouse there: CSS pixels from the top left of the tab's viewport (not the
+                            page), as mouse events have them.
+        click <x> <y> [button]
+                            clicks there: left, right or middle (Default: left), or --button=<button>;
+                            --click-count=<n> as click's (2 a double-click, 3 a triple-click); --delay=<ms>
+                            holds the button that long, as Playwright's mouse.click delay.
+        dblclick <x> <y> [button]
+                            mouse click --click-count=2, as Playwright's mouse.dblclick: two clicks and a
+                            dblclick. Two mouse clicks are two single clicks, which fire no dblclick.
+        down [button] | up [button]
+                            presses or releases a button where the mouse is. A drag: mouse down, mouse move to
+                            another point, mouse up.
+        wheel <dx> <dy>     turns the wheel where the mouse is; positive dy scrolls down. A map zooms around
+                            the mouse: mouse move 400 300, then mouse wheel 0 -300 zooms in. It returns once
+                            the events are sent, not once the page has redrawn; while recording, it scrolls in
+                            eased steps over up to 1s (help record).
+
+      For what has no selector, such as a marker drawn on a canvas; anything a selector finds is better
+      clicked with click, which waits for it. The mouse stays where it went, for a mouse wheel or mouse down
+      after it. The cursor (help cursor) moves there first and shows a ring at a press.
 
       A snapshot has no coordinates; eval of getBoundingClientRect gives an element's centre:
       eval (r => [r.x + r.width / 2, r.y + r.height / 2])(document.querySelector("#map")
         .getBoundingClientRect())
 
-      A click at a point: mouseclick <x> <y>; a double-click: mousedblclick <x> <y>. A drag: mousedown, then
-      mousemove to another point, then mouseup.
-
-  mouseclick <x> <y> [button]                         click at a point in the viewport
-      Arguments:
-        <x> <y>             CSS pixels from the top left of the tab's viewport, as for mousemove.
-        [button]            left, right or middle. Default: left.
-      Options:
-        --button=<button>   the button, as click's: mouseclick 400 300 --button=right.
-        --click-count=<n>   as click's: 2 is a double-click (as mousedblclick), 3 a triple-click. 1 to 3.
-                            Default: 1.
-        --delay=<ms>        holds the button down this long between press and release, as Playwright's
-                            mouse.click delay. Default: 0.
-
-      For what has no selector, such as a marker drawn on a canvas; anything a selector finds is better
-      clicked with click, which waits for it. help mousemove shows how to find a point. The mouse stays at the
-      point, for a mousewheel or mousedown after it. The cursor (help cursor) moves there first and shows a
-      ring at the press.
-
-  mousedblclick <x> <y> [button]                      double-click at a point in the viewport
-      Arguments:
-        <x> <y>             CSS pixels from the top left of the tab's viewport, as for mousemove.
-        [button]            left, right or middle. Default: left.
-      Options:
-        --button=<button>   the button, as click's.
-
-      mouseclick --click-count=2, as Playwright's mouse.dblclick is: the page gets two clicks and a dblclick.
-      Two mouseclicks are two single clicks, which fire no dblclick. For a triple-click: mouseclick <x> <y>
-      --click-count=3.
-
-  mousedown [button]                                  press a mouse button at the mouse (left, right, middle)
-      The button is a word or --button=<button>, as for mouseclick.
-
-  mouseup [button]                                    release a mouse button where the mouse is
-      The button is a word or --button=<button>, as for mouseclick.
-
-  mousewheel <dx> <dy>                                turn the wheel where the mouse is
-      Arguments:
-        <dx> <dy>           CSS pixels; positive dy scrolls down.
-
-      The events go to the mouse's point (mousemove puts it there): a map zooms around it, so mousemove 400
-      300, then mousewheel 0 -300 zooms in. It returns once the events are sent, not once the page has
-      scrolled or redrawn. While recording, it scrolls in eased steps over up to 1s (help record).
+      playwright-cli's mouse move, mouse down, mouse up and mouse wheel run these.
 
   touch <gesture> <x> <y> ...                         tap, swipe or pinch at a point, as a finger
       Arguments:
@@ -670,11 +646,12 @@ clean browser of its own (here, its video-start is record on).
       does. The file is owner-only, as a screenshot is, and never replaces one. One recording per tab; another
       client with the tab selected can stop it, and both are told whose it was.
 
-      While recording: type types at a pace the video can show (help type), mousewheel scrolls in eased steps,
-      an element out of view is scrolled to smoothly, each action and each highlight drawn is followed by
-      --pause, and with the cursor on it rests 300ms on the element before acting. fill still sets a value at
-      once: use type for text the viewer should see typed. Send the take as a file of commands (pw-repl send
-      --file take.txt), or the time between commands is in the video. help video has the whole way through.
+      While recording: type types at a pace the video can show (help type), mouse wheel scrolls in eased
+      steps, an element out of view is scrolled to smoothly, each action and each highlight drawn is followed
+      by --pause, and with the cursor on it rests 300ms on the element before acting. fill still sets a value
+      at once: use type for text the viewer should see typed. Send the take as a file of commands (pw-repl
+      send --file take.txt), or the time between commands is in the video. help video has the whole way
+      through.
 
       Steps (--steps): one line per command run on the tab while it recorded: when it began and ended, in
       seconds into the video, and the element or point it acted on (or highlighted), in the video's pixels.
@@ -724,15 +701,15 @@ clean browser of its own (here, its video-start is record on).
       The REPL's clicks and typing don't move a pointer on screen, so a recording shows things happening with
       nothing pointing at them. With the cursor on, these commands move it smoothly to their element or point
       before they act: click, dblclick, hover, drag (to each end), fill, type <selector>, press <selector>,
-      select, check, uncheck, upload, mousemove, mouseclick and mousedblclick. Each move takes 150 to 600ms by
-      distance (300 to 1000ms while the tab records), and the command waits for it. Clicks (click, dblclick,
-      check, uncheck, mouseclick, mousedblclick, mousedown, and upload when it clicks a button) show a ring
-      where they land.
+      select, check, uncheck, upload, mouse move, mouse click and mouse dblclick. Each move takes 150 to 600ms
+      by distance (300 to 1000ms while the tab records), and the command waits for it. Clicks (click,
+      dblclick, check, uncheck, mouse click, mouse dblclick, mouse down, and upload when it clicks a button)
+      show a ring where they land.
 
       Only the drawing moves: no mouse events are sent along the way, so the page gets the same input as with
       the cursor off. It shows only the REPL's input, from every client, never the user's own mouse. fill,
-      select and the like move the drawing but leave the real mouse where it was; mousedown, mouseup and
-      mousewheel act at the real mouse, so the pointer moves back there first.
+      select and the like move the drawing but leave the real mouse where it was; mouse down, mouse up and
+      mouse wheel act at the real mouse, so the pointer moves back there first.
 
       It is a mode of its tab: modes lists it and modes off turns it off. It stays on across page loads, at
       the same spot, and shows in screenshots and recordings. Selectors, snapshot and text don't see it, it
