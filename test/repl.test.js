@@ -1635,16 +1635,16 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match(await ok('wait request /api/data 5s'), /#\d+ GET 200 \S+\/api\/data/);
     await ok('click #load');
     assert.match(await ok('wait request **/api/* 5s'), /\/api\/data/, 'globs work too');
-    const late = await repl.run('wait request /never 1s');
+    const late = await repl.run('wait request /never 250');
     assert.equal(late.status, 'error');
-    const never = await repl.run('wait text "never shown" 1s');
-    assert.equal(never.output, 'Error: No visible text matches never shown within 1s', 'said plainly');
+    const never = await repl.run('wait text "never shown" 250');
+    assert.equal(never.output, 'Error: No visible text matches never shown within 250ms', 'said plainly');
     assert.equal((await repl.run('wait text never shown 1')).output, 'Error: No visible text matches never shown within 1ms (1 was taken as the time: wait text "never shown 1" waits for that text)');
     await ok('eval document.body.insertAdjacentHTML("beforeend", "<p>Showing 1</p>"); 0');
     assert.equal(await ok('wait text "Showing 1"'), 'Visible: Showing 1', 'quoted, the number is the text\'s');
     assert.match((await pwSend(['wait', 'text', 'Showing 1'])).output, /^Visible: Showing 1$/m, 'quoted in the shell, through send too');
     assert.match((await pwSend(['wait', 'text=Showing 1', '2s'])).output, /^Visible: "text=Showing 1"$/m, 'a selector with a space, and the time');
-    assert.equal((await repl.run('wait #never 1s')).output, 'Error: No visible element matches #never within 1s');
+    assert.equal((await repl.run('wait #never 250')).output, 'Error: No visible element matches #never within 250ms');
     assert.equal((await repl.run('wait text Showing 0')).output, 'Error: wait takes a time over 0 (got 0); for text that ends in a number, quote it: wait text "Showing 0"');
     assert.equal((await repl.run('wait load 0')).output, 'Error: wait takes a time over 0 (got 0)');
     await ok('eval document.body.insertAdjacentHTML("beforeend", \'<p id="later" hidden>Later</p>\'); setTimeout(() => { document.querySelector("#later").hidden = false; }, 400); "added"');
@@ -1685,9 +1685,9 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match(await ok('wait .spin --gone 5s'), /^Gone: \.spin$/);
     assert.match(await ok('wait text "Loading now" --gone 5s'), /^Gone: Loading now$/);
     assert.match(await ok('wait .never-there --gone'), /Gone/, 'nothing matching is gone already');
-    const stays = await repl.run('wait h1 --gone 1s');
+    const stays = await repl.run('wait h1 --gone 250');
     assert.equal(stays.status, 'error');
-    assert.match(stays.output, /Still visible after 1s: h1/);
+    assert.match(stays.output, /Still visible after 250ms: h1/);
   });
 
   it('chooses files in a file input, a hidden one behind a button, and from send\'s folder', async () => {
