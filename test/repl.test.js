@@ -1701,8 +1701,8 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       const file = path.join(dir, 'a.txt');
       assert.match((await repl.run(`upload ${file}`)).output, /Usage: upload <selector> <file>\.\.\., naming the file input \(or the button that opens it\) first, e\.g\. upload e12 \.\/doc\.pdf/);
       assert.match((await repl.run(`upload ${file} ${file}`)).output, /a\.txt is a file, not the input: upload <selector> <file>/, 'playwright-cli\'s upload <files...>');
-      assert.doesNotMatch((await repl.run(`upload //input[@id="files"] ${file}`)).output, /is a file, not the input/, 'an XPath is a selector');
       await ok('eval document.body.insertAdjacentHTML("beforeend", \'<input type="file" id="files" multiple><input type="file" id="hidden" hidden><button id="pick" onclick="document.querySelector(\\\'#hidden\\\').click()">Pick</button>\'); "added"');
+      assert.match(await ok(`upload //input[@id="files"] ${file}`), /^Chose a file in \/\/input\[@id="files"\]: /, 'an XPath is a selector');
       const files = id => ok(`eval [...document.querySelector("#${id}").files].map(f => f.name + ":" + f.size + ":" + f.type).join(" ")`);
       assert.match(await ok(`upload #files ${dir}/a.txt "${dir}/b c.png"`), /^Chose 2 files in #files: /);
       assert.equal(await files('files'), 'a.txt:5:text/plain b c.png:3:image/png');
