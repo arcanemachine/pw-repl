@@ -466,7 +466,9 @@ Output is capped; --all right after the command, or at the end, shows everything
       Arguments:
         [<ref>]             only that element, from a snapshot ref: screenshot e5.
         [name]              saved as screenshot-<name>.png; letters, digits, underscores and hyphens. Default:
-                            a timestamp.
+                            a timestamp. A word with a / or ending in .png, .jpg or .jpeg is a file instead,
+                            as --filename: x.png is the file x.png, not screenshot-x.png. At the prompt, a
+                            path with a space goes in --filename="<file>"; through pw-repl send, either works.
       Options:
         --full              the whole page, not only the viewport; --full-page too.
         -d, --delay <time>  counts down out loud first, in seconds, up to 60s, so someone can hold a hover or

@@ -1667,6 +1667,16 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       fs.mkdirSync(spaced);
       assert.match(await ok(`screenshot --full-page --filename="${require('path').join(spaced, 'page.png')}"`), /a b\/page\.png$/, 'a quoted path with a space');
       assert.match((await repl.run(`screenshot --filename "${require('path').join(spaced, 'nope', 'x.png')}"`)).output, /No folder [^\n]+a b\/nope to save x\.png in/);
+      // A file as a word of its own, as --filename: at the prompt, and through send from the sender's folder.
+      // dir has a space, which a word at the prompt cannot hold.
+      const bare = require('path').join(require('os').tmpdir(), `pw-bare-${process.pid}.png`);
+      assert.equal(await ok(`screenshot ${bare}`), `Saved: ${bare}`);
+      fs.rmSync(bare);
+      for (const [word, file] of [['h2.png', 'h2.png'], ['a b/h2.jpeg', 'a b/h2.jpeg']]) {
+        const shot = spawnSync(process.execPath, [bin, 'send', '-e', repl.socket, 'screenshot', word], { encoding: 'utf8', cwd: dir });
+        assert.equal(shot.stdout.trim(), `Saved: ${require('path').join(dir, file)}`, word);
+      }
+      assert.match((await repl.run(`screenshot ${bare} other.png`)).output, /^Error: Usage: screenshot .*\| <file> \|/);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
