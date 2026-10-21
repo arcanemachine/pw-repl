@@ -93,7 +93,6 @@ describe('help', () => {
 describe('modules', () => {
   const fs = require('node:fs');
   const path = require('node:path');
-  const { spawnSync } = require('node:child_process');
   const lib = path.join(__dirname, '..', 'lib');
 
   it('names only commands that exist in the runner\'s lists', () => {
@@ -105,27 +104,32 @@ describe('modules', () => {
   });
 
   // A require cycle fails silently in CommonJS: one module gets the other's exports half made.
-  // Each module is loaded on its own, and the requires made while loading must not go round.
+  // Each module is loaded on its own, with lib/ cleared from the cache first (no module sets
+  // anything outside lib/ when loaded), and the requires made while loading must not go round.
   it('loads each lib module on its own, with exports and no require cycle', () => {
-    const script = `
-      const path = require('path');
-      const lib = path.dirname(require.resolve(process.argv[1]));
-      const exported = Object.keys(require(process.argv[1]));
-      const graph = {};
-      for (const [id, m] of Object.entries(require.cache)) {
-        if (path.dirname(id) === lib) graph[path.basename(id)] = m.children.map(c => c.id).filter(c => path.dirname(c) === lib).map(c => path.basename(c));
+    const inLib = (/** @type {string} */ id) => path.dirname(id) === lib;
+    const kept = Object.entries(require.cache).filter(([id]) => inLib(id));
+    const clear = () => { for (const id of Object.keys(require.cache)) if (inLib(id)) delete require.cache[id]; };
+    try {
+      for (const file of fs.readdirSync(lib).filter(f => f.endsWith('.js'))) {
+        clear();
+        const exported = Object.keys(require(path.join(lib, file)));
+        assert.ok(exported.length, `${file} exports nothing`);
+        /** @type {Record<string, string[]>} */
+        const graph = {};
+        for (const [id, m] of Object.entries(require.cache)) {
+          if (inLib(id) && m) graph[path.basename(id)] = m.children.map(c => c.id).filter(inLib).map(c => path.basename(c));
+        }
+        const visit = (/** @type {string} */ name, /** @type {string[]} */ trail) => {
+          assert.ok(!trail.includes(name), `require cycle: ${[...trail, name].join(' -> ')}`);
+          for (const next of graph[name] || []) visit(next, [...trail, name]);
+        };
+        visit(file, []);
       }
-      console.log(JSON.stringify({ exported, graph }));`;
-    for (const file of fs.readdirSync(lib).filter(f => f.endsWith('.js'))) {
-      const run = spawnSync(process.execPath, ['-e', script, path.join(lib, file)], { encoding: 'utf8' });
-      assert.equal(run.status, 0, `${file}: ${run.stderr}`);
-      const { exported, graph } = JSON.parse(run.stdout);
-      assert.ok(exported.length, `${file} exports nothing`);
-      const visit = (name, trail) => {
-        assert.ok(!trail.includes(name), `require cycle: ${[...trail, name].join(' -> ')}`);
-        for (const next of graph[name] || []) visit(next, [...trail, name]);
-      };
-      visit(file, []);
+    } finally {
+      // Later tests keep the modules they loaded before.
+      clear();
+      Object.assign(require.cache, Object.fromEntries(kept));
     }
   });
 });
