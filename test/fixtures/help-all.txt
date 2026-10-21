@@ -118,8 +118,10 @@ its element into view first, as Playwright does; profile counts that scroll in t
       5s, it says why for each and does nothing. A ref, or a single match, is clicked as it is, waiting up to
       5s for it to be ready.
 
-      Timed out after it began acting, it says what stopped it (e.g. <div class="overlay"> intercepts pointer
-      events) and that the outcome is unknown; Playwright's full call log goes to the REPL's pane or log.
+      Timed out, it says what stopped it, and Playwright's full call log goes to the REPL's pane or log.
+      Stopped by one of Playwright's checks before the click is sent, it did nothing: the element is not
+      visible, enabled or stable, or <div class="overlay"> intercepts pointer events (something covers it).
+      Stopped after it was sent, as when the page stops answering, the outcome is unknown.
 
   dblclick <selector> [button]                        double-click, as click does, with its options
       click --click-count=2, as Playwright's dblclick is. For a triple-click: click --click-count=3.

@@ -363,6 +363,18 @@ describe('action timeouts', () => {
     const waiting = await quiet(() => onElement('#go', timedOut(['waiting for element to be visible, enabled and stable'])).catch(e => e));
     assert.match(waiting.message, /: it never became ready to act on; a page busy with a long task does not answer meanwhile: profile on, then try again/);
   });
+
+  it('is unknown only once input was sent, in any retry', async () => {
+    const retry = (blocker, last) => ['waiting for element to be visible, enabled and stable', 'element is visible, enabled and stable', 'scrolling into view if needed', 'done scrolling', blocker, 'retrying click action', 'waiting for element to be visible, enabled and stable', last];
+    const sent = await quiet(() => onElement('#go', timedOut(retry('performing click action', 'element is not enabled'))).catch(e => e));
+    assert.equal(sent.uncertain, true, 'an earlier retry sent the click');
+    const covered = await quiet(() => onElement('#go', timedOut(retry('<div></div> intercepts pointer events', '<div></div> intercepts pointer events'))).catch(e => e));
+    assert.equal(covered.uncertain, false, 'a cover is found before the click is sent');
+    for (const check of ['element is not enabled', 'element is not visible', 'element is not stable']) {
+      const error = await quiet(() => onElement('#go', timedOut(['waiting for element to be visible, enabled and stable', `  - ${check}`])).catch(e => e));
+      assert.equal(error.uncertain, false, check);
+    }
+  });
 });
 
 describe('profile summary', () => {

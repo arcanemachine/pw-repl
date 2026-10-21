@@ -72,7 +72,7 @@ describe('a command that times out', { skip: SKIP }, () => {
     assert.equal((await repl.run('info')).status, 'ok');
   });
 
-  it('reports a click that timed out after finding its element as unconfirmed, in a line, and carries on', async () => {
+  it('reports a click on a covered element as a failure, in a line, and carries on', async () => {
     // Through send, for its exit status too.
     const { spawn } = require('child_process');
     const sent = await new Promise(resolve => {
@@ -83,11 +83,11 @@ describe('a command that times out', { skip: SKIP }, () => {
       child.stderr.on('data', d => { stderr += d; });
       child.on('close', status => resolve({ status, stdout, stderr }));
     });
-    assert.equal(sent.status, 2, 'completion not confirmed');
-    assert.match(sent.stderr, /completion not confirmed/);
+    assert.equal(sent.status, 1, 'the cover is found before the click is sent');
+    assert.doesNotMatch(sent.stderr, /completion not confirmed/);
     assert.doesNotMatch(sent.stdout, /snapshot ref/);
-    assert.match(sent.stdout, /^Error: Timed out after 5s on #under: <span.*> intercepts pointer events \(its call log is in the REPL's pane or log\)\nOutcome unknown: it timed out after it began acting on the page/);
-    assert.doesNotMatch(sent.stdout, /Call log/);
+    assert.match(sent.stdout, /^Error: Timed out after 5s on #under: <span.*> intercepts pointer events \(its call log is in the REPL's pane or log\)$/m);
+    assert.doesNotMatch(sent.stdout, /Outcome unknown|Call log/);
     assert.match(repl.stdout, /Playwright's call log:[\s\S]*attempting click action/, 'the whole log is in the pane');
     assert.equal(repl.exited, false);
     assert.equal((await repl.run('info')).status, 'ok');
