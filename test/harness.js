@@ -228,6 +228,13 @@ fetch('/api/big').then(r => r.json()).then(drawLayers);
     if (req.url === '/picker') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end(PICKER_PAGE); }
     if (req.url === '/app') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end(APP_PAGE); }
     if (req.url === '/flow') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end(FLOW_PAGE); }
+    // Laid out for a phone, with no panning or zoom, as a drawing app has it: a drag ends in pointerup, not
+    // pointercancel, and a tap's click is not held back to see whether a double-tap follows.
+    if (req.url === '/touch') {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      return res.end(`<!doctype html><title>Touch</title><meta name="viewport" content="width=device-width"><body style="margin:0; height:600px; touch-action:none">
+<script>window.events = []; for (const t of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'click', 'dblclick', 'contextmenu']) addEventListener(t, () => { if (t !== 'pointermove' || events[events.length - 1] !== t) events.push(t); }, true);</script>`);
+    }
     if (req.url === '/other') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end('<!doctype html><title>Other</title><h1>Other</h1>'); }
     // Loads for a moment, for wait load.
     if (req.url === '/slow-load') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end('<!doctype html><title>Slow</title><img src="/slow-image">'); }

@@ -364,6 +364,34 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match((await repl.run('click #go --button=sideways')).output, /--button is left, right or middle, once/);
   });
 
+  it('keeps a touch sequence sent one cdp call at a time, and says what a tap fires', async () => {
+    await ok('emulate mobile');
+    await ok(`goto ${site.url}/touch`);
+    const touch = (type, points = []) => ok(`cdp Input.dispatchTouchEvent ${JSON.stringify({ type, touchPoints: points.map(([x, y]) => ({ x, y, id: 1 })) })}`);
+    // Read once the last event looked for has come, or after 1s: a tap's click comes a moment after its pointerup.
+    const events = async last => { const shown = await ok(`eval (async () => { for (let i = 0; i < 40 && events[events.length - 1] !== ${JSON.stringify(last)}; i++) await new Promise(r => setTimeout(r, 25)); return events.splice(0).join(" "); })()`); return shown; };
+    await touch('touchStart', [[60, 100]]);
+    await touch('touchEnd');
+    assert.equal(await events('click'), 'pointerdown pointerup click');
+    await ok('sleep 1000');
+    // Two in a row: the first one's click may wait to see whether it is a double-tap.
+    for (let i = 0; i < 2; i++) { await touch('touchStart', [[60, 100]]); await touch('touchEnd'); }
+    assert.match(await events('dblclick'), /^pointerdown pointerup (?:click )?pointerdown pointerup click dblclick$/);
+    await ok('sleep 1000');
+    await touch('touchStart', [[60, 100]]);
+    await ok('sleep 800');
+    await touch('touchEnd');
+    assert.equal(await events('click'), 'pointerdown pointerup click', 'held, still a tap, with no contextmenu');
+    await ok('sleep 1000');
+    await ok('cdp Input.synthesizeTapGesture {"x": 60, "y": 100, "tapCount": 2, "gestureSourceType": "touch"}');
+    assert.equal(await events('click'), 'pointerdown pointerup pointerdown pointerup', 'no click from a synthesized tap');
+    // Last: Chrome takes a tap up to a few seconds after a drag as part of it, with no click.
+    await touch('touchStart', [[60, 100]]);
+    await touch('touchMove', [[90, 130]]);
+    await touch('touchEnd');
+    assert.equal(await events('pointerup'), 'pointerdown pointermove pointerup', 'a drag, not a tap');
+  });
+
   it('clicks an aria-disabled element with --force, as Playwright\'s force', async () => {
     assert.equal(await ok('click #greyed --force'), 'Clicked: #greyed, forced');
     assert.equal(await ok('text #greyed'), 'Greyed, clicked');

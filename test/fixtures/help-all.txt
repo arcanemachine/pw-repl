@@ -872,15 +872,28 @@ show sensitive data (cdp Network.getCookies shows cookie values).
       read it back: eval "window.__done = null; run().then(r => window.__done = r); 'started'", then eval
       window.__done until it is set.
 
-  cdp [--all] <method> <JSON object>            send one CDP command through a temporary session
+  cdp [--all] <method> <JSON object>            send one CDP command to the selected tab
       Arguments:
         <method>            a CDP method: Network.getCookies.
         <JSON object>       its parameters: {} for none.
       Options:
         --all               the whole result, not capped.
 
-      The session is detached afterwards, so subscriptions and settings do not persist. Browser.close and
-      Target.closeTarget are refused, and so is Page.handleJavaScriptDialog: dialog answers one.
+      A command goes through a temporary session, detached afterwards, so subscriptions and settings do not
+      persist (input aside, below). Browser.close and Target.closeTarget are refused, and so is
+      Page.handleJavaScriptDialog: dialog answers one.
+
+      Input (Input.dispatchTouchEvent, dispatchMouseEvent, the synthesize gestures): through a session kept
+      for the tab, so a sequence sent one call at a time stays one sequence (Chrome drops it when the session
+      that began it detaches). End one before other commands (touchEnd, or touchCancel to drop it): left open,
+      the next click lands mid-touch. Input.setIgnoreInputEvents and setInterceptDrags go through a temporary
+      session, as they would otherwise stay on and break later clicks.
+
+      Touch (under emulate mobile, for pointerType touch): touchStart and touchEnd sent this way make a tap,
+      with click, and two in a row a dblclick; held, it is still a tap, with no contextmenu. Chrome takes a
+      tap sent soon after another gesture as part of it, with no click: up to a few seconds after a drag
+      (sleep 3s). The synthesize gestures (Input.synthesizeTapGesture, synthesizePinchGesture,
+      synthesizeScrollGesture) send pointer and touch events but no click, dblclick or contextmenu.
 
   clipboard [--all] [--shared-clipboard]        print the text on the clipboard, as a Copy button left it
       Options:
