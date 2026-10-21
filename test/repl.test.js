@@ -405,17 +405,15 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await touch('touchStart', [[60, 100]]);
     await touch('touchEnd');
     assert.equal(await events('click'), 'pointerdown pointerup click');
-    await ok('sleep 1000');
+    // Each tap after this lands far from the one before, so none is taken as a double-tap with it.
     // Two in a row: the first one's click may wait to see whether it is a double-tap.
-    for (let i = 0; i < 2; i++) { await touch('touchStart', [[60, 100]]); await touch('touchEnd'); }
+    for (let i = 0; i < 2; i++) { await touch('touchStart', [[200, 300]]); await touch('touchEnd'); }
     assert.match(await events('dblclick'), /^pointerdown pointerup (?:click )?pointerdown pointerup click dblclick$/);
-    await ok('sleep 1000');
-    await touch('touchStart', [[60, 100]]);
+    await touch('touchStart', [[60, 500]]);
     await ok('sleep 800');
     await touch('touchEnd');
     assert.equal(await events('click'), 'pointerdown pointerup click', 'held, still a tap, with no contextmenu');
-    await ok('sleep 1000');
-    await ok('cdp Input.synthesizeTapGesture {"x": 60, "y": 100, "tapCount": 2, "gestureSourceType": "touch"}');
+    await ok('cdp Input.synthesizeTapGesture {"x": 300, "y": 150, "tapCount": 2, "gestureSourceType": "touch"}');
     assert.equal(await events('click'), 'pointerdown pointerup pointerdown pointerup', 'no click from a synthesized tap');
     // Last: Chrome takes a tap up to a few seconds after a drag as part of it, with no click.
     await touch('touchStart', [[60, 100]]);
@@ -439,13 +437,11 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     const events = last => ok(`eval (async () => { for (let i = 0; i < 40 && events[events.length - 1] !== ${JSON.stringify(last)}; i++) await new Promise(r => setTimeout(r, 25)); return events.splice(0).join(" "); })()`);
     assert.equal(await ok('touch tap 60 100'), 'Tapped at 60, 100');
     assert.equal(await events('click'), 'pointerdown pointerup click');
-    await ok('sleep 1000');
-    assert.equal(await ok('touch doubletap 60 100'), 'Double-tapped at 60, 100');
+    // Far from the tap before, so not taken as a double-tap with it.
+    assert.equal(await ok('touch doubletap 200 300'), 'Double-tapped at 200, 300');
     assert.match(await events('dblclick'), /^pointerdown pointerup (?:click )?pointerdown pointerup click dblclick$/);
-    await ok('sleep 1000');
-    assert.equal(await ok('touch longpress 60 100 0.5s'), 'Long-pressed at 60, 100 for 500ms');
+    assert.equal(await ok('touch longpress 60 500 0.5s'), 'Long-pressed at 60, 500 for 500ms');
     assert.equal(await events('click'), 'pointerdown pointerup click', 'in headless, still a tap');
-    await ok('sleep 1000');
     // Last, as a tap soon after a swipe or pinch is taken as part of it.
     assert.equal(await ok('touch swipe 60 100 120 80'), 'Swiped from 60, 100 to 180, 180');
     assert.equal(await events('pointerup'), 'pointerdown pointermove pointerup');
