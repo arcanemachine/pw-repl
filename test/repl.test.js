@@ -230,9 +230,10 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.equal(await ok('eval log.textContent'), 'dragstart drop down up-on-rail ');
     assert.match((await repl.run('drag #knob')).output, /Usage: drag <from> <to>/);
     assert.match((await repl.run('drag #knob #rail #bin')).output, /Usage: drag <from> <to>/);
-    const missing = await repl.run('drag #knob #nowhere');
+    // A target from an old snapshot: it never comes.
+    const missing = await repl.run('drag #knob e99999');
     assert.equal(missing.status, 'error');
-    assert.match(missing.output, /No element matches #nowhere/);
+    assert.match(missing.output, /e99999 is a snapshot ref; if the page changed since that snapshot, take a new one\./);
     assert.equal(await ok('eval log.textContent'), 'dragstart drop down up-on-rail down ', 'pressed, then released when the target never came');
     // Between points, for what has no element to drag by: pressed at the first, moved in steps, released at the second.
     await ok('eval log.textContent = ""; document.onpointerdown = e => { log.textContent += `down@${e.clientX},${e.clientY} `; }; document.onpointermove = e => { if (e.buttons) log.textContent += "m"; }; document.onpointerup = e => { log.textContent += ` up@${e.clientX},${e.clientY}`; }');
@@ -577,12 +578,6 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match(await ok('listeners --all #load'), /^keydown: function commented\(\) \{\n      \/\/ a comment\n      return 1;\n    \} \(line \d+\)$/m, 'as written');
     assert.equal((await repl.run('listeners #nope')).status, 'error');
     assert.match((await repl.run('snapshot e99999')).output, /e99999 is a snapshot ref; if the page changed since that snapshot, take a new one/);
-  });
-
-  it('says a snapshot ref that no longer matches may be stale', async () => {
-    const result = await repl.run('click e99999');
-    assert.equal(result.status, 'error');
-    assert.match(result.output, /e99999 is a snapshot ref; if the page changed since that snapshot, take a new one\./);
   });
 
   it('outlines the page and clicks by snapshot label', async () => {
