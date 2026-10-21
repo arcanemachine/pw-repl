@@ -231,6 +231,14 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.equal(missing.status, 'error');
     assert.match(missing.output, /No element matches #nowhere/);
     assert.equal(await ok('eval log.textContent'), 'dragstart drop down up-on-rail down ', 'pressed, then released when the target never came');
+    // Between points, for what has no element to drag by: pressed at the first, moved in steps, released at the second.
+    await ok('eval log.textContent = ""; document.onpointerdown = e => { log.textContent += `down@${e.clientX},${e.clientY} `; }; document.onpointermove = e => { if (e.buttons) log.textContent += "m"; }; document.onpointerup = e => { log.textContent += ` up@${e.clientX},${e.clientY}`; }');
+    assert.equal(await ok('drag 300 50 360 90'), 'Dragged from 300, 50 to 360, 90');
+    assert.equal(await ok('eval log.textContent'), 'down@300,50 mmmmmmmmmm up@360,90');
+    assert.match((await repl.run('drag 300 -5 360 90')).output, /^Error: 300, -5 is outside the viewport \(\d+x\d+\); nothing was dragged\./m);
+    assert.match(await ok('drag 300 50 360 -20'), /^Dragged from 300, 50 to 360, -20 \(outside the viewport, \d+x\d+\)$/, 'it may end outside');
+    assert.match((await repl.run('drag 300 50 360')).output, /Usage: drag <from> <to>/, 'three numbers are not points');
+    await ok('eval document.onpointerdown = document.onpointermove = document.onpointerup = null');
   });
 
   it('clicks three times at once, selecting a field\'s text, on an element or at a point', async () => {
