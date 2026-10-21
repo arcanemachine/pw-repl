@@ -111,7 +111,7 @@ function shellLine(words) {
 // at the end, as an agent types them (send open <url> -t 30s); after --, every word is the command.
 function parseSendArgs(args, subcommand) {
   const allowCommand = subcommand === 'send';
-  const options = { endpoint: null, session: null, client: null, timeout: 20000, command: '', file: null };
+  const options = { endpoint: /** @type {string | null} */ (null), session: /** @type {string | null} */ (null), client: /** @type {string | null} */ (null), timeout: 20000, command: '', file: /** @type {string | null} */ (null) };
   const given = new Set();
   const take = (arg, value, after) => {
     if (value === undefined) usage(`${arg} needs a value`, subcommand);
@@ -177,7 +177,7 @@ function parseSendArgs(args, subcommand) {
 }
 
 function startOptions(args, serve) {
-  const options = { serve, endpoint: null, startUrl: null, background: false, launch: false, headed: false, chromeArgs: [], pidFile: process.env.PW_REPL_PID_FILE || null };
+  const options = { serve, endpoint: /** @type {string | null} */ (null), startUrl: /** @type {string | null} */ (null), background: false, launch: false, headed: false, chromeArgs: /** @type {string[]} */ ([]), pidFile: process.env.PW_REPL_PID_FILE || null };
   // Whatever follows -- is for the Chromium that --launch starts.
   const split = args.indexOf('--');
   const rest = split === -1 ? [...args] : args.slice(0, split);

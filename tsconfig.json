@@ -3,7 +3,11 @@
     "allowJs": true,
     "checkJs": true,
     "noEmit": true,
-    "strict": false,
+    "strict": true,
+    "noImplicitAny": false,
+    // A catch variable is read as an Error throughout; narrowing each one would change what a thrown
+    // non-Error prints, and an `any` annotation on each would check nothing.
+    "useUnknownInCatchVariables": false,
     "module": "nodenext",
     "target": "es2022",
     "lib": ["es2022", "dom"],
