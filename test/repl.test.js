@@ -316,13 +316,6 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     }
   });
 
-  it('reads and drives the page', async () => {
-    assert.match(await ok('info'), /Title: Fixture$/m);
-    await ok('fill #name Ada');
-    await ok('click #go');
-    assert.equal(await ok('text #out'), 'Hello Ada');
-    assert.match(await ok('links'), /"href": "http:\/\/127\.0\.0\.1:\d+\/other"/);
-  });
 
   it('takes the selector as the first word, quoted if it has spaces, and the value as the rest', async () => {
     const value = 'eval document.querySelector("#name").value';
@@ -588,6 +581,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await ok(`click aria-ref=${ref}`);
     assert.equal(await ok('text #out'), 'Hello Lin');
     assert.match(await ok('snapshot #go'), /button "Go"/);
+    assert.match(await ok('links'), /"href": "http:\/\/127\.0\.0\.1:\d+\/other"/);
   });
 
   it('keeps the refs of a whole-page snapshot after a snapshot of one element', async () => {
