@@ -595,3 +595,53 @@ describe('release check', () => {
     }
   });
 });
+
+describe('drawing', () => {
+  const { keepDrawing, drawUntilIdle, DRAW_IDLE } = require('../lib/cdp');
+  const { tabState } = require('../lib/tabstate');
+
+  // Only what keepDrawing uses of a page, with the CDP methods it sends written down.
+  const page = () => {
+    /** @type {string[]} */
+    const sent = [];
+    /** @type {(() => void)[]} */
+    const closers = [];
+    let closed = false;
+    const session = { send: async (/** @type {string} */ method) => { sent.push(method); }, on: () => {} };
+    const p = {
+      sent,
+      context: () => ({ newCDPSession: async () => session }),
+      once: (/** @type {string} */ event, /** @type {() => void} */ fn) => { if (event === 'close') closers.push(fn); },
+      isClosed: () => closed,
+      close: () => { closed = true; closers.forEach(fn => fn()); },
+    };
+    return p;
+  };
+
+  it('draws a tab while commands act in it, and stops once it has had none for a while', async () => {
+    const p = /** @type {any} */ (page());
+    const closing = /** @type {any} */ (page());
+    await keepDrawing(p);
+    await keepDrawing(closing);
+    assert.deepEqual(p.sent, ['Emulation.setFocusEmulationEnabled', 'Page.startScreencast']);
+    drawUntilIdle();
+    await keepDrawing(p);
+    assert.ok(!tabState(p).drawIdle, 'a command before the tail ends keeps it drawing');
+    // A tab drawn for a browser event (watch's next tab) while p's command runs: only it is timed.
+    const event = /** @type {any} */ (page());
+    await keepDrawing(event);
+    drawUntilIdle(event);
+    assert.ok(tabState(event).drawIdle && !tabState(p).drawIdle, 'the command running in p is not cut short');
+    drawUntilIdle();
+    closing.close();
+    await new Promise(r => setTimeout(r, DRAW_IDLE + 200));
+    assert.equal(p.sent.at(-1), 'Page.stopScreencast');
+    assert.equal(event.sent.at(-1), 'Page.stopScreencast');
+    assert.ok(!('drawing' in tabState(p)));
+    assert.equal(closing.sent.at(-1), 'Page.startScreencast', 'nothing sent to a closed tab');
+    await keepDrawing(p);
+    assert.equal(p.sent.at(-1), 'Page.startScreencast', 'drawing again at the next command, its focus already told');
+    assert.equal(p.sent.filter((/** @type {string} */ m) => m === 'Emulation.setFocusEmulationEnabled').length, 1);
+    drawUntilIdle();
+  });
+});

@@ -23,7 +23,7 @@ If you hit a limitation or write a workaround, consider adding the capability to
   `lib/routes.js`, `lib/network.js`, `lib/emulation.js` (and viewport), `lib/capture.js`, `lib/profile.js` (performance traces;
   `lib/trace.js` reads and sums them up), `lib/record.js`
   (video, through ffmpeg, and the steps file saved with it), `lib/dialogs.js` and `lib/modes.js`. Beneath them, `lib/tabstate.js` is the one record kept per tab, `lib/cdp.js` the CDP
-  session kept per tab, `lib/util.js` small shared helpers, and `lib/written.js` the files written and for whom. No facility requires `lib/modes.js` or
+  session kept per tab and a background tab kept drawing while commands act in it, `lib/util.js` small shared helpers, and `lib/written.js` the files written and for whom. No facility requires `lib/modes.js` or
   `lib/commands.js`, and a unit test fails on a require cycle, which CommonJS would not report.
 - `bin/pw-repl.js` is the command line; `lib/start.js` connects and runs the prompt; `lib/runner.js`
   runs commands one at a time (`quit` and `dialog` skip its queue); `lib/server.js` is the command
