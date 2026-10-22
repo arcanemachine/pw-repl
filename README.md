@@ -74,7 +74,8 @@ With `npx`, use `npx pw-repl@latest` the same way every time, so every command r
 ## What it can do
 
 - **Read the page:** accessibility snapshots with clickable refs, text, HTML, attributes, links, form
-  controls, event listeners, screenshots (viewport, full page or one element).
+  controls, event listeners, screenshots (viewport, full page, one element with or without a margin
+  around it, or a rectangle).
 - **Act on it:** click, double-click, fill, type, press keys, select, check, drag and drop, upload files,
   click or drag at a point, scroll the wheel, answer dialogs.
 - **Watch the network:** every request and response body, console messages and page errors, all recorded

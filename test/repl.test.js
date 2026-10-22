@@ -1930,6 +1930,46 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await ok(`goto ${site.url}/`);
   });
 
+  it('screenshots an element with a margin around it, and a rectangle, on a desktop and a phone', async () => {
+    const { PNG } = require('playwright-core/lib/utilsBundle');
+    // The image's size, and each point's color: r, b or w (red, blue, white).
+    const read = async (command, ...points) => {
+      const file = /Saved: (\S+)/.exec(await ok(command))[1];
+      const image = PNG.sync.read(fs.readFileSync(file));
+      fs.unlinkSync(file);
+      const colors = points.map(([x, y]) => { const i = (y * image.width + x) * 4; const [r, , b] = image.data.slice(i, i + 3); return r > 200 && b > 200 ? 'w' : r > 200 ? 'r' : b > 200 ? 'b' : '?'; });
+      return `${image.width}x${image.height} ${colors.join('')}`;
+    };
+    // A red mark outside each button, where a margin reaches it. Edge sits at the viewport's bottom right,
+    // beside the scrollbar, with its margin and mark below the fold.
+    await ok('goto data:text/html,<!doctype html><meta name=viewport content="width=device-width"><body style="margin:0;height:3000px"><i style="position:absolute;left:90px;top:90px;width:4px;height:4px;background:red"></i><button style="position:absolute;left:100px;top:100px;width:100px;height:100px;background:blue;border:0">Box</button><button style="position:absolute;left:0;top:0;width:50px;height:50px;background:blue;border:0">Corner</button><button id=edge style="position:absolute;right:0;width:80px;height:40px;background:blue;border:0">Edge</button><i id=mark style="position:absolute;right:0;width:80px;height:4px;background:red"></i>');
+    await ok('eval edge.style.top = `${innerHeight - 30}px`; mark.style.top = `${innerHeight + 15}px`');
+    const refs = Object.fromEntries([...(await ok('snapshot')).matchAll(/button "(\w+)" \[ref=((?:f\d+)?e\d+)\]/g)].map(m => [m[1], m[2]]));
+    try {
+      assert.equal(await read(`screenshot ${refs.Box} --margin`, [8, 8], [15, 15], [16, 16]), '132x132 rwb', '16px by default');
+      assert.equal(await read(`screenshot ${refs.Box} --margin=0`, [0, 0]), '100x100 b');
+      assert.equal(await read(`screenshot ${refs.Corner} --margin 30`, [0, 0], [50, 50]), '80x80 bw', 'cut at the page\'s edge');
+      await ok('eval scrollTo(0, 0)');
+      assert.equal(await read(`screenshot ${refs.Edge} --margin 20`, [19, 30], [20, 30], [99, 30], [50, 66]), '100x80 wbbr', 'its margin below the fold, not shifted by the scrollbar');
+      assert.equal(await ok('eval document.adoptedStyleSheets.length'), '0', 'the page is left as it was');
+      await ok('eval scrollTo(0, 50)');
+      assert.equal(await read('screenshot --clip 90,40,120,120', [1, 1], [15, 15]), '120x120 rb', 'in the viewport\'s coordinates');
+      assert.equal(await read('screenshot -p --clip 90,90,120,120', [1, 1], [15, 15]), '120x120 rb', 'in the page\'s, with -p');
+      assert.match((await repl.run('screenshot --clip 5000,5000,10,10')).output, /^Error: --clip 5000,5000,10,10 is outside the viewport/);
+      for (const line of ['screenshot --clip 1,2,3', 'screenshot --clip 1,2,0,3', `screenshot ${refs.Box} --clip 1,1,5,5`, 'screenshot --margin']) {
+        assert.match((await repl.run(line)).output, /^Error: Usage: screenshot/, line);
+      }
+      await ok('emulate mobile');
+      assert.equal(await read(`screenshot ${refs.Box} --margin`, [8, 8], [16, 16]), '132x132 rb', 'on a phone');
+      await ok('eval scrollTo(0, 50)');
+      assert.equal(await read('screenshot --clip 90,40,120,120', [1, 1], [15, 15]), '120x120 rb', 'on a phone, in the viewport\'s coordinates');
+      assert.equal(await read('screenshot -p --clip 90,90,120,120', [1, 1], [15, 15]), '120x120 rb', 'on a phone, in the page\'s');
+    } finally {
+      await ok('emulate off');
+      await ok(`goto ${site.url}/`);
+    }
+  });
+
   it('types at a pace a video can show while recording, and saves when each step ran and where', { skip: FFMPEG ? false : 'no ffmpeg found: npx playwright-core install ffmpeg' }, async () => {
     const dir = fs.mkdtempSync(require('path').join(require('os').tmpdir(), 'pw-repl-steps-'));
     try {
