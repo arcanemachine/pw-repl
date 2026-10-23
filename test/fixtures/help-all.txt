@@ -852,7 +852,8 @@ requests and console record all the time; a capture records only while it runs.
         <glob> abort        fails it as if the connection broke.
         <glob> rewrite <url>
                             sends it to that URL instead; the page never sees the change, and its answer comes
-                            as the one for the URL asked for.
+                            as the one for the URL asked for, so a rewrite to another origin needs no CORS
+                            headers.
         <glob> redirect <url> [status]
                             answers with a redirect to that URL, which the page then follows, its address bar
                             too. Default: 302; 301, 303, 307 or 308. A POST keeps its method and body only
