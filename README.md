@@ -80,8 +80,8 @@ With `npx`, use `npx pw-repl@latest` the same way every time, so every command r
   click or drag at a point, scroll the wheel, answer dialogs.
 - **Watch the network:** every request and response body, console messages and page errors, all recorded
   as they happen.
-- **Change the network:** fake a response (`route`), patch its JSON, delay it, fail it, or cut or slow the
-  whole tab's network.
+- **Change the network:** fake a response (`route`), patch its JSON, delay it, fail it, send it to another
+  URL or redirect it, or cut or slow the whole tab's network.
 - **Emulate:** a phone, dark mode, a locale, a timezone, a viewport size.
 - **Run code:** `eval` any JavaScript in the page, a line or a file of it, or send a raw CDP command with
   `cdp`; read what a Copy button put on the clipboard (`clipboard`).

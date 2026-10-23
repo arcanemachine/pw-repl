@@ -3,6 +3,7 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
 const http = require('http');
+const https = require('https');
 const os = require('os');
 const path = require('path');
 
@@ -31,6 +32,8 @@ async function startChrome() {
   const proc = spawn(CHROME, [
     // /dev/shm is small in containers, and heavier pages crash the tab without this.
     '--headless=new', '--no-sandbox', '--no-first-run', '--disable-dev-shm-usage', '--remote-debugging-port=0',
+    // The site's https side has a self-signed certificate (test/tls).
+    '--ignore-certificate-errors',
     `--user-data-dir=${profile}`, 'about:blank',
   ], { stdio: 'ignore' });
   let exit = null;
@@ -171,8 +174,9 @@ const CONTROLS_PAGE = `<!doctype html><title>Controls</title>
 <button>Not a field</button>
 <script>partial.indeterminate = true;</script>`;
 
+// Served over http on 127.0.0.1, and over https on localhost (secureUrl): another protocol and host.
 async function startSite() {
-  const server = http.createServer((req, res) => {
+  const handler = (req, res) => {
     req.url = new URL(req.url, 'http://fixture').pathname;
     if (req.url === '/') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end(PAGE); }
     if (req.url === '/frame') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end('<!doctype html><title>Frame</title><iframe srcdoc="<button>inner</button>"></iframe>'); }
@@ -243,13 +247,23 @@ fetch('/api/big').then(r => r.json()).then(drawLayers);
     if (req.url === '/api/empty') { res.writeHead(204); return res.end(); }
     if (req.url === '/api/slow') { setTimeout(() => { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end('{"slow":true}'); }, 1500); return; }
     if (req.url === '/api/data') { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end('{"real":true}'); }
+    if (req.url === '/api/cookie') { res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': 'from=backend; Path=/' }); return res.end(JSON.stringify({ cookie: req.headers.cookie || null })); }
+    if (req.url === '/api/moved') { res.writeHead(302, { Location: '/api/data' }); return res.end(); }
     // No content type, as some servers send errors.
     if (req.url === '/untyped-text') { res.writeHead(404); return res.end('not found'); }
     if (req.url === '/untyped-bytes') { res.writeHead(200); return res.end(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0x01])); }
     res.writeHead(404); res.end();
-  });
+  };
+  const server = http.createServer(handler);
+  const tls = path.join(__dirname, 'tls');
+  const secure = https.createServer({ key: fs.readFileSync(path.join(tls, 'key.pem')), cert: fs.readFileSync(path.join(tls, 'cert.pem')) }, handler);
   await new Promise(r => server.listen(0, '127.0.0.1', r));
-  return { url: `http://127.0.0.1:${server.address().port}`, stop: () => server.close() };
+  await new Promise(r => secure.listen(0, '127.0.0.1', r));
+  return {
+    url: `http://127.0.0.1:${server.address().port}`,
+    secureUrl: `https://localhost:${secure.address().port}`,
+    stop: () => { server.close(); secure.close(); },
+  };
 }
 
 async function startRepl(cdpUrl, env = {}) {

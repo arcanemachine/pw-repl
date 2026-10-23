@@ -2450,6 +2450,42 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.equal(await ok(fetchStatus), '200');
   });
 
+  it('rewrites a request to another URL, unseen by the page, and redirects one', async () => {
+    assert.match(await ok(`route ${site.url}/old/** rewrite ${site.url}/api/**`), /Routed: \S+\/old\/\*\* -> rewrite \S+\/api\/\*\*/);
+    const rewritten = await ok('eval fetch("/old/data").then(r => r.text())');
+    assert.match(rewritten, /Rewritten: #\d+ GET \S+\/old\/data -> \S+\/api\/data/, 'the URL asked for, then the new one');
+    assert.match(rewritten, /^\{"real":true\}$/m);
+    assert.match(await ok('requests 3 /old/data'), /GET 200 rewritten .*\/old\/data/);
+    await ok('route **/api/missing rewrite /api/data');
+    assert.match(await ok('eval fetch("/api/missing").then(r => r.text())'), /^\{"real":true\}$/m, 'a URL with no host is on the request\'s');
+    await ok(`route ${site.url}/go/** redirect /**`);
+    const redirected = await ok(`goto ${site.url}/go/other`);
+    assert.match(redirected, /Redirected: #\d+ GET \S+\/go\/other -> 302 \S+\/other/);
+    assert.equal(await ok('eval location.pathname'), '/other', 'the address bar follows');
+    assert.match(await ok('requests 5 /go/other'), /GET 302 redirected/);
+    assert.match(await ok('route'), /\/go\/\*\* +redirect 302 \/\*\*/);
+    await ok(`route off ${site.url}/old/**`);
+    assert.equal(await ok('eval fetch("/old/data").then(r => r.status)'), '404', 'route off removes a route matched by its RegExp');
+    assert.match((await repl.run('route **/a/** rewrite /b/**')).output, /the glob needs exactly one/);
+    assert.match((await repl.run('route **/a rewrite /b/**/**')).output, /only one \*\*/);
+    assert.match((await repl.run(`route ${site.url}/a/**/z rewrite /b/**`)).output, /must be too: \*\*\//);
+    assert.match((await repl.run('route **/a redirect /b 200')).output, /301, 302, 303, 307 or 308/);
+    await ok('route off --all');
+  });
+
+  it('rewrites to another protocol by fetching it, with the page\'s cookies', async () => {
+    await ok(`goto ${site.secureUrl}/other`);
+    await ok('eval document.cookie = "page=1; path=/"');
+    await ok(`route ${site.secureUrl}/api/** rewrite ${site.url}/api/**`);
+    const fetched = await ok('eval fetch("/api/cookie").then(r => r.text())');
+    assert.match(fetched, /Rewritten: #\d+ GET https:\S+\/api\/cookie -> http:\S+\/api\/cookie/);
+    assert.match(fetched, /^\{"cookie":"page=1"\}$/m, 'the page\'s cookies, though the new URL is another host');
+    assert.match(await ok('eval document.cookie'), /from=backend/, 'a cookie the answer sets is kept for the page\'s site');
+    // The backend's relative Location resolves against the page's URL, and that request is not routed.
+    assert.match(await ok('eval fetch("/api/moved").then(r => r.url)'), new RegExp(`^${site.secureUrl}/api/data$`, 'm'));
+    await ok('route off --all');
+  });
+
   it('rejects a route body that is not JSON, unless its type is given', async () => {
     const result = await repl.run('route **/api/data 500 {nope');
     assert.equal(result.status, 'error');

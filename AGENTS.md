@@ -45,8 +45,8 @@ If you hit a limitation or write a workaround, consider adding the capability to
   `types/globals.d.ts`. A gap in someone else's types is filled with a cast or that file, never by
   changing what the code does.
 - `npm test` runs the suite (about two and a half minutes): a private headless Chromium, a local test site
-  (`test/harness.js`), and the real REPL with its server. Nothing is mocked, and the shared browser is
-  never touched. It finds Chromium through `PW_TEST_CHROME`, or where `--launch` looks (Playwright's
+  (`test/harness.js`, over http and, on a self-signed certificate in `test/tls`, https), and the real REPL
+  with its server. Nothing is mocked, and the shared browser is never touched. It finds Chromium through `PW_TEST_CHROME`, or where `--launch` looks (Playwright's
   browsers, then the `PATH`), and skips the browser tests if there is none. Add a test with each new
   command or behaviour. In `test/repl.test.js` each test starts in a fresh tab of its own, and every mode
   is turned off after it; a test whose REPL quits, times out or is killed goes in

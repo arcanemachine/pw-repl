@@ -833,7 +833,7 @@ requests and console record all the time; a capture records only while it runs.
       on and capture off. One runs at a time, on the tab selected when it started. Unlike requests and console
       it keeps more than the last 200, and lists both together.
 
-  route <glob> <how> | off <glob>|--all       fake, patch, delay or fail the selected tab's matching requests
+  route <glob> <how> | off <glob>|--all       fake, patch, delay, fail, rewrite or redirect the tab's requests
       Arguments:
         <glob> <status> <json>
                             answers with this status (200-599) and JSON (the rest of the line), or no body. It
@@ -845,6 +845,13 @@ requests and console record all the time; a capture records only while it runs.
         <glob> delay <time>
                             holds it that long, then lets it through.
         <glob> abort        fails it as if the connection broke.
+        <glob> rewrite <url>
+                            sends it to that URL instead; the page never sees the change, and its answer comes
+                            as the one for the URL asked for.
+        <glob> redirect <url> [status]
+                            answers with a redirect to that URL, which the page then follows, its address bar
+                            too. Default: 302; 301, 303, 307 or 308. A POST keeps its method and body only
+                            with 307 or 308.
         off <glob> | --all  removes one route, or all.
         (none)              lists the selected tab's routes.
       Options:
@@ -859,6 +866,21 @@ requests and console record all the time; a capture records only while it runs.
 
       Routes belong to the tab and last until route off or the REPL exits. Routing the same glob again
       replaces it. A glob may be quoted. Example: route **/api/cart patch {"total": 0}
+
+      Rewrite and redirect: a ** in the URL takes what the glob's ** matched, so the glob may have only one.
+      Not **/dashboard/**, which has two: write the host out. route https://host/dashboard/** rewrite
+      https://host/app/dashboard/** sends /dashboard/x to /app/dashboard/x. A URL with no host (/login) is on
+      the request's. Each prints Rewritten: or Redirected:, and requests shows the URL asked for, marked
+      rewritten or redirected. Only HTTP is routed: a WebSocket still goes where the page sent it. A page
+      loaded through a rewrite keeps its own address, so its relative links resolve against that; a redirect
+      moves it. The request a redirect leads to goes to the network unrouted, a fake for its URL included.
+
+      A rewrite to the same protocol is the browser's own request, sent on: it goes out with the new URL's
+      cookies, under the browser's rules for a request from another site (often none), and a redirect it
+      answers with resolves against the new URL. To another protocol (an https page to http://localhost), the
+      REPL sends the request itself, with the page's cookies, and passes its answer back: a cookie the answer
+      sets is kept for the page's site and for the new URL's, a redirect resolves against the page's URL, and
+      a streamed answer (server-sent events) arrives only once it ends.
 
   network [on|off|slow [<ms> [<kbps>]]]       cut, slow or restore the tab's network
       Arguments:
