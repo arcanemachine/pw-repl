@@ -242,7 +242,9 @@ first, as Playwright does; profile counts that scroll in the action's step.
 
   touch <gesture> <x> <y> ...                         tap, swipe or pinch at a point, as a finger
       Arguments:
-        tap <x> <y>         a tap: the page gets pointer and touch events, then click.
+        tap <x> <y>         a tap: the page gets pointer and touch events, then mousedown, mouseup and click,
+                            as for a finger; focus moves to what was tapped, or off a field when the tap is
+                            beside it.
         doubletap <x> <y>   two taps: a dblclick after them.
         longpress <x> <y> [time]
                             held down this long, then lifted. Default: 800ms. In headless Chromium it is still

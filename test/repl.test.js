@@ -430,6 +430,14 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     const events = last => ok(`eval (async () => { for (let i = 0; i < 40 && events[events.length - 1] !== ${JSON.stringify(last)}; i++) await new Promise(r => setTimeout(r, 25)); return events.splice(0).join(" "); })()`);
     assert.equal(await ok('touch tap 60 100'), 'Tapped at 60, 100');
     assert.equal(await events('click'), 'pointerdown pointerup click');
+    // A tap moves focus as a finger's does: off a field when beside it, onto one tapped.
+    await ok('eval const f = document.createElement("input"); f.id = "field"; f.style.cssText = "position:absolute; left:250px; top:440px; width:100px; height:30px"; document.body.append(f); f.focus(); 0');
+    await ok('touch tap 60 100');
+    await events('click');
+    assert.equal(await ok('eval document.activeElement.tagName'), 'BODY');
+    await ok('touch tap 300 455');
+    await events('click');
+    assert.equal(await ok('eval document.activeElement.id'), 'field');
     // Far from the tap before, so not taken as a double-tap with it.
     assert.equal(await ok('touch doubletap 200 300'), 'Double-tapped at 200, 300');
     assert.match(await events('dblclick'), /^pointerdown pointerup (?:click )?pointerdown pointerup click dblclick$/);
