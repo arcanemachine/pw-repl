@@ -367,6 +367,21 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await ok('fill #name ""');
   });
 
+  it('holds a key down until keyup, for the keys and clicks after it', async () => {
+    await ok('eval window.keys = []; for (const t of ["keydown", "keypress", "keyup", "click"]) addEventListener(t, e => keys.push(`${t} ${e.key} ${e.shiftKey}`)); document.querySelector("#name").value = ""; document.querySelector("#name").focus()');
+    assert.equal(await ok('keydown shift'), 'Held down: Shift');
+    await ok('click #name');
+    assert.equal(await ok('keydown a'), 'Held down: a');
+    assert.equal(await ok('eval keys.join()'), 'keydown Shift true,click undefined true,keydown a true,keypress a true', 'nothing let go yet');
+    assert.equal(await ok('eval document.querySelector("#name").value'), 'a', 'a printable key types its character');
+    await ok('keyup a');
+    assert.equal(await ok('keyup Shift'), 'Released: Shift');
+    await ok('click #name');
+    assert.equal(await ok('eval keys.slice(4).join()'), 'keyup a true,keyup Shift false,click undefined false');
+    assert.match((await repl.run('keydown')).output, /^Error: Usage: keydown <key>, e\.g\. keydown Shift/);
+    await ok('fill #name ""');
+  });
+
   it('clicks with a button and modifiers', async () => {
     await ok('eval window.clicks = []; for (const t of ["click", "contextmenu", "auxclick", "dblclick"]) document.querySelector("#go").addEventListener(t, e => clicks.push(`${t}:${e.button}:${e.shiftKey}`)); 0');
     const ref = /button "Go" \[ref=((?:f\d+)?e\d+)\]/.exec(await ok('snapshot'))[1];

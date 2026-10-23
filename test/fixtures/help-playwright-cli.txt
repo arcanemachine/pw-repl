@@ -47,7 +47,6 @@ Not here as such:
   attach: pw-repl serve connects to the browser on PW_CDP_URL; pw-repl skill has the rest
   detach: pw-repl stop, or quit at the prompt, disconnects and leaves the browser running
   drop, webmcp-list, webmcp-call: not here yet
-  keydown, keyup: not here yet; press <key> presses and releases one
   pdf: not here yet; screenshot --full-page saves the whole page as a PNG
   generate-locator: not here yet; a snapshot ref (e5) works as a selector in any command
   cookie-get: not here yet; cookies lists them without values, and cdp Network.getCookies {} shows the
