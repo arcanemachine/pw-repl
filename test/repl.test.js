@@ -1873,7 +1873,6 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.equal((await repl.run('viewport 0x0')).output, 'Error: A width and a height are 1 or more (got 0x0)');
     await ok('viewport 700X500');
     assert.match(await ok('modes'), /\(viewport:700x500\)/);
-    assert.match((await repl.run('emulate mobile')).output, /viewport off first/, 'one screen size at a time');
     const shot = /Saved: (\S+)/.exec(await ok('screenshot'))[1];
     const png = fs.readFileSync(shot);
     fs.unlinkSync(shot);
@@ -1884,6 +1883,20 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await ok('viewport 640x480');
     assert.match(await ok('modes off'), /viewport off/);
     assert.equal(await ok('viewport'), `${windowSize} (the window's page area)`);
+  });
+
+  it('replaces a viewport with a phone\'s size, naming who set it', async () => {
+    await ok('viewport 375x700');
+    assert.match(await ok('emulate mobile'), /^Replaced the viewport set by you \(375x700\): a phone has its own size$/m);
+    assert.match(await ok('viewport'), /^412x839 /);
+    assert.doesNotMatch(await ok('modes'), /viewport/, 'gone, not kept beside the phone');
+    assert.match((await repl.run('viewport 800x600')).output, /emulate mobile off first/, 'the other way still refuses');
+    await ok('emulate mobile off');
+    await repl.runAs('vp-a', `tab new ${site.url}/?vp-a`);
+    await repl.runAs('vp-a', 'viewport 375x700');
+    await ok('tab ?vp-a');
+    assert.match(await ok('emulate mobile'), /^Replaced the viewport set by vp-a \(375x700\)/m);
+    await ok('tab close ?vp-a');
   });
 
   it('screenshots a viewport wider than the window at its size after a navigation', async () => {

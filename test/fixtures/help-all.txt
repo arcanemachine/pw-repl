@@ -557,7 +557,7 @@ Output is capped; --all right after the command, or at the end, shows everything
         off                 back to the window's page area.
         (none)              shows the size, and whether it was set or is the window's page area.
 
-      emulate mobile sets a phone's size instead, and each refuses while the other is on.
+      emulate mobile sets a phone's size instead, replacing a viewport; viewport refuses while it is on.
 
       The window's page area is the page's size without a viewport set. Chromium's --window-size flag sizes
       the whole window, frame included, so the page is smaller: --window-size=1280,900 gives 1280x757 in a
@@ -579,8 +579,8 @@ Output is capped; --all right after the command, or at the end, shows everything
         (none)              shows what is on.
 
       Per tab, until turned off or the REPL exits; emulate mobile <device> while another is on switches to it.
-      Mobile and viewport both set the screen size, so each refuses while the other is on: viewport off before
-      emulate mobile, and emulate mobile off before viewport.
+      Mobile and viewport both set the screen size: emulate mobile replaces a viewport, and says whose it was;
+      viewport refuses while mobile is on, so emulate mobile off before it.
 
       The page sees the user agent, touch and navigator.languages from its next load: reload after turning
       mobile or locale on or off. Touch means the page sees a touch screen; click still clicks with the mouse,
