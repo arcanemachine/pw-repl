@@ -553,7 +553,8 @@ Output is capped; --all right after the command, or at the end, shows everything
   viewport [WxH | off]                                 show, set or unset the viewport size
       Arguments:
         <W>x<H>             sets the selected tab's page to that size, until viewport off, modes off or the
-                            REPL exits. The window is not resized.
+                            REPL exits. The window is not resized. A tab opened later has the window's size:
+                            set it again there.
         off                 back to the window's page area.
         (none)              shows the size, and whether it was set or is the window's page area.
 
