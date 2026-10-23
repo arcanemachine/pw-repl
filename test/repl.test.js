@@ -1746,7 +1746,14 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       const saved = require('path').join(dir, 'h1.jpg');
       assert.equal(sent.stdout.trim(), `Saved: ${saved}`, 'relative to the sender\'s folder');
       assert.equal(fs.readFileSync(saved).subarray(0, 2).toString('hex'), 'ffd8', 'a JPEG');
-      assert.match((await repl.run(`screenshot --filename="${saved}"`)).output, /already exists/);
+      // Saved by an unnamed sender, as repl.run is: its own, so saved over.
+      assert.equal(await ok(`screenshot --filename="${saved}"`), `Saved: ${saved}\nIt replaced the one you saved there before.`);
+      await repl.runAs('shot-other', `tab new ${site.url}/?shot-other`);
+      assert.match((await repl.runAs('shot-other', `screenshot --filename="${saved}"`)).output, /^Error: Screenshot already exists: [^;]+h1\.jpg; not one you saved in this REPL, so it is kept: remove it, or save under another name$/m, 'another client\'s');
+      await repl.runAs('shot-other', 'tab close ?shot-other');
+      const stray = require('path').join(dir, 'stray.png');
+      fs.writeFileSync(stray, '');
+      assert.match((await repl.run(`screenshot --filename="${stray}"`)).output, /not one you saved in this REPL/, 'a file the REPL did not write');
       const spaced = require('path').join(dir, 'a b');
       fs.mkdirSync(spaced);
       assert.match(await ok(`screenshot --full-page --filename="${require('path').join(spaced, 'page.png')}"`), /a b\/page\.png$/, 'a quoted path with a space');
