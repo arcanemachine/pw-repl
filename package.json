@@ -33,7 +33,7 @@
     "typecheck": "tsc",
     "preversion": "npm run typecheck && npm test",
     "release": "npm version -m \"chore: release %s\"",
-    "deploy": "node scripts/check-tagged.js && git push --follow-tags && npm publish",
+    "deploy": "node scripts/check-tagged.js && git push --follow-tags && npm login && npm publish",
     "prepublishOnly": "node scripts/check-tagged.js"
   },
   "engines": {
