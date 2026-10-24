@@ -101,9 +101,10 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `fe
    `package.json` and `package-lock.json`, commits it as `chore: release X.Y.Z`, and tags that commit
    `vX.Y.Z`. A failed check leaves no commit and no tag. `preversion` is an npm script that runs only on a
    release, not a git hook: commits are never checked.
-3. `npm run deploy` pushes the commits and the tag, then publishes. It, and `npm publish` on its own
-   (`prepublishOnly`), refuse unless HEAD is the commit tagged `vX.Y.Z` and the tree is clean, untracked
-   files included (`scripts/check-tagged.js`): what is published is the commit `release` checked.
+3. `npm run deploy` pushes the commits and the tag, logs in to npm (`npm login`), then publishes. It,
+   and `npm publish` on its own (`prepublishOnly`), refuse unless HEAD is the commit tagged `vX.Y.Z` and
+   the tree is clean, untracked files included (`scripts/check-tagged.js`): what is published is the
+   commit `release` checked.
 
 A release cut too early and not pushed yet is undone (its commit and tag) and cut again after the fixes.
 
