@@ -205,6 +205,19 @@ redraw();
 pad.addEventListener('wheel', e => { e.preventDefault(); log.textContent += 'wheel:' + e.deltaY + '@' + e.clientX + ',' + e.clientY + ' '; });
 </script>`);
     }
+    // Controls below the edge of a box that clips them: one a user cannot scroll (overflow: hidden, a stage
+    // panned by a transform inside it), one a user can (overflow: auto, a carousel's track).
+    if (req.url === '/clipped') {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      return res.end(`<!doctype html><title>Clipped</title><body style="margin:0">
+<div id="diagram" style="position:absolute;top:0;left:0;width:300px;height:200px;overflow:hidden">
+  <div style="transform:translate(-20px,-20px);height:1000px"><button id="top" style="margin-top:40px">Top</button><div style="height:460px"></div>
+    <button id="node" onclick="log.textContent += 'node '">Node</button>
+    <input type="checkbox" id="toggle" onclick="event.preventDefault()"></div></div>
+<div id="track" style="position:absolute;top:0;left:400px;width:300px;height:200px;overflow:auto">
+  <div style="height:500px"></div><button id="slide" onclick="log.textContent += 'slide '">Slide</button></div>
+<p id="log" style="position:absolute;top:250px"></p>`);
+    }
     // Planted slowness for profile: a load that waits on a big response, then draws for 70ms; a wheel
     // handled in script (a map's zoom) that forces a layout; a slow click. Named functions, to find by name.
     if (req.url === '/slow-map') {

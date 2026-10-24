@@ -102,6 +102,20 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.equal((await repl.run('stop -e /tmp/x.sock')).output, 'Error: stop is a pw-repl subcommand, run at the shell: pw-repl stop ...');
   });
 
+  it('says when an action scrolled a box a user cannot scroll', async () => {
+    await ok(`tab new ${site.url}/clipped`);
+    const note = /\nNote: to reach it, Playwright scrolled <div#diagram> by 0, \d+, though it has overflow: hidden, which a user cannot scroll; the page may not expect it, and its view stays shifted \(help click --all\)\.$/;
+    assert.match(await ok('click #node'), new RegExp(`^Clicked: #node${note.source}`));
+    assert.equal(await ok('eval log.textContent'), 'node ');
+    assert.equal(await ok('click #node'), 'Clicked: #node', 'once in view, nothing scrolls');
+    assert.equal(await ok('click #top'), 'Clicked: #top', 'scrolled back to 0, 0, as the page keeps it, unshifted');
+    assert.equal(await ok('click #slide'), 'Clicked: #slide', 'a box a user can scroll is not named');
+    await ok('eval diagram.scrollTop = 0');
+    const failed = await repl.run('check #toggle');
+    assert.equal(failed.status, 'error', failed.output);
+    assert.match(failed.output, note, 'named when the action fails after scrolling too');
+  });
+
   it('clicks the first match that can be clicked, and says which, or why none can', async () => {
     await ok(`tab new ${site.url}/pick`);
     try {
