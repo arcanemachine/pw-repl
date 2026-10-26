@@ -1497,7 +1497,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await ok('select #color Blue');
     let trail = '';
     await waitFor(async () => /select combobox/.test(trail = await ok('watch')), 'the select');
-    assert.match(trail, /type textbox "Name" "Ada"\n\S+ select combobox "Color" "Blue"/);
+    assert.match(trail, /type textbox "Name" "Ada"\n +selector: .*\n\S+ select combobox "Color" "Blue"/);
     await ok('watch off');
   });
 
@@ -1520,9 +1520,9 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     trail += '\n' + await ok('watch new');
     assert.equal(trail.match(/type textbox "Name"/g).length, 2, trail);
     assert.match(trail, /type textbox "Name" "abc"\n/);
-    assert.match(trail, /type textbox "Name" "abcdef"\n\S+ press textbox "Name" Enter/, 'typing is recorded before the Enter that ends it, with the whole value');
+    assert.match(trail, /type textbox "Name" "abcdef"\n +selector: .*\n\S+ press textbox "Name" Enter/, 'typing is recorded before the Enter that ends it, with the whole value');
     assert.match(trail, /press \S+.* Escape/);
-    assert.match(trail, /type textbox "Password" \(a password: not recorded\)\n\S+ press textbox "Password" Enter/);
+    assert.match(trail, /type textbox "Password" \(a password: not recorded\)\n +selector: .*\n\S+ press textbox "Password" Enter/);
     assert.doesNotMatch(trail, /hunter2|fill textbox "Name"/);
     assert.doesNotMatch(trail, /press button/, 'Enter on a button is left to the click it causes');
     await ok('watch off');
