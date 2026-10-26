@@ -431,6 +431,15 @@ describe('key names', () => {
   });
 });
 
+describe('screenshot files', () => {
+  const { SCREENSHOT_FILE } = require('../lib/syntax');
+
+  it('reads a path or an image\'s name as a file, and a selector with a / as a selector', () => {
+    for (const word of ['x.png', 'shots/x', './x', '~/x', '/abs/x']) assert.ok(SCREENSHOT_FILE.test(word), word);
+    for (const word of ['a[href="/x"]', 'xpath=//a', '//a', 'text=a/b', 'my shots/x', 'shots/a+b']) assert.ok(!SCREENSHOT_FILE.test(word), word);
+  });
+});
+
 describe('send --file variables', () => {
   const { variablesIn, expandVariables } = require('../lib/syntax');
   const values = { PW_PASSWORD: 'a"b\\c d', PW_WHO: 'Ada' };

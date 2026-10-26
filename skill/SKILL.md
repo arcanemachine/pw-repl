@@ -238,6 +238,8 @@ pw-repl send -c <name> close                        # your modes off; tab close 
 - To point something out, to the user or in a screenshot, `highlight <ref|selector>` draws a box over it
   without changing the page (`--style=<css>` restyles it; `highlight off` hides them), without
   Playwright's locator label unless `highlight --labels on`.
+- To screenshot one element, `screenshot <ref|selector>` (`--margin` for what is drawn around it);
+  `highlight` it first to check its edges, then `highlight off`.
 - For a video, `help video` says how: a take written as a file and sent with `send --file`, `record on`
   around it, `cursor on` for a pointer, `toast` to say what is happening, and the pacing recording adds
   for the viewer; a screen recorder on the user's machine records what they see.

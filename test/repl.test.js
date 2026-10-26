@@ -2005,6 +2005,18 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     try {
       assert.equal(await read(`screenshot ${refs.Box} --margin`, [8, 8], [15, 15], [16, 16]), '132x132 rwb', '16px by default');
       assert.equal(await read(`screenshot ${refs.Box} --margin=0`, [0, 0]), '100x100 b');
+      // A selector: any word not a name, ref or file, or a quoted one, with quotes inside it kept.
+      assert.equal(await read('screenshot \'role=button[name="Box"]\' --margin', [8, 8], [15, 15], [16, 16]), '132x132 rwb', 'a quoted selector');
+      assert.equal(await read('screenshot button:text-is("Box") box', [0, 0]), '100x100 b', 'a selector, then a name');
+      assert.match((await repl.run('screenshot css=button')).output, /^Error: 3 elements match css=button; screenshot takes one/m);
+      assert.match((await repl.run('screenshot #box #corner')).output, /^Error: Usage: screenshot/, 'one element');
+      // Through send, a selector with a space, quotes and a / stays one word, not a file.
+      const { spawnSync } = require('child_process');
+      const sent = spawnSync(process.execPath, [require('path').join(__dirname, '..', 'bin', 'pw-repl.js'), 'send', '-e', repl.socket, 'screenshot', 'body > button:text-is("Box"):not([data-x="a/b"])'], { encoding: 'utf8' });
+      const file = /^Saved: (\S+)$/m.exec(sent.stdout)?.[1];
+      assert.ok(file, sent.stdout + sent.stderr);
+      assert.equal(`${PNG.sync.read(fs.readFileSync(file)).width}`, '100');
+      fs.unlinkSync(file);
       assert.equal(await read(`screenshot ${refs.Corner} --margin 30`, [0, 0], [50, 50]), '80x80 bw', 'cut at the page\'s edge');
       await ok('eval scrollTo(0, 0)');
       assert.equal(await read(`screenshot ${refs.Edge} --margin 20`, [19, 30], [20, 30], [99, 30], [50, 66]), '100x80 wbbr', 'its margin below the fold, not shifted by the scrollbar');
