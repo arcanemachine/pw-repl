@@ -10,6 +10,8 @@ is doing in your browser, and the agent can see what you did.
 
 [![pw-repl demo, recorded by pw-repl](docs/pw-repl-demo.webp)](https://github.com/user-attachments/assets/c4114933-8ef2-455e-bc9e-1dd6f1fe9c07)
 
+> NOTE: The REPL window in the above video is simulated. The actual tool runs in a terminal, and your browser will look the same as it usually does. The demo uses the virtual REPL to emphasize what's happening in the `pw-repl` tool as it's working.
+
 A 90-second demo, recorded by pw-repl itself from one script of commands. The command panel on the
 right is part of the demo page, showing what the agent sends.
 
