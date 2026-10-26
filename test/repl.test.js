@@ -1078,6 +1078,9 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       assert.match(steps, /type textbox "Name" "-Ada  "/, 'what was typed, shown');
       assert.match(steps, /type textbox "Password" \(a password: not recorded\)/);
       assert.doesNotMatch(steps, /hunter|424242/, 'no secret, even once shown as text');
+      // Each step's selector, quoted to paste into a command, or why it has none.
+      assert.match(steps, /type textbox "Name" "-Ada  "\n +selector: 'role=textbox\[name\*="Name"\]'\n/);
+      assert.match(steps, /click i "\+"[^\n]*\n +selector: \(none: not unique\)\n/);
       assert.match(await ok(`watch save ${file}`), /^Saved \d+ steps to \S+flow\.txt; 2 could not be written as commands[\s\S]*\{\{ PW_PASSWORD \}\}, \{\{ PW_CODE \}\}\.\nPW_PASSWORD=\.\.\. PW_CODE=\.\.\. pw-repl send --file/);
       const saved = fs.readFileSync(file, 'utf8');
       assert.equal(fs.statSync(file).mode & 0o777, 0o600, 'only the user reads what they typed');
@@ -1433,7 +1436,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await waitFor(async () => /#\d+ GET 200 \S+\/api\/data/.test(trail = await ok('watch')), 'the click and its request');
     assert.match(trail, /type textbox "Name" "secret-value"\n/, 'what was typed');
     assert.match(trail, /type textbox "Password" \(a password: not recorded\)\n/);
-    assert.match(trail, /click button "Load"\n +#\d+ GET 200 \S+\/api\/data/);
+    assert.match(trail, /click button "Load"\n +selector: 'role=button\[name\*="Load"\]'\n +#\d+ GET 200 \S+\/api\/data/);
     assert.match(trail, /watch save <file> +save them as commands/);
     assert.doesNotMatch(trail, /hunter2/);
     await ok(`goto ${site.url}/`);
@@ -1555,7 +1558,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await ok('click #go');
     let trail = '';
     await waitFor(async () => /Hello/.test(trail += '\n' + await ok('watch new')), 'the change the click made', 6000);
-    assert.match(trail, /click button "Go"(?: \(continued\))?\n +[+~] .*Hello zzz-typed/);
+    assert.match(trail, /click button "Go"(?: \(continued\))?\n(?: +selector: .*\n)? +[+~] .*Hello zzz-typed/);
     await ok('watch on');
     await ok('click #go');
     await new Promise(r => setTimeout(r, 1500));
@@ -1614,7 +1617,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match(await ok('watch on --live'), /Each step prints here once it settles/);
     const start = repl.stdout.length;
     await ok('click #load');
-    await waitFor(() => /\[watch\] \S+ click button "Load"\n {8}\s+#\d+ GET 200 \S+\/api\/data/.test(repl.stdout.slice(start)), 'the step with its request', 6000);
+    await waitFor(() => /\[watch\] \S+ click button "Load"\n {8}\s+selector: 'role=button\[name\*="Load"\]'\n {8}\s+#\d+ GET 200 \S+\/api\/data/.test(repl.stdout.slice(start)), 'the step with its request', 6000);
     await ok('click #go');
     await ok('click #load');
     await waitFor(() => /\[watch\] \S+ click button "Go"[\s\S]*\[watch\] \S+ click button "Load"/.test(repl.stdout.slice(start)), 'a step ended by the next one, then that one', 6000);
