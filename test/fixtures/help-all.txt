@@ -197,7 +197,8 @@ first, as Playwright does; profile counts that scroll in the action's step.
       holds. Their ISO form (2026-10-02) is refused, since typed it comes out mangled: fill sets it.
 
   press <key> | press <selector> <key>                press a key: Enter, Escape, Control+A (any case)
-      Down and up at once. To hold one, such as Shift while the page shows what it does then: keydown, keyup.
+      Down and up at once, on the focused element, else the page; with a <selector>, on that element, focused
+      first (no click). To hold one, such as Shift while the page shows what it does then: keydown, keyup.
 
       A key whose key and code differ, as a numpad's with Num Lock off (key ArrowUp, code Numpad8), is beyond
       press: send cdp Input.dispatchKeyEvent twice, with these parameters, then with "keyUp" in place of
@@ -213,6 +214,17 @@ first, as Playwright does; profile counts that scroll in the action's step.
       all in a browser someone else is using.
 
   keyup <key>                                         release a key keydown held
+  focus <selector>                                    give an element the keyboard, without clicking it
+      As Playwright's locator.focus, on the first match: no pointer events (the cursor glides to it, the mouse
+      does not), so the press, keydown and type <text> after it go there. An element that cannot take focus
+      (no tabindex, or disabled) is refused, naming what has focus instead. For one key, press <selector>
+      <key> focuses and presses at once.
+
+  blur [<selector>]                                   take focus off an element, or off whatever has it
+      As Playwright's locator.blur: the page gets blur and focusout, as when the user moves on, without moving
+      focus anywhere else (Tab would, wherever the page's tab order leads). An element that does not have
+      focus is refused, naming what has it.
+
   select <selector> <value>                           choose an option; the value is the rest of the line
       Arguments:
         <value>             an option's value or its label.

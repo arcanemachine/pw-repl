@@ -396,6 +396,23 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await ok('fill #name ""');
   });
 
+  it('focuses an element without a pointer, and blurs it, refusing what cannot take focus', async () => {
+    await ok('eval window.seen = []; document.body.insertAdjacentHTML("beforeend", "<div id=handle role=separator tabindex=0>h</div><div id=plain>p</div><button id=off disabled>o</button>"); for (const t of ["pointerdown", "mousedown", "click", "keydown", "blur"]) handle.addEventListener(t, e => seen.push(`${t} ${e.key || ""}`.trim())); document.activeElement.blur(); 0');
+    assert.equal(await ok('focus #handle'), 'Focused: #handle');
+    await ok('press ArrowUp');
+    assert.equal(await ok('eval seen.join()'), 'keydown ArrowUp', 'no pointer events, and the key went to it');
+    assert.match((await repl.run('focus #plain')).output, /^Error: #plain did not take focus: it is not focusable \(no tabindex, or disabled\); focus is on div#handle/);
+    assert.match((await repl.run('focus #off')).output, /^Error: #off did not take focus: .*; focus is on div#handle/);
+    assert.match((await repl.run('blur #name')).output, /^Error: #name did not have focus; focus is on div#handle/);
+    assert.equal(await ok('blur #handle'), 'Blurred: #handle');
+    assert.equal(await ok('eval seen.at(-1) + " " + (document.activeElement === document.body)'), 'blur true');
+    assert.match((await repl.run('blur')).output, /^Error: Nothing on the page has focus/);
+    assert.match((await repl.run('focus #plain')).output, /; nothing on the page has focus/);
+    await ok('focus #name');
+    assert.equal(await ok('blur'), 'Blurred the focused input#name');
+    await ok('eval ["handle", "plain", "off"].forEach(id => document.getElementById(id).remove()); 0');
+  });
+
   it('clicks with a button and modifiers', async () => {
     await ok('eval window.clicks = []; for (const t of ["click", "contextmenu", "auxclick", "dblclick"]) document.querySelector("#go").addEventListener(t, e => clicks.push(`${t}:${e.button}:${e.shiftKey}`)); 0');
     const ref = /button "Go" \[ref=((?:f\d+)?e\d+)\]/.exec(await ok('snapshot'))[1];

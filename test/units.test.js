@@ -466,6 +466,8 @@ describe('step labels', () => {
     assert.equal(stepLabel('check', '"role=checkbox[name=\\"Email me news\\"]"'), 'check role=checkbox[name="Email me news"]');
     assert.equal(stepLabel('click', '"text=Send ticket" right --modifiers=Shift'), 'click text=Send ticket right');
     assert.equal(stepLabel('mouse', 'move 10 20'), 'mouse move 10 20');
+    assert.equal(stepLabel('focus', '"text=Drag handle"'), 'focus text=Drag handle');
+    assert.equal(stepLabel('blur', ''), 'blur');
     assert.equal(stepLabel('fill', '"text=Your name" Ada'), 'fill text=Your name');
     assert.equal(stepLabel('type', '--delay=0 #name secret'), 'type #name');
   });
