@@ -998,8 +998,9 @@ show sensitive data (cdp Network.getCookies shows cookie values).
         --all               the whole result, not capped.
 
       A command goes through a temporary session, detached afterwards, so subscriptions and settings do not
-      persist (input aside, below). Browser.close and Target.closeTarget are refused, and so is
-      Page.handleJavaScriptDialog: dialog answers one.
+      persist (input aside, below): an Emulation override ends with the command; emulate sets one that stays.
+      Browser.close and Target.closeTarget are refused, and so is Page.handleJavaScriptDialog: dialog answers
+      one.
 
       Input (Input.dispatchTouchEvent, dispatchMouseEvent, the synthesize gestures): through a session kept
       for the tab, so a sequence sent one call at a time stays one sequence (Chrome drops it when the session
