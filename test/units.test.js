@@ -480,6 +480,8 @@ describe('playwright-cli names', () => {
     assert.deepEqual(translate('tab-list'), { text: 'tab', as: 'tab' });
     assert.equal(translate('go-back').text, 'back');
     assert.equal(translate('set-color-scheme dark').text, 'emulate dark');
+    assert.equal(translate('set-reduced-motion reduce').text, 'emulate reduced-motion reduce');
+    assert.equal(translate('clear-media').text, 'emulate media off');
     assert.equal(translate('network-state-set offline').text, 'network off');
     assert.equal(translate('resize 800 600').text, 'viewport 800x600');
     assert.equal(translate('video-start demo.webm').text, 'record on demo.webm');
@@ -559,6 +561,7 @@ describe('playwright-cli names', () => {
     assert.match(translate('run-code async page => 1').refuse, /eval <JavaScript>/);
     assert.match(translate('tab-close 2').refuse, /tab <index> then tab close/, 'an index here would be read as part of a URL');
     assert.match(translate('set-color-scheme sepia').refuse, /emulate dark\|light/);
+    assert.match(translate('set-contrast less').refuse, /emulate contrast more\|no-preference/);
   });
 });
 

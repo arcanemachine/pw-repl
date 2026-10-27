@@ -620,12 +620,20 @@ Output is capped; --all right after the command, or at the end, shows everything
       unless the flags after -- give one; a profile it was given and has used before may keep its own last
       size. For a page of an exact size, use viewport <W>x<H>.
 
-  emulate [<what> [off] | off]                         emulate a phone, dark mode, a locale or a timezone
+  emulate [<what> [off] | off]                         emulate a phone, dark mode, reduced motion and more
       Arguments:
         mobile [device]     a phone's screen, touch and user agent: a Pixel 7, or a device named as in
                             Playwright's list, e.g. emulate mobile iPhone 13. A name that is not exact lists
                             the devices it matches (emulate mobile galaxy).
         dark | light        the color scheme the page's CSS and matchMedia see.
+        reduced-motion [reduce | no-preference]
+                            prefers-reduced-motion. Default: reduce.
+        forced-colors [active | none]
+                            forced-colors. Default: active.
+        contrast [more | no-preference]
+                            prefers-contrast. Default: more.
+        media <print | screen>
+                            the CSS media type: print applies the page's print styles.
         locale <tag>        the language (Accept-Language, navigator.language) and date and number formats,
                             e.g. fr-FR.
         timezone <zone>     an IANA timezone, e.g. Asia/Tokyo.
@@ -639,8 +647,8 @@ Output is capped; --all right after the command, or at the end, shows everything
 
       The page sees the user agent, touch and navigator.languages from its next load: reload after turning
       mobile or locale on or off. Touch means the page sees a touch screen; click still clicks with the mouse,
-      and sends no touch events. Dark, light and timezone apply at once, but what the page already drew with
-      them (times, colors set by its script) changes only when it reloads.
+      and sends no touch events. The rest apply at once, but what the page already drew with them (times,
+      colors set by its script) changes only when it reloads.
 
   wait [text|request] <what> [--gone] [time]           wait for an element, text, a response or a load (10s)
       Arguments:

@@ -20,6 +20,14 @@ playwright-cli's command names, and what they run here (each says so the first t
   localstorage-list      storage
   set-color-scheme       emulate dark|light
   clear-color-scheme     emulate dark off
+  set-reduced-motion     emulate reduced-motion reduce|no-preference
+  clear-reduced-motion   emulate reduced-motion off
+  set-forced-colors      emulate forced-colors active|none
+  clear-forced-colors    emulate forced-colors off
+  set-contrast           emulate contrast more|no-preference
+  clear-contrast         emulate contrast off
+  set-media              emulate media print|screen
+  clear-media            emulate media off
   network-state-set      network off|on
   route-list             route
   unroute                route off <glob>|--all
@@ -65,8 +73,6 @@ Not here as such:
   state-load: not here on purpose: it would replace the sign-ins of someone else sharing the browser
   install: not needed here: pw-repl needs no workspace set up; pw-repl skill says how to use it
   install-browser: not needed here: --launch uses Playwright's Chromium or one on the PATH (PW_CHROME)
-  set-reduced-motion, clear-reduced-motion, set-forced-colors, clear-forced-colors, set-contrast,
-      clear-contrast, set-media, clear-media: not here yet; emulate dark|light sets the color scheme
   request-headers, response-headers, request-body: not here yet; body <#> shows the response body
   video-chapter: not here: toast <text> --duration=3s shows a title over the page instead, in the video
   video-show-actions: not here; cursor on draws a pointer that moves to each action, without labels

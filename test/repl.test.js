@@ -1856,6 +1856,39 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match(await ok('eval matchMedia("(prefers-color-scheme: dark)").matches'), /false/);
   });
 
+  it('emulates reduced motion, forced colors, contrast and the media type, each kept when another stops', async () => {
+    const read = 'eval ["(prefers-color-scheme: dark)", "(prefers-reduced-motion: reduce)", "(forced-colors: active)", "(prefers-contrast: more)", "print"].map(q => matchMedia(q).matches).join(" ")';
+    const before = await ok(read);
+    assert.equal(before, 'false false false false false');
+    await ok('emulate dark');
+    assert.equal(await ok('emulate reduced-motion'), 'Emulating reduced-motion reduce in the selected tab');
+    await ok('emulate forced-colors');
+    await ok('emulate contrast');
+    assert.equal(await ok('emulate media print'), 'Emulating media print in the selected tab');
+    assert.equal(await ok(read), 'true true true true true');
+    const shown = await ok('emulate');
+    assert.match(shown, /^  reduced motion +reduce$/m);
+    assert.match(shown, /^  forced colors +active$/m);
+    assert.match(shown, /^  contrast +more$/m);
+    assert.match(shown, /^  media +print$/m);
+    assert.match(await ok('modes'), /\(emulate:dark,reduced-motion,forced-colors,contrast,media\)$/m);
+    assert.equal(await ok('emulate reduced-motion off'), 'Stopped emulating reduced-motion in the selected tab');
+    assert.equal(await ok(read), 'true false true true true', 'one stops, the others stay');
+    await ok('emulate reduced-motion no-preference');
+    assert.match(await ok('eval matchMedia("(prefers-reduced-motion: no-preference)").matches'), /true/);
+    await ok('emulate dark off');
+    assert.equal(await ok(read), 'false false true true true', 'the color scheme stops, the media features stay');
+    await ok('emulate media screen');
+    assert.match(await ok('eval matchMedia("screen").matches'), /true/);
+    for (const bad of ['emulate media', 'emulate reduced-motion fast', 'emulate contrast less', 'emulate forced-colors active now']) {
+      assert.equal((await repl.run(bad)).status, 'error', bad);
+    }
+    assert.match(await ok('emulate off'), /: reduced-motion, forced-colors, contrast, media$/);
+    await ok('emulate media print');
+    assert.match(await ok('modes off'), /: emulate off$/m);
+    assert.equal(await ok(read), before, 'everything is back as it was, the media type too');
+  });
+
   it('closes the one tab you opened of several a URL part matches, and refuses when that is not one', async () => {
     const as = (client, command) => repl.runAs(client, command);
     await as('tc-a', `tab new ${site.url}/?shared-part=a1`);

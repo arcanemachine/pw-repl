@@ -69,7 +69,8 @@ With `npx`, use `npx pw-repl@latest` the same way every time, so every command r
   it caused. Reproduce a bug by hand and the agent sees exactly what happened. `watch save` keeps the
   steps as a file of commands that runs them again.
 - **Breaking things on purpose.** Fake, patch, delay or fail responses, cut or slow the network, emulate a
-  phone, a locale or a timezone. All of it applies to one tab, so your other tabs are left alone.
+  phone, dark mode, reduced motion, a locale or a timezone. All of it applies to one tab, so your other
+  tabs are left alone.
 - **Videos that explain themselves.** Record a tab with a pointer that glides to each click, captions on
   screen, boxes around what matters, and pacing for a viewer.
 
@@ -84,7 +85,8 @@ With `npx`, use `npx pw-repl@latest` the same way every time, so every command r
   as they happen.
 - **Change the network:** fake a response (`route`), patch its JSON, delay it, fail it, send it to another
   URL or redirect it, or cut or slow the whole tab's network.
-- **Emulate:** a phone, dark mode, a locale, a timezone, a viewport size.
+- **Emulate:** a phone, dark mode, reduced motion, forced colors, contrast, print styles, a locale, a
+  timezone, a viewport size.
 - **Run code:** `eval` any JavaScript in the page, a line or a file of it, or send a raw CDP command with
   `cdp`; read what a Copy button put on the clipboard (`clipboard`).
 - **Wait:** for an element, some text, a response or a page load.
