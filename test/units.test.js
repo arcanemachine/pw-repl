@@ -470,6 +470,8 @@ describe('step labels', () => {
     assert.equal(stepLabel('blur', ''), 'blur');
     assert.equal(stepLabel('fill', '"text=Your name" Ada'), 'fill text=Your name');
     assert.equal(stepLabel('type', '--delay=0 #name secret'), 'type #name');
+    assert.equal(stepLabel('press', 'ArrowDown --delay=900 --repeat'), 'press', 'its options are no selector');
+    assert.equal(stepLabel('press', '#grid --delay 900 ArrowDown --repeat'), 'press #grid');
   });
 });
 

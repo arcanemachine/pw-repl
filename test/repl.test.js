@@ -396,6 +396,22 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await ok('fill #name ""');
   });
 
+  it('holds a key for --delay, repeating it as a keyboard does with --repeat', async () => {
+    await ok('eval window.keys = []; for (const t of ["keydown", "keyup"]) addEventListener(t, e => keys.push(`${t} ${e.key}${e.repeat ? " repeat" : ""}${e.isTrusted ? "" : " untrusted"}${e.shiftKey ? " shift" : ""}`)); document.querySelector("#name").value = ""; 0');
+    assert.equal(await ok('press #name ArrowDown --delay=100'), 'Pressed ArrowDown on #name, held 100ms');
+    assert.equal(await ok('eval keys.join()'), 'keydown ArrowDown,keyup ArrowDown', 'held, with no repeats');
+    await ok('eval keys = []');
+    assert.match(await ok('press #name Shift+ArrowDown --delay=700 --repeat'), /^Pressed Shift\+ArrowDown on #name, held 700ms, \d+ repeats?$/);
+    const keys = (await ok('eval keys.join()')).split(',');
+    assert.deepEqual(keys.slice(0, 3), ['keydown Shift shift', 'keydown ArrowDown shift', 'keydown ArrowDown repeat shift'], 'the last key repeats, trusted, under its modifier');
+    assert.deepEqual(keys.slice(-2), ['keyup ArrowDown shift', 'keyup Shift'], 'let go, last key first');
+    assert.deepEqual([...new Set(keys.slice(2, -2))], ['keydown ArrowDown repeat shift']);
+    await ok('press #name b --delay=600 --repeat');
+    assert.match(await ok('eval document.querySelector("#name").value'), /^bb+$/, 'a printable key types with each repeat');
+    assert.match((await repl.run('press ArrowDown --repeat')).output, /^Error: Usage: press .*: --repeat needs --delay/);
+    await ok('fill #name ""');
+  });
+
   it('focuses an element without a pointer, and blurs it, refusing what cannot take focus', async () => {
     await ok('eval window.seen = []; document.body.insertAdjacentHTML("beforeend", "<div id=handle role=separator tabindex=0>h</div><div id=plain>p</div><button id=off disabled>o</button>"); for (const t of ["pointerdown", "mousedown", "click", "keydown", "blur"]) handle.addEventListener(t, e => seen.push(`${t} ${e.key || ""}`.trim())); document.activeElement.blur(); 0');
     assert.equal(await ok('focus #handle'), 'Focused: #handle');
