@@ -9,7 +9,10 @@ Common tasks:
   run some JavaScript in the page         eval document.title; eval --file=check.js for a long one
   wait for a page or element              wait load, wait <selector> [--gone], wait text <text>
   choose a file in a file input           upload <selector> <file>
+  type a password, kept out of the log    fill <selector> "{{ PW_PASSWORD }}" (pw-repl send --help)
+  answer an alert or a confirm            dialog, then dialog accept or dismiss
   see it as a phone, or in dark mode      emulate mobile, emulate dark
+  see print styles or reduced motion      emulate media print, emulate reduced-motion
   tap, swipe or pinch as a finger         touch tap <x> <y>, touch pinch <x> <y> <scale>
   see what the page requested             requests, then body <#> for what one got back
   see console messages and errors         console
