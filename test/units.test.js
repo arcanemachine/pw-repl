@@ -29,8 +29,43 @@ describe('help', () => {
     for (const name of named) assert.ok(name === 'pw-repl' || Object.hasOwn(help.COMMANDS, name), name);
   });
 
-  it('names every topic in the overview', () => {
-    for (const topic of Object.keys(help.TOPICS)) assert.match(help.render(), new RegExp(`(\\n  |   )${topic} `));
+  it('names every topic, and every command under its topic, in the overview', () => {
+    const overview = help.render();
+    for (const [topic, { commands: names }] of Object.entries(help.TOPICS)) {
+      const row = new RegExp(`\\n  ${topic} +([^\\n]*(?:\\n {12}[^\\n]*)*)`).exec(overview);
+      assert.ok(row, topic);
+      assert.deepEqual(row[1].split(/,\s+/), names, topic);
+    }
+  });
+
+  it('greps every topic and command, each hit under its usage line', () => {
+    const text = help.render('--grep FORCED-colors');
+    assert.match(text, /^"FORCED-colors" is in the help of: emulate\.\n\n== emulate \(help emulate\) ==\nemulate \[/);
+    assert.match(text, /Arguments:\n  forced-colors/);
+    assert.doesNotMatch(text, /reduced-motion \[/, 'only the rows that mention it');
+    // A hit in what help <command> leaves out says where to read it.
+    assert.match(help.render('--grep overflow: hidden'), /== click \(help click --all\) ==\nclick <selector>/);
+    assert.match(help.render('--grep zzqq'), /^No help mentions "zzqq"\. For a playwright-cli name: help playwright-cli\.$/);
+    assert.match(help.render('--grep tab-list'), /tab-list is playwright-cli's: help tab-list\.$/);
+    assert.equal(help.render('--grep'), null);
+    assert.equal(help.render('--grep ""'), null);
+    for (const asked of ['--grep', '--grep ""']) assert.equal(help.notFound(asked), 'Usage: help --grep <text>');
+  });
+
+  it('greps a phrase across a line the help wraps, quoted or not', () => {
+    // Four words around the first line break in click's detail, which is stored wrapped.
+    const detail = /** @type {string} */ (help.COMMANDS.click.detail);
+    const at = detail.indexOf('\n');
+    const phrase = `${detail.slice(0, at).split(' ').slice(-2).join(' ')} ${detail.slice(at + 1).split(' ').slice(0, 2).join(' ')}`;
+    for (const query of [phrase, `"${phrase}"`, `'${phrase}'`]) assert.match(help.render(`--grep ${query}`), /== click \(help click\) ==/, query);
+  });
+
+  it('greps from the command line, over send, as at the prompt', () => {
+    const { execFileSync } = require('node:child_process');
+    const bin = path.join(__dirname, '..', 'bin', 'pw-repl.js');
+    for (const args of [['help', '--grep', 'overflow: hidden'], ['send', 'help', '--grep', 'overflow: hidden']]) {
+      assert.equal(execFileSync(bin, args, { encoding: 'utf8' }), `${help.render('--grep overflow: hidden')}\n`, args.join(' '));
+    }
   });
 
   it('renders topics and commands, and nothing for unknown names', () => {

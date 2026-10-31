@@ -27,8 +27,8 @@ const USAGE = `Usage:
   pw-repl where [-e endpoint | -s session]
       say which REPL send would reach
 
-  pw-repl help [topic | command | --all]
-      this usage; with a topic or command, the REPL's help for it
+  pw-repl help [topic | command | --all | --grep <text>]
+      this usage; with a topic or command, the REPL's help for it; --grep searches it
 
   pw-repl skill
       print an agent skill (SKILL.md) that teaches an agent to use the REPL
@@ -83,8 +83,8 @@ pane.`;
 
 const REPL_HELP = `The REPL's own commands: help at the pw> prompt, or pw-repl send help here (no REPL needed).
 
-pw-repl help <topic | command [--all] | --all> shows one part of it; pw-repl help video and pw-repl
-help playwright-cli are guides.`;
+pw-repl help <topic | command [--all] | --all> shows one part of it, and pw-repl help --grep <text>
+the parts that mention text; pw-repl help video and pw-repl help playwright-cli are guides.`;
 
 const SUBCOMMANDS = ['run', 'serve', 'attach', 'stop', 'send', 'where', 'help', 'skill'];
 

@@ -38,14 +38,19 @@ them on its own, and modes, shows its state and what you can run next.
 Times are in milliseconds, as in Playwright, or in seconds with an s: wait .done 30000, or wait .done
 30s.
 
-Topics (help <topic>):
-  tabs      open, select, close, navigate        network   requests, bodies, console, fakes, network off
-  interact  click, fill, type, press, select     devtools  eval, CDP commands, cookie and storage names
-  inspect   snapshot, watch, wait, screenshots   session   modes, server, clients, quitting
-  video     record a take, with a pointer
+Topics (help <topic>) and their commands (help <command>):
+  tabs      tab, goto, back, forward, reload, info
+  interact  click, dblclick, hover, drag, fill, type, press, keydown, keyup, focus, blur, select, check,
+            uncheck, upload, mouse, touch
+  inspect   snapshot, watch, profile, text, html, attrs, listeners, count, visible, links, inputs,
+            screenshot, highlight, viewport, emulate, wait, sleep
+  video     record, cursor, toast
+  network   requests, body, console, capture, route, network
+  devtools  eval, cdp, clipboard, cookies, storage
+  session   modes, dialog, help, quit
 
 help <command> for usage and caveats (e.g. help route), help <command> --all for all of it; help --all
-for everything.
+for everything, help --grep <text> to search it.
 
 Know playwright-cli? Its command names work here too (tab-list, go-back, set-color-scheme, route
 --status=...); help playwright-cli lists them.
@@ -1101,13 +1106,16 @@ Completion: @<id> <command> makes the REPL print [[pw-done:<id>:ok|error]] when 
       dialog then. cdp cannot answer one: Chrome lets only a session that saw it open do so. With nobody at
       the browser (e.g. headless), it is the only way to answer one.
 
-  help [topic | command | --all]    this help; --all prints every topic and command in full
+  help [topic | command | --all]    this help; --grep searches it, --all prints all of it
       Arguments:
         (none)              what this is, and the topics.
         <topic>             the topic, and one line per command in it.
         <command>           its usage, arguments, options and what most need to know.
         <command> --all     all of it, with what only goes wrong now and then.
         --all               every topic and command in full.
+        --grep <text>       each topic and command whose help mentions text (any case), with the paragraphs
+                            and rows that do, under its usage line. A hit in what help <command> leaves out
+                            heads its group with help <command> --all.
 
   quit                              disconnect, leaving Chromium running (one --launch started stops too)
       Runs immediately, even while another command is waiting. Only available at the prompt.

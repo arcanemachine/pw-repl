@@ -182,12 +182,15 @@ blindly retry a change), `64` usage or the REPL is not reachable. `pw-repl --hel
 
 ## Learn the commands
 
-Run `pw-repl send help`. It lists seven topics; `help <topic>` lists their commands, `help <command>`
-gives usage and caveats: read it before you use a command, since this file does not repeat them. When a
-command fails or does something you did not expect, read its `help <command>` before working around it.
-`help --all` prints everything, tens of kilobytes: a last resort, when the topics and commands have not
-answered. pw-repl answers help itself: it needs no running REPL, and never reaches one. If you know
-playwright-cli, its command names work too (`help playwright-cli` lists them).
+Run `pw-repl send help`. It lists seven topics and their commands; `help <topic>` gives a line on each
+command, `help <command>` usage and caveats: read it before you use a command, since this file does not
+repeat them. When a command fails or does something you did not expect, read its `help <command>`
+before working around it. When you do not know which command covers something, `help --grep <text>`
+searches all of the help (any case) and prints each paragraph that mentions it, under its command's
+usage line: `help --grep password`. `help --all` prints everything, tens of kilobytes: a last resort,
+when the topics, commands and a search have not answered. pw-repl answers help itself: it needs no
+running REPL, and never reaches one. If you know playwright-cli, its command names work too (`help
+playwright-cli` lists them).
 
 ### Coming from playwright-cli
 

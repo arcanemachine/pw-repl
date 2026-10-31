@@ -40,7 +40,7 @@ the REPL quits. Add `--headed` to see that browser and click in it yourself. The
 `pw>` prompt waits:
 
 ```text
-pw> help                          # common tasks and topics; help <topic>, help <command>, help --all
+pw> help                          # common tasks, and each topic's commands; help <command>, help --grep <text>
 pw> snapshot
 pw> click e3
 pw> screenshot
@@ -171,7 +171,8 @@ example the Docker bridge gateway, `ip route | awk '/default/ {print $3}'`).
 | point something out on the page       | `highlight <ref>`, then `highlight off`                       |
 | clean up                              | `modes off`                                                   |
 
-`help <topic>` lists the rest, and `help <command>` has usage and caveats.
+`help` lists the rest by topic, `help <command>` has usage and caveats, and `help --grep <text>` searches
+it all.
 
 ### Modes
 
