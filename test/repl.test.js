@@ -2727,6 +2727,9 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match(all, new RegExp(`^#${id} \\S+ sent push:\\{"a":1\\}\\n#${id} \\S+ sent binary\\n#${id} \\S+ received \\{"a":1\\}\\n#${id} \\S+ received \\[binary, 3 bytes\\]$`, 'm'));
     assert.match(all, /^#(\d+) \S+ received first\n#\1 \S+ received \[update\] second\n#\1 \S+ received third$/m, 'the stream\'s, an event named');
     assert.match(await ok(`messages #${id}`), new RegExp(`^#${id} websocket open ws:\\S+ \\(3 sent, 3 received\\)\\n\\S+ sent hello 1\\n`));
+    assert.match(await ok(`messages #${id} --all 1`), new RegExp(`^#${id} websocket open .*\\n\\(last 1 of 6 kept; messages #${id} 6 shows them all\\)\\n\\S+ received \\[binary, 3 bytes\\]$`), '--all before the filter is the option');
+    assert.match(await ok(`messages --all #${id} 1`), /\(last 1 of 6 kept; .*\n\S+ received \[binary, 3 bytes\]$/, 'and first, the runner\'s');
+    assert.equal(await ok('messages zz --all yy'), 'No messages containing zz --all yy', 'once the filter begins, the rest is the filter');
     assert.match(await ok('messages events 1'), /^#\d+ eventsource pending \S+\/events \(3 received\)\n\(last 1 of 3 kept; messages #\d+ 3 shows them all\)\n\S+ received third$/, 'one connection by its URL');
     assert.match(await ok('messages a":1'), /^#\d+ \S+ sent push:\{"a":1\}\n#\d+ \S+ received \{"a":1\}$/, 'a word in no URL filters');
     assert.match(await ok('requests /events'), /GET pending - eventsource \S+\/events \(3 received\)$/m);
