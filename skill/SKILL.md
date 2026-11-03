@@ -169,7 +169,8 @@ shows REPL commands only, not what was clicked in the browser (unless `watch on 
 that, look at the browser itself: `tab` and `info` for where things are, `requests` for the requests the
 clicks made (`body <#>` for what one returned), `messages` for what its WebSockets and SSE streams
 sent and received, `console` for console messages and page errors.
-`watch on` records each step someone takes in a tab, with the requests it caused; `watch` reads it back,
+`watch on` records each step someone takes in a tab, with the requests it caused and how many WebSocket
+or SSE messages went each way; `watch` reads it back,
 and `watch save <file>` writes the steps as commands that `send --file` runs again, a repro to keep.
 Before you watch someone, read `help watch`: what it keeps and leaves out, passwords, and sharing a watch
 with another client.
