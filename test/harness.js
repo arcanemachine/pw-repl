@@ -1,6 +1,7 @@
 // Real end to end: a private headless Chromium, a local site, and the REPL
 // itself with its server on a temp socket. Nothing is mocked.
 const { spawn } = require('child_process');
+const crypto = require('crypto');
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
@@ -175,10 +176,79 @@ const CONTROLS_PAGE = `<!doctype html><title>Controls</title>
 <script>partial.indeterminate = true;</script>`;
 
 // Served over http on 127.0.0.1, and over https on localhost (secureUrl): another protocol and host.
+// A WebSocket and server-sent events, for messages. The socket echoes what it is sent, as "echo <text>";
+// "push:<text>" is answered with the text alone, and "binary" with three bytes. On demand, not on a
+// timer, so a test sees exactly the messages it asked for. The page reconnects when its socket closes.
+const SOCKET_PAGE = `<!doctype html><title>Socket</title><button id="say" onclick="ws.send('said')">Say</button>
+<script>
+window.events = [];
+let n = 0;
+function connect() {
+  const ws = window.ws = new WebSocket(location.origin.replace('http', 'ws') + '/socket');
+  ws.onopen = () => { events.push('open'); ws.send('hello ' + (++n)); };
+  ws.onmessage = e => events.push('message:' + e.data);
+  ws.onclose = e => { events.push('close:' + e.code + ':' + e.wasClean); setTimeout(connect, 100); };
+}
+connect();
+window.listen = () => {
+  const es = window.es = new EventSource('/events');
+  es.onmessage = e => events.push('sse:' + e.data);
+  es.addEventListener('update', e => events.push('update:' + e.data));
+};
+if (location.search === '?listen') listen();
+</script>`;
+
+// Unmasked frames from the server, masked ones from the browser; only short ones (under 64 KB).
+function socketFrame(opcode, payload) {
+  const length = payload.length;
+  const head = length < 126 ? Buffer.from([0x80 | opcode, length]) : Buffer.from([0x80 | opcode, 126, length >> 8, length & 255]);
+  return Buffer.concat([head, payload]);
+}
+
+/** @param {import('net').Socket} socket */
+function serveSocket(req, socket) {
+  const accept = crypto.createHash('sha1').update(`${req.headers['sec-websocket-key']}258EAFA5-E914-47DA-95CA-C5AB0DC85B11`).digest('base64');
+  socket.write(`HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ${accept}\r\n\r\n`);
+  let pending = Buffer.alloc(0);
+  socket.on('error', () => {});
+  socket.on('data', data => {
+    pending = Buffer.concat([pending, data]);
+    for (;;) {
+      if (pending.length < 2) return;
+      const opcode = pending[0] & 15;
+      let length = pending[1] & 127;
+      let at = 2;
+      if (length === 126) { if (pending.length < 4) return; length = pending.readUInt16BE(2); at = 4; }
+      if (pending.length < at + 4 + length) return;
+      const mask = pending.subarray(at, at + 4);
+      const payload = Buffer.from(pending.subarray(at + 4, at + 4 + length).map((b, i) => b ^ mask[i % 4]));
+      pending = pending.subarray(at + 4 + length);
+      // A close is answered with its own code, and ends the connection.
+      if (opcode === 8) { socket.end(socketFrame(8, payload)); return; }
+      const text = payload.toString();
+      if (text === 'binary') socket.write(socketFrame(2, Buffer.from([1, 2, 3])));
+      else socket.write(socketFrame(1, Buffer.from(text.startsWith('push:') ? text.slice(5) : `echo ${text}`)));
+    }
+  });
+}
+
 async function startSite() {
+  // Open SSE streams, each sent what /events/push?<text> asks for.
+  const streams = new Set();
   const handler = (req, res) => {
+    req.originalUrl = req.url;
     req.url = new URL(req.url, 'http://fixture').pathname;
+    const query = decodeURIComponent(new URL(req.originalUrl, 'http://fixture').search.slice(1));
     if (req.url === '/') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end(PAGE); }
+    if (req.url === '/socket-page') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end(SOCKET_PAGE); }
+    if (req.url === '/events') {
+      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' });
+      res.write('data: first\n\nevent: update\ndata: second\n\n');
+      streams.add(res);
+      req.on('close', () => streams.delete(res));
+      return;
+    }
+    if (req.url === '/events/push') { for (const stream of streams) stream.write(`data: ${query}\n\n`); res.writeHead(204); return res.end(); }
     if (req.url === '/frame') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end('<!doctype html><title>Frame</title><iframe srcdoc="<button>inner</button>"></iframe>'); }
     // Several matches: one under an overlay, one hidden, one free; and a pad that logs mouse events.
     if (req.url === '/pick') {
@@ -270,12 +340,21 @@ fetch('/api/big').then(r => r.json()).then(drawLayers);
   const server = http.createServer(handler);
   const tls = path.join(__dirname, 'tls');
   const secure = https.createServer({ key: fs.readFileSync(path.join(tls, 'key.pem')), cert: fs.readFileSync(path.join(tls, 'cert.pem')) }, handler);
+  const sockets = new Set();
+  for (const each of [server, secure]) {
+    each.on('upgrade', (req, socket) => {
+      if (req.url !== '/socket') return socket.destroy();
+      sockets.add(socket);
+      socket.on('close', () => sockets.delete(socket));
+      serveSocket(req, socket);
+    });
+  }
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   await new Promise(r => secure.listen(0, '127.0.0.1', r));
   return {
     url: `http://127.0.0.1:${server.address().port}`,
     secureUrl: `https://localhost:${secure.address().port}`,
-    stop: () => { server.close(); secure.close(); },
+    stop: () => { for (const stream of streams) stream.end(); for (const socket of sockets) socket.destroy(); server.close(); secure.close(); },
   };
 }
 

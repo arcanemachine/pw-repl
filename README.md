@@ -81,16 +81,16 @@ With `npx`, use `npx pw-repl@latest` the same way every time, so every command r
   around it, or a rectangle).
 - **Act on it:** click, double-click, fill, type, press or hold keys, focus, select, check, drag and drop,
   upload files, click or drag at a point, scroll the wheel, answer dialogs.
-- **Watch the network:** every request and response body, console messages and page errors, all recorded
-  as they happen.
+- **Watch the network:** every request and response body, WebSocket and SSE messages, console messages
+  and page errors, all recorded as they happen.
 - **Change the network:** fake a response (`route`), patch its JSON, delay it, fail it, send it to another
-  URL or redirect it, or cut or slow the whole tab's network.
+  URL or redirect it, cut or slow the whole tab's network, or close its WebSockets to test reconnecting.
 - **Emulate:** a phone, dark mode, reduced motion, forced colors, contrast, print styles, a locale, a
   timezone, a viewport size.
 - **Run code:** `eval` any JavaScript in the page, a line or a file of it, or send a raw CDP command with
   `cdp`; read what a Copy button put on the clipboard (`clipboard`).
-- **Wait:** for an element, some text, a response or a page load.
-- **Record:** what someone does in a tab (`watch`), a timeline of requests and console (`capture`), or a
+- **Wait:** for an element, some text, a response, a WebSocket or SSE message, or a page load.
+- **Record:** what someone does in a tab (`watch`), a timeline of requests, socket messages and console (`capture`), or a
   video of the tab (`record`), with a virtual pointer (`cursor`), captions (`toast`) and highlights
   (`highlight`).
 - **Profile:** what keeps a page's main thread busy (`profile`): long tasks and the function behind each,
@@ -156,6 +156,7 @@ example the Docker bridge gateway, `ip route | awk '/default/ {print $3}'`).
 | tap, swipe or pinch as a finger       | `touch tap <x> <y>`, `touch pinch <x> <y> <scale>`            |
 | see what the page requested           | `requests`, then `body <#>` for what one got back             |
 | see console messages and errors       | `console`                                                     |
+| see WebSocket and SSE messages        | `messages`, then `messages #<n>` for one socket               |
 | show an agent what I do               | `watch on`, click around, then `watch`                        |
 | see each step as I click              | `watch on --live`                                             |
 | watch a tab someone will open         | `watch on --next-tab [url-part]`                              |

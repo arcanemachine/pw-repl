@@ -1,6 +1,6 @@
 ---
 name: pw-repl
-description: Inspect and drive a Chromium browser, possibly one the user is using, through the pw-repl REPL - tabs, page snapshots, clicks and typing, the mouse at a point (moves, buttons, wheel), touch gestures on an emulated phone (tap, swipe, pinch), requests and their bodies, console messages, what a page copied to the clipboard, waiting for pages and elements, choosing files, faking, patching or delaying responses or sending requests to another URL, cutting or slowing the network, emulating a phone, dark mode, reduced motion, a locale or a timezone, recording what the user does, profiling what makes a page slow (long tasks, forced layouts, input delay, dropped frames), and recording a video of a tab, with a pointer and on-screen captions. Use when asked to look at, debug or test something in a web page, in an existing Chromium with remote debugging or in one it starts itself.
+description: Inspect and drive a Chromium browser, possibly one the user is using, through the pw-repl REPL - tabs, page snapshots, clicks and typing, the mouse at a point (moves, buttons, wheel), touch gestures on an emulated phone (tap, swipe, pinch), requests and their bodies, WebSocket and SSE messages, console messages, what a page copied to the clipboard, waiting for pages and elements, choosing files, faking, patching or delaying responses or sending requests to another URL, cutting or slowing the network, emulating a phone, dark mode, reduced motion, a locale or a timezone, recording what the user does, profiling what makes a page slow (long tasks, forced layouts, input delay, dropped frames), and recording a video of a tab, with a pointer and on-screen captions. Use when asked to look at, debug or test something in a web page, in an existing Chromium with remote debugging or in one it starts itself.
 allowed-tools: Bash(pw-repl:*) Bash(npx pw-repl@latest:*)
 ---
 
@@ -167,7 +167,8 @@ Every command you run and its output show in the REPL's pane, or in `attach` and
 background REPL (server commands as `[server]` lines), so whoever looks there sees what you do. The pane
 shows REPL commands only, not what was clicked in the browser (unless `watch on --live` is on); for
 that, look at the browser itself: `tab` and `info` for where things are, `requests` for the requests the
-clicks made (`body <#>` for what one returned), `console` for console messages and page errors.
+clicks made (`body <#>` for what one returned), `messages` for what its WebSockets and SSE streams
+sent and received, `console` for console messages and page errors.
 `watch on` records each step someone takes in a tab, with the requests it caused; `watch` reads it back,
 and `watch save <file>` writes the steps as commands that `send --file` runs again, a repro to keep.
 Before you watch someone, read `help watch`: what it keeps and leaves out, passwords, and sharing a watch

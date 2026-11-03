@@ -16,6 +16,7 @@ Common tasks:
   tap, swipe or pinch as a finger         touch tap <x> <y>, touch pinch <x> <y> <scale>
   see what the page requested             requests, then body <#> for what one got back
   see console messages and errors         console
+  see WebSocket and SSE messages          messages, then messages #<n> for one socket
   show an agent what I do                 watch on, click around, then watch
   see each step as I click                watch on --live
   watch a tab someone will open           watch on --next-tab [url-part]
@@ -45,7 +46,7 @@ Topics (help <topic>) and their commands (help <command>):
   inspect   snapshot, watch, profile, text, html, attrs, listeners, count, visible, links, inputs,
             screenshot, highlight, viewport, emulate, wait, sleep
   video     record, cursor, toast
-  network   requests, body, console, capture, route, network
+  network   requests, body, console, messages, capture, route, network, websocket
   devtools  eval, cdp, clipboard, cookies, storage
   session   modes, dialog, help, quit
 
@@ -388,10 +389,11 @@ Output is capped; --all right after the command, or at the end, shows everything
 
       What a step is: a click, typing (once it pauses), Enter or Escape, a form change, a submit or a
       navigation, described by role and name as in snapshot, with up to 5 of the requests it caused under it,
-      each with its status as in requests (body <#> for one), leaving out scripts and what requests hides. The
-      REPL's own fill shows as type. A double-click shows as two clicks; hovering and moving the mouse are not
-      recorded. When other elements are described alike (cards that repeat their buttons), the step says which
-      one: (under "<its nearest heading>"), with n of N where the heading does not settle it.
+      each with its status as in requests (body <#> for one), leaving out scripts and what requests hides. A
+      WebSocket or SSE stream shows under each step it had messages in, with how many then (messages <#> for
+      them). The REPL's own fill shows as type. A double-click shows as two clicks; hovering and moving the
+      mouse are not recorded. When other elements are described alike (cards that repeat their buttons), the
+      step says which one: (under "<its nearest heading>"), with n of N where the heading does not settle it.
 
       Selectors: under a step on an element, the selector watch save would use for it, quoted to paste into a
       command (highlight, screenshot), or why there is none: in a frame, in a closed shadow root, or not
@@ -671,14 +673,18 @@ Output is capped; --all right after the command, or at the end, shows everything
       and sends no touch events. The rest apply at once, but what the page already drew with them (times,
       colors set by its script) changes only when it reloads.
 
-  wait [text|request] <what> [--gone] [time]           wait for an element, text, a response or a load (10s)
+  wait [text|request|message] <what> [--gone] [time]   wait for an element, text, a response, message or load
       Arguments:
         <selector>          for a matching element to be visible.
         text <text>         for text to be visible: any part of an element's text, any case. Quote text that
                             ends in a number, or the number is taken as the time: wait text "Showing 1".
         request <part>      for a matching response (a URL part or a glob), counting one that finished since
                             the previous command began, or is still under way: click, then wait request, does
-                            not miss it.
+                            not miss it. A WebSocket counts once it opens: wait message waits for what it
+                            says.
+        message [text]      for a WebSocket or SSE message, sent or received, containing text (any message,
+                            with none), counting one since the previous command began: click, then wait
+                            message, does not miss it. Quote text that ends in a number, as for text.
         load                for the page to finish loading (its load event), counting a navigation that began
                             since the previous command began: click a link, then wait load.
         [time]              how long, with no limit (give send time too: send -t). Default: 10s.
@@ -856,7 +862,8 @@ clean browser of its own (here, its video-start is record on).
       shows in screenshots and recordings. Selectors, snapshot and text don't see it, and it takes no clicks.
 
 == network ==
-requests and console record all the time; a capture records only while it runs.
+requests, console and messages (WebSocket and SSE) record all the time; a capture records only while it
+runs.
 
   requests [--all] [n] [url-filter]           the selected tab's last n requests (default 20)
       Arguments:
@@ -869,7 +876,9 @@ requests and console record all the time; a capture records only while it runs.
 
       Each line: #number, time, method, status (HTTP code, pending, no response, failed: <reason>, <code> then
       failed: <reason> when its body was cut off, or <code> faked), duration, kind (document, fetch, xhr,
-      script, image, ...), URL. A line "--- the page loads <url>" marks where each page load starts, even when
+      script, image, ...), URL. A WebSocket's line is open, closed or failed: <reason>, kind websocket, and
+      ends with its messages, (3 sent, 5 received); an SSE stream's, kind eventsource, with (5 received):
+      messages <#> shows them. A line "--- the page loads <url>" marks where each page load starts, even when
       a filter hides that request. body <#> shows what a request got back.
 
       Kept: from when the REPL connects, and a tab opened since from its first page (one a link opens
@@ -886,7 +895,7 @@ requests and console record all the time; a capture records only while it runs.
 
       Read from the browser on demand: JSON is pretty-printed, binary is not shown. The browser may drop a
       body (e.g. after the tab navigates); then body reports not available, unless a watch kept it (help
-      watch). Bodies can contain sensitive data.
+      watch). Bodies can contain sensitive data. A WebSocket or SSE stream has messages instead: messages <#>.
 
   console [--all] [n] [level|filter]          the last n console messages and page errors
       Arguments:
@@ -906,6 +915,34 @@ requests and console record all the time; a capture records only while it runs.
       A page brought back from the back/forward cache (back, forward) reports its earlier messages again, at
       the time it comes back, though nothing loaded again.
 
+  messages [--all] [#<n>] [n] [filter]        WebSocket and SSE messages, the tab's or one connection's
+      Arguments:
+        #<n>                one WebSocket or SSE stream, by its number in requests. Its line comes first, as
+                            requests shows it.
+        <url-part>          in place of #<n>: the latest connection whose URL contains it. A word that is part
+                            of no connection's URL is the filter.
+        [n]                 how many of the latest to show. Default: 20; when more match, a first line says
+                            so.
+        [filter]            the rest of the line: only messages containing it.
+      Options:
+        --all               each message as kept (up to 4000 characters), not capped.
+
+      Each line: #number (of its connection, left out for one), time, sent or received, the message. A binary
+      one shows as [binary, <n> bytes]; an SSE event other than message starts with its name, [update].
+      Messages can contain sensitive data, as bodies can.
+
+      Kept from when the REPL connects, like requests: a connection opened before that is not seen (reload for
+      a full record). Per connection the last 200, each up to 4000 characters, and up to 2 MB per tab, the
+      oldest dropped first; a first line says when older ones are gone. They go with their connection's line
+      in requests.
+
+      WebSockets are seen in the page, its frames and its workers. SSE messages only in the page and its
+      frames of the same site: a stream in a worker or a cross-site iframe shows in requests, at 0 received,
+      but its messages are not seen.
+
+      The reason a WebSocket closed (its code) is not reported. One its page left (a new page loading) shows
+      closed then.
+
   capture on [requests|console] [time] | off  record requests and console together, in time order
       Arguments:
         on                  records both until capture off, which prints them.
@@ -916,6 +953,9 @@ requests and console record all the time; a capture records only while it runs.
       A timed capture suits recording what someone does in the browser; around your own commands, use capture
       on and capture off. One runs at a time, on the tab selected when it started. Unlike requests and console
       it keeps more than the last 200, and lists both together.
+
+      WebSockets and SSE streams are among the requests: each one opening and closing, and each message, as
+      messages shows it (#12 received {"type":"tick"}).
 
   route <glob> <how> | off <glob>|--all       fake, patch, delay, fail, rewrite or redirect the tab's requests
       Arguments:
@@ -958,9 +998,10 @@ requests and console record all the time; a capture records only while it runs.
       Not **/dashboard/**, which has two: write the host out. route https://host/dashboard/** rewrite
       https://host/app/dashboard/** sends /dashboard/x to /app/dashboard/x. A URL with no host (/login) is on
       the request's. Each prints Rewritten: or Redirected:, and requests shows the URL asked for, marked
-      rewritten or redirected. Only HTTP is routed: a WebSocket still goes where the page sent it. A page
-      loaded through a rewrite keeps its own address, so its relative links resolve against that; a redirect
-      moves it. The request a redirect leads to goes to the network unrouted, a fake for its URL included.
+      rewritten or redirected. Only HTTP is routed: a WebSocket still goes where the page sent it, and its
+      messages are neither seen nor changed by a route (messages shows them). A page loaded through a rewrite
+      keeps its own address, so its relative links resolve against that; a redirect moves it. The request a
+      redirect leads to goes to the network unrouted, a fake for its URL included.
 
       A rewrite to the same protocol is the browser's own request, sent on: it goes out with the new URL's
       cookies, under the browser's rules for a request from another site (often none), and a redirect it
@@ -971,7 +1012,9 @@ requests and console record all the time; a capture records only while it runs.
 
   network [on|off|slow [<ms> [<kbps>]]]       cut, slow or restore the tab's network
       Arguments:
-        off                 cuts it, like dropped wifi.
+        off                 cuts it, like dropped wifi, for requests. An open WebSocket is not closed: its
+                            messages are held, and arrive when the network is on again (websocket close closes
+                            it).
         slow [<ms> [<kbps>]]
                             each request takes at least <ms> (a minimum, not added to a slow server's own
                             time), at <kbps> both ways. Default: DevTools' Slow 4G: 563ms, 1440 kbps down, 675
@@ -981,6 +1024,23 @@ requests and console record all the time; a capture records only while it runs.
       Per tab; lasts until network on or the REPL exits. Routes still answer while it is off or slow. To slow
       one API, use route <glob> delay <time>. Stopping a service is not the same as network off: a dev proxy
       in front of it usually holds the request open, so the page spins instead of failing.
+
+      network slow does not slow a WebSocket's messages, and an SSE stream already open keeps flowing while
+      the network is off.
+
+  websocket close [#<n>|url-part]             close the tab's open WebSockets, to test reconnecting
+      Arguments:
+        close               closes every open WebSocket of the selected tab, and says how many.
+        #<n>                only those to that one's URL, by its number in requests, while it is open: they
+                            cannot be told apart.
+        url-part            only those whose URL contains it.
+
+      It closes them from the page's side, as the page's own ws.close(4000, "closed by pw-repl") would: the
+      page sees a close event with code 4000 and wasClean true, and its reconnect logic runs. A dropped
+      connection (code 1006, wasClean false) cannot be made: a library that reconnects only after an unclean
+      close will not reconnect. network off does not close an open WebSocket.
+
+      Only sockets in the main frame's JavaScript are reached: not those of an iframe or a worker.
 
 == devtools ==
 Cookie and storage listings omit values. eval, cdp, html, screenshots, recordings and URLs can still

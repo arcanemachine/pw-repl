@@ -2713,6 +2713,68 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match(await ok('requests 50'), /\(\d+ hidden between these: images, fonts, stylesheets, media and extension requests; requests --all shows them\)$/);
   });
 
+  it('keeps a WebSocket\'s messages, and an SSE stream\'s, with a line for each in requests', async () => {
+    await ok(`goto ${site.url}/socket-page`);
+    assert.match(await ok('wait message "echo hello 1"'), /^#\d+ \S+ received echo hello 1$/);
+    const socket = (await ok('requests ws://')).match(/^#(\d+) \S+ GET open - websocket ws:\S+\/socket \(1 sent, 1 received\)$/m);
+    assert.ok(socket, 'the socket in requests');
+    const id = socket[1];
+    await ok('eval ws.send("push:{\\"a\\":1}"); ws.send("binary"); listen()');
+    await ok('wait message second');
+    await ok('eval fetch("/events/push?third")');
+    await ok('wait message third');
+    const all = await ok('messages');
+    assert.match(all, new RegExp(`^#${id} \\S+ sent push:\\{"a":1\\}\\n#${id} \\S+ sent binary\\n#${id} \\S+ received \\{"a":1\\}\\n#${id} \\S+ received \\[binary, 3 bytes\\]$`, 'm'));
+    assert.match(all, /^#(\d+) \S+ received first\n#\1 \S+ received \[update\] second\n#\1 \S+ received third$/m, 'the stream\'s, an event named');
+    assert.match(await ok(`messages #${id}`), new RegExp(`^#${id} websocket open ws:\\S+ \\(3 sent, 3 received\\)\\n\\S+ sent hello 1\\n`));
+    assert.match(await ok('messages events 1'), /^#\d+ eventsource pending \S+\/events \(3 received\)\n\(last 1 of 3 kept; messages #\d+ 3 shows them all\)\n\S+ received third$/, 'one connection by its URL');
+    assert.match(await ok('messages a":1'), /^#\d+ \S+ sent push:\{"a":1\}\n#\d+ \S+ received \{"a":1\}$/, 'a word in no URL filters');
+    assert.match(await ok('requests /events'), /GET pending - eventsource \S+\/events \(3 received\)$/m);
+    assert.match((await repl.run(`body #${id}`)).output, new RegExp(`#${id} is a WebSocket: messages #${id} shows its messages`));
+    assert.match((await repl.run('wait message nothing-says-this 300')).output, /No WebSocket or SSE message containing nothing-says-this within 0.3s/);
+    // Over 200 across two sockets: each keeps its last 200, and all of them can be listed.
+    await ok('eval const other = new WebSocket(ws.url); other.onopen = () => { for (let i = 0; i < 110; i++) { ws.send("a" + i); other.send("b" + i); } }; 1');
+    // Both sockets' last echoes, in either order.
+    await waitFor(async () => /^\(last 1 of 403 kept; messages 403 shows them all; older messages are no longer kept\)\n/.test(await ok('messages 1')), 'every echo');
+    const listed = (await ok('messages --all 403')).split('\n');
+    assert.equal(listed[0], '(older messages are no longer kept: only the last 200 per connection, and 2 MB per tab, are)');
+    assert.equal(listed.length, 404);
+  });
+
+  it('closes a page\'s open WebSockets, and puts them in capture and watch', async () => {
+    await ok(`goto ${site.url}/socket-page`);
+    await ok('wait message "echo hello 1"');
+    const first = (await ok('requests ws://')).match(/^#(\d+) .* websocket /m)[1];
+    await ok('capture on');
+    assert.equal(await ok('websocket close nowhere'), 'No open WebSockets whose URL contains nowhere on the selected tab');
+    assert.equal(await ok(`websocket close #${first}`), 'Closed 1 open WebSocket to ' + `${site.url.replace('http', 'ws')}/socket, from the page's side (code 4000, "closed by pw-repl")`);
+    await ok('wait message "echo hello 2"');
+    assert.deepEqual(JSON.parse(await ok('eval JSON.stringify(events.filter(e => !e.startsWith("message")))')), ['open', 'close:4000:true', 'open'], 'the page reconnected');
+    const captured = await ok('capture off');
+    assert.match(captured, new RegExp(`^\\+\\S+ #${first} websocket closed\\n\\+\\S+ #(\\d+) websocket open ws:\\S+\\n\\+\\S+ #\\1 sent hello 2\\n\\+\\S+ #\\1 received echo hello 2$`, 'm'));
+    assert.match((await repl.run(`websocket close #${first}`)).output, new RegExp(`#${first} is closed already; websocket close ws:\\S+ closes`));
+    await ok('watch on');
+    await ok('click #say');
+    await ok('wait message "echo said"');
+    assert.match(await ok('watch'), /click button "Say"\n.*\n +#\d+ websocket open ws:\S+\/socket: 1 sent, 1 received$/m);
+    await ok('watch off');
+    // Leaving the page closes its socket, with no close reported.
+    await ok(`goto ${site.url}/other`);
+    assert.match(await ok('requests ws://'), / closed \d+ms websocket /);
+    assert.doesNotMatch(await ok('requests ws://'), / open - websocket/);
+  });
+
+  it('holds an open WebSocket\'s messages while the network is off', async () => {
+    await ok(`goto ${site.url}/socket-page`);
+    await ok('wait message "echo hello 1"');
+    await ok('network off');
+    await ok('eval ws.send("held")');
+    assert.equal((await repl.run('wait message "echo held" 500')).status, 'error');
+    await ok('network on');
+    await ok('wait message "echo held"');
+    assert.deepEqual(JSON.parse(await ok('eval JSON.stringify(events.filter(e => e.startsWith("close")))')), [], 'not closed');
+  });
+
   it('shows the body of a request, real or faked', async () => {
     await ok(fetchStatus);
     await ok('route **/api/data 418 {"fake":1}');
