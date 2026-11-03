@@ -189,6 +189,16 @@ describe('a socket seen before Playwright reported it', () => {
   });
 });
 
+// A placeholder: an SSE stream that begins before the REPL sees its tab (one a link opened) is kept by the
+// backfill in ensureRecentLog, which passes it to keepConnections' reported(). No real test: the REPL always
+// saw the tab first, so a test passed with or without the fix. Harmless if it regressed: one extra line in
+// requests, no messages lost.
+describe('an SSE stream begun before the REPL saw its tab', () => {
+  it('has no real test (see the comment above)', () => {
+    assert.ok(true);
+  });
+});
+
 describe('times', () => {
   it('reads milliseconds, or seconds with an s, and says them back', () => {
     assert.equal(parseDuration('1500'), 1500);

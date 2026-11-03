@@ -2774,7 +2774,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.doesNotMatch(await ok('requests ws://'), / open - websocket/);
   });
 
-  // Not the stream that began before the REPL saw the tab (the backfill's), which cannot be made to happen on cue.
+  // Not the stream that began before the REPL saw the tab: see units.test.js, "an SSE stream begun before".
   it('lists once an SSE stream of a tab a link opened', async () => {
     await ok('eval document.body.insertAdjacentHTML("beforeend", \'<a id="popup" href="/socket-page?listen" target="_blank">New tab</a>\'); "added"');
     await ok('click #popup');
