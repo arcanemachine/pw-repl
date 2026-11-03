@@ -390,10 +390,11 @@ Output is capped; --all right after the command, or at the end, shows everything
       What a step is: a click, typing (once it pauses), Enter or Escape, a form change, a submit or a
       navigation, described by role and name as in snapshot, with up to 5 of the requests it caused under it,
       each with its status as in requests (body <#> for one), leaving out scripts and what requests hides. A
-      WebSocket or SSE stream shows under each step it had messages in, with how many then (messages <#> for
-      them). The REPL's own fill shows as type. A double-click shows as two clicks; hovering and moving the
-      mouse are not recorded. When other elements are described alike (cards that repeat their buttons), the
-      step says which one: (under "<its nearest heading>"), with n of N where the heading does not settle it.
+      WebSocket or SSE stream shows under each step it had messages in, with how many then, up to the next
+      step (a heartbeat counts too; the last step's count grows until there is one): messages <#> for them.
+      The REPL's own fill shows as type. A double-click shows as two clicks; hovering and moving the mouse are
+      not recorded. When other elements are described alike (cards that repeat their buttons), the step says
+      which one: (under "<its nearest heading>"), with n of N where the heading does not settle it.
 
       Selectors: under a step on an element, the selector watch save would use for it, quoted to paste into a
       command (highlight, screenshot), or why there is none: in a frame, in a closed shadow root, or not
@@ -684,9 +685,11 @@ Output is capped; --all right after the command, or at the end, shows everything
                             says.
         message [text]      for a WebSocket or SSE message, sent or received, containing text (any message,
                             with none), counting one since the previous command began: click, then wait
-                            message, does not miss it. With no text and a time in seconds, any message within
-                            it: wait message 30s; a lone bare number is still the text (wait message 42), and
-                            "30s" quoted waits for that text. Quote text that ends in a number, as for text.
+                            message, does not miss it. One that came between that command and this one counts
+                            too, so on a socket that sends a heartbeat it returns at once: name text for the
+                            one you want. With no text and a time in seconds, any message within it: wait
+                            message 30s; a lone bare number is still the text (wait message 42), and "30s"
+                            quoted waits for that text. Quote text that ends in a number, as for text.
         load                for the page to finish loading (its load event), counting a navigation that began
                             since the previous command began: click a link, then wait load.
         [time]              how long, with no limit (give send time too: send -t). Default: 10s.
