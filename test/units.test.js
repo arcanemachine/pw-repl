@@ -169,6 +169,26 @@ describe('modules', () => {
   });
 });
 
+describe('a socket seen before Playwright reported it', () => {
+  const { matchRaceSocket } = require('../lib/requestlog');
+  const socket = (id, ...messages) => ({ id, messages: messages.map(([way, text, t]) => ({ way, text, t })) });
+
+  it('is the one whose messages hold its first frame, the same way and text, close in time', () => {
+    const quiet = socket(1);
+    const pinging = socket(2, ['sent', 'ping', 1000]);
+    const joining = socket(3, ['received', 'ping', 1010], ['sent', '{"join":1}', 1020]);
+    assert.equal(matchRaceSocket('sent', '{"join":1}', 1100, [quiet, pinging, joining]), joining);
+    assert.equal(matchRaceSocket('sent', 'ping', 1100, [quiet, joining, pinging]), pinging, 'the way counts');
+  });
+
+  it('is none when no message matches, or one does but long before: a socket opened before the REPL connected', () => {
+    const pinging = socket(1, ['sent', 'ping', 1000]);
+    assert.equal(matchRaceSocket('sent', 'pong', 1000, [pinging]), undefined);
+    assert.equal(matchRaceSocket('sent', 'ping', 1300, [pinging]), undefined);
+    assert.equal(matchRaceSocket('sent', 'ping', 1000, []), undefined);
+  });
+});
+
 describe('times', () => {
   it('reads milliseconds, or seconds with an s, and says them back', () => {
     assert.equal(parseDuration('1500'), 1500);

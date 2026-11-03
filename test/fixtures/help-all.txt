@@ -932,17 +932,19 @@ runs.
       one shows as [binary, <n> bytes]; an SSE event other than message starts with its name, [update].
       Messages can contain sensitive data, as bodies can.
 
-      Kept from when the REPL connects, like requests: a connection opened before that is not seen (reload for
-      a full record). Per connection the last 200, each up to 4000 characters, and up to 2 MB per tab, the
-      oldest dropped first; a first line says when older ones are gone. They go with their connection's line
-      in requests.
+      Kept from when the REPL connects, like requests. A connection the page opened before that shows from its
+      next message on, its earlier ones not seen: requests marks it (opened before the REPL connected), with
+      its URL when the page has only one such open, else (URL unknown). Per connection the last 200, each up
+      to 4000 characters, and up to 2 MB per tab, the oldest dropped first; a first line says when older ones
+      are gone. They go with their connection's line in requests.
 
       WebSockets are seen in the page, its frames and its workers. SSE messages only in the page and its
       frames of the same site: a stream in a worker or a cross-site iframe shows in requests, at 0 received,
       but its messages are not seen.
 
       The reason a WebSocket closed (its code) is not reported. One its page left (a new page loading) shows
-      closed then.
+      closed then. An SSE stream opened before the REPL connected shows open until its page is left: no close
+      is reported for it.
 
   capture on [requests|console] [time] | off  record requests and console together, in time order
       Arguments:
@@ -1033,7 +1035,8 @@ runs.
       Arguments:
         close               closes every open WebSocket of the selected tab, and says how many.
         #<n>                only those to that one's URL, by its number in requests, while it is open: they
-                            cannot be told apart.
+                            cannot be told apart. Not one whose URL is unknown (opened before the REPL
+                            connected).
         url-part            only those whose URL contains it.
 
       It closes them from the page's side, as the page's own ws.close(4000, "closed by pw-repl") would: the

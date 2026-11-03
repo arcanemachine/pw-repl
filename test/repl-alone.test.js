@@ -342,3 +342,68 @@ describe('a REPL killed while it profiles', { skip: SKIP }, () => {
     }
   });
 });
+
+describe('a page whose sockets were open before the REPL connected', { skip: SKIP }, () => {
+  let chrome, site;
+
+  before(async () => {
+    chrome = await startChrome();
+    site = await startSite();
+  });
+
+  after(async () => {
+    site?.stop();
+    await chrome?.stop();
+  });
+
+  it('shows them from their next message, with their URL when the page has only one open', async () => {
+    // A REPL opens the pages and quits; they stay open, with their sockets, for the next one.
+    const first = await startRepl(chrome.cdpUrl);
+    try {
+      for (const command of [`tab new ${site.url}/socket-page?listen`, 'wait message second', `tab new ${site.url}/socket-page#two`, 'wait message "echo hello 1"',
+        `eval window.other = new WebSocket("${site.url.replace('http://127.0.0.1', 'ws://localhost')}/socket"); new Promise(r => other.onopen = r)`]) {
+        const result = await first.run(command);
+        assert.equal(result.status, 'ok', `${command}\n${result.output}`);
+      }
+    } finally {
+      await first.stop();
+    }
+    const repl = await startRepl(chrome.cdpUrl);
+    const ok = async command => {
+      const result = await repl.run(command);
+      assert.equal(result.status, 'ok', `${command}\n${result.output}`);
+      return result.output;
+    };
+    try {
+      await ok('tab listen');
+      await ok('eval ws.send("push:after"); fetch("/events/push?later")');
+      await ok('wait message later');
+      // A socket's first frames are held a moment, and the URLs looked up after.
+      let listed = '';
+      await waitFor(async () => / websocket ws:.*before the REPL.* 1 received/.test(listed = await ok('requests')) && / eventsource http:/.test(listed), 'both, with their URLs');
+      const socket = listed.match(/^#(\d+) \S+ GET open - websocket ws:\S+\/socket \(opened before the REPL connected; 1 sent, 1 received\)$/m);
+      assert.ok(socket, listed);
+      assert.match(listed, /^#\d+ \S+ GET open - eventsource http:\S+\/events \(opened before the REPL connected; 1 received\)$/m);
+      assert.match(await ok(`messages #${socket[1]}`), /\S+ sent push:after\n\S+ received after$/);
+      // Closed: the page reconnects, and its new socket is listed once.
+      await ok('websocket close');
+      await ok('wait message "echo hello 2"');
+      listed = await ok('requests');
+      assert.match(listed, new RegExp(`^#${socket[1]} \\S+ GET closed \\d+ms websocket `, 'm'));
+      assert.equal(listed.match(/ open - websocket /g).length, 1, listed);
+      assert.match(listed, / open - websocket ws:\S+\/socket \(1 sent, 1 received\)$/m);
+
+      // Two open to different URLs: neither can be told, so neither is named, and close by number refuses.
+      await ok('tab two');
+      await ok('eval ws.send("push:a"); other.send("push:b")');
+      await ok('wait message b');
+      const unnamed = /^#(\d+) \S+ GET open - websocket \(URL unknown\) \(opened before the REPL connected; 1 sent, 1 received\)$/gm;
+      let unknown = null;
+      await waitFor(async () => (unknown = (await ok('requests')).match(unnamed))?.length === 2, 'both, unnamed');
+      const id = unknown[0].match(/^#(\d+)/)[1];
+      assert.match((await repl.run(`websocket close #${id}`)).output, new RegExp(`#${id} was opened before the REPL connected, and its URL is unknown`));
+    } finally {
+      await repl.stop();
+    }
+  });
+});

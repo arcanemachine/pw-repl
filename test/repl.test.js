@@ -2766,6 +2766,21 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.doesNotMatch(await ok('requests ws://'), / open - websocket/);
   });
 
+  // Not the stream that began before the REPL saw the tab (the backfill's), which cannot be made to happen on cue.
+  it('lists once an SSE stream of a tab a link opened', async () => {
+    await ok('eval document.body.insertAdjacentHTML("beforeend", \'<a id="popup" href="/socket-page?listen" target="_blank">New tab</a>\'); "added"');
+    await ok('click #popup');
+    await waitFor(async () => /socket-page\?listen/.test(await ok('tab')), 'the new tab', 20000);
+    await ok('tab listen');
+    await waitFor(async () => / GET pending - eventsource \S+\/events/.test(await ok('requests')), 'its stream in the log', 20000);
+    await ok('eval fetch("/events/push?popped")');
+    await ok('wait message popped');
+    const listed = await ok('requests');
+    assert.equal(listed.match(/ eventsource /g).length, 1, listed);
+    assert.match(listed, / GET pending - eventsource \S+\/events \(\d+ received\)$/m);
+    assert.doesNotMatch(listed, /opened before the REPL connected/);
+  });
+
   it('holds an open WebSocket\'s messages while the network is off', async () => {
     await ok(`goto ${site.url}/socket-page`);
     await ok('wait message "echo hello 1"');
