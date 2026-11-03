@@ -2734,6 +2734,11 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await waitFor(async () => /GET 200, closed \d+ms eventsource \S+\/events \(3 received\)$/m.test(await ok('requests /events')), 'the stream closed by the page');
     assert.match((await repl.run(`body #${id}`)).output, new RegExp(`#${id} is a WebSocket: messages #${id} shows its messages`));
     assert.match((await repl.run('wait message nothing-says-this 300')).output, /No WebSocket or SSE message containing nothing-says-this within 0.3s/);
+    await ok('eval ws.send("again")');
+    assert.match(await ok('wait message 1s'), /^#\d+ \S+ sent again$/, 'any message, with a time');
+    assert.match((await repl.run('wait message "1s" 300')).output, /No WebSocket or SSE message containing 1s within 0.3s/, 'quoted, the text');
+    await ok('eval ws.send("first"); ws.send("x42")');
+    assert.match(await ok('wait message 42'), /^#\d+ \S+ sent x42$/, 'a bare number is the text, not a time');
     // Over 200 across two sockets: each keeps its last 200, and all of them can be listed.
     await ok('eval const other = new WebSocket(ws.url); other.onopen = () => { for (let i = 0; i < 110; i++) { ws.send("a" + i); other.send("b" + i); } }; 1');
     // Both sockets' last echoes, in either order.

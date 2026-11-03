@@ -684,7 +684,9 @@ Output is capped; --all right after the command, or at the end, shows everything
                             says.
         message [text]      for a WebSocket or SSE message, sent or received, containing text (any message,
                             with none), counting one since the previous command began: click, then wait
-                            message, does not miss it. Quote text that ends in a number, as for text.
+                            message, does not miss it. With no text and a time in seconds, any message within
+                            it: wait message 30s; a lone bare number is still the text (wait message 42), and
+                            "30s" quoted waits for that text. Quote text that ends in a number, as for text.
         load                for the page to finish loading (its load event), counting a navigation that began
                             since the previous command began: click a link, then wait load.
         [time]              how long, with no limit (give send time too: send -t). Default: 10s.
