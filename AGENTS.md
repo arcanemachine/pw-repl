@@ -104,7 +104,8 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `fe
 3. `npm run deploy` pushes the commits and the tag, logs in to npm (`npm login`), then publishes. It,
    and `npm publish` on its own (`prepublishOnly`), refuse unless HEAD is the commit tagged `vX.Y.Z` and
    the tree is clean, untracked files included (`scripts/check-tagged.js`): what is published is the
-   commit `release` checked.
+   commit `release` checked. With commits on top of the release (a test, a doc), `npm run deploy -- --last`
+   pushes, then checks out the latest `v*` tag, publishes it, and goes back to the branch.
 
 A release cut too early and not pushed yet is undone (its commit and tag) and cut again after the fixes.
 
