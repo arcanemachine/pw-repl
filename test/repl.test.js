@@ -2730,6 +2730,8 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.match(await ok('messages events 1'), /^#\d+ eventsource pending \S+\/events \(3 received\)\n\(last 1 of 3 kept; messages #\d+ 3 shows them all\)\n\S+ received third$/, 'one connection by its URL');
     assert.match(await ok('messages a":1'), /^#\d+ \S+ sent push:\{"a":1\}\n#\d+ \S+ received \{"a":1\}$/, 'a word in no URL filters');
     assert.match(await ok('requests /events'), /GET pending - eventsource \S+\/events \(3 received\)$/m);
+    await ok('eval es.close()');
+    await waitFor(async () => /GET 200, closed \d+ms eventsource \S+\/events \(3 received\)$/m.test(await ok('requests /events')), 'the stream closed by the page');
     assert.match((await repl.run(`body #${id}`)).output, new RegExp(`#${id} is a WebSocket: messages #${id} shows its messages`));
     assert.match((await repl.run('wait message nothing-says-this 300')).output, /No WebSocket or SSE message containing nothing-says-this within 0.3s/);
     // Over 200 across two sockets: each keeps its last 200, and all of them can be listed.
