@@ -84,7 +84,8 @@ With `npx`, use `npx pw-repl@latest` the same way every time, so every command r
 - **Watch the network:** every request and response body, WebSocket and SSE messages, console messages
   and page errors, all recorded as they happen.
 - **Change the network:** fake a response (`route`), patch its JSON, delay it, fail it, send it to another
-  URL or redirect it, cut or slow the whole tab's network, or close its WebSockets to test reconnecting.
+  URL or redirect it, cut or slow the whole tab's network, close or drop its WebSockets to test
+  reconnecting, or fake a WebSocket's server (`websocket route`) and send the page messages from it.
 - **Emulate:** a phone, dark mode, reduced motion, forced colors, contrast, print styles, a locale, a
   timezone, a viewport size.
 - **Run code:** `eval` any JavaScript in the page, a line or a file of it, or send a raw CDP command with
@@ -140,37 +141,39 @@ example the Docker bridge gateway, `ip route | awk '/default/ {print $3}'`).
 
 ## Common tasks
 
-| I want to…                            | Commands                                                      |
-| ------------------------------------- | ------------------------------------------------------------- |
-| see where I am                        | `tab`, `info`                                                 |
-| see what is on the page               | `snapshot`, `screenshot`                                      |
-| do something on it                    | `click`, `fill`, `type`, `press`, `drag`                      |
-| click what has no selector (a canvas) | `mouse click <x> <y>`, `mouse dblclick <x> <y>`               |
-| run some JavaScript in the page       | `eval document.title`; `eval --file=check.js` for a long one  |
-| wait for a page or element            | `wait load`, `wait <selector> [--gone]`, `wait text <text>`   |
-| choose a file in a file input         | `upload <selector> <file>`                                    |
-| type a password, kept out of the log  | `fill <selector> "{{ PW_PASSWORD }}"` (`pw-repl send --help`) |
-| answer an alert or a confirm          | `dialog`, then `dialog accept` or `dismiss`                   |
-| see it as a phone, or in dark mode    | `emulate mobile`, `emulate dark`                              |
-| see print styles or reduced motion    | `emulate media print`, `emulate reduced-motion`               |
-| tap, swipe or pinch as a finger       | `touch tap <x> <y>`, `touch pinch <x> <y> <scale>`            |
-| see what the page requested           | `requests`, then `body <#>` for what one got back             |
-| see console messages and errors       | `console`                                                     |
-| see WebSocket and SSE messages        | `messages`, then `messages #<n>` for one socket               |
-| show an agent what I do               | `watch on`, click around, then `watch`                        |
-| see each step as I click              | `watch on --live`                                             |
-| watch a tab someone will open         | `watch on --next-tab [url-part]`                              |
-| replay what I clicked through         | `watch save flow.txt`, then `pw-repl send --file flow.txt`    |
-| record requests and console together  | `capture on`, then `capture off`                              |
-| find what makes the page slow         | `profile on`, then `profile off`; `profile reload` for a load |
-| fake a backend response               | `route <glob> <status> <json>`, `route <glob> abort`          |
-| change or slow an API response        | `route <glob> patch <json>`, `route <glob> delay <time>`      |
-| cut or slow the whole network         | `network off`, `network slow`, then `network on`              |
-| record a video of the page            | `record on`, then `record off` (`help video` for a take)      |
-| show a pointer where the agent acts   | `cursor on`, then `cursor off`                                |
-| say what is happening on screen       | `toast <text>`, then `toast off`                              |
-| point something out on the page       | `highlight <ref>`, then `highlight off`                       |
-| clean up                              | `modes off`                                                   |
+| I want to…                            | Commands                                                              |
+| ------------------------------------- | --------------------------------------------------------------------- |
+| see where I am                        | `tab`, `info`                                                         |
+| see what is on the page               | `snapshot`, `screenshot`                                              |
+| do something on it                    | `click`, `fill`, `type`, `press`, `drag`                              |
+| click what has no selector (a canvas) | `mouse click <x> <y>`, `mouse dblclick <x> <y>`                       |
+| run some JavaScript in the page       | `eval document.title`; `eval --file=check.js` for a long one          |
+| wait for a page or element            | `wait load`, `wait <selector> [--gone]`, `wait text <text>`           |
+| choose a file in a file input         | `upload <selector> <file>`                                            |
+| type a password, kept out of the log  | `fill <selector> "{{ PW_PASSWORD }}"` (`pw-repl send --help`)         |
+| answer an alert or a confirm          | `dialog`, then `dialog accept` or `dismiss`                           |
+| see it as a phone, or in dark mode    | `emulate mobile`, `emulate dark`                                      |
+| see print styles or reduced motion    | `emulate media print`, `emulate reduced-motion`                       |
+| tap, swipe or pinch as a finger       | `touch tap <x> <y>`, `touch pinch <x> <y> <scale>`                    |
+| see what the page requested           | `requests`, then `body <#>` for what one got back                     |
+| see console messages and errors       | `console`                                                             |
+| see WebSocket and SSE messages        | `messages`, then `messages #<n>` for one socket                       |
+| show an agent what I do               | `watch on`, click around, then `watch`                                |
+| see each step as I click              | `watch on --live`                                                     |
+| watch a tab someone will open         | `watch on --next-tab [url-part]`                                      |
+| replay what I clicked through         | `watch save flow.txt`, then `pw-repl send --file flow.txt`            |
+| record requests and console together  | `capture on`, then `capture off`                                      |
+| find what makes the page slow         | `profile on`, then `profile off`; `profile reload` for a load         |
+| fake a backend response               | `route <glob> <status> <json>`, `route <glob> abort`                  |
+| change or slow an API response        | `route <glob> patch <json>`, `route <glob> delay <time>`              |
+| cut or slow the whole network         | `network off`, `network slow`, then `network on`                      |
+| test a WebSocket reconnect            | `websocket route <glob>`, `reload`, then `websocket drop`             |
+| fake a WebSocket server               | `websocket route <glob> fake`, `reload`, then `websocket send <text>` |
+| record a video of the page            | `record on`, then `record off` (`help video` for a take)              |
+| show a pointer where the agent acts   | `cursor on`, then `cursor off`                                        |
+| say what is happening on screen       | `toast <text>`, then `toast off`                                      |
+| point something out on the page       | `highlight <ref>`, then `highlight off`                               |
+| clean up                              | `modes off`                                                           |
 
 `help` lists the rest by topic, `help <command>` has usage and caveats, and `help --grep <text>` searches
 it all.
@@ -178,7 +181,8 @@ it all.
 ### Modes
 
 Some commands turn on a mode that stays on until you turn it off: `watch`, `capture`, `profile`,
-`record`, `route`, `network off` or `slow`, `emulate`, `viewport`, `highlight`, `cursor` and `toast`.
+`record`, `route`, `websocket route`, `network off` or `slow`, `emulate`, `viewport`, `highlight`, `cursor`
+and `toast`.
 While any are on in the selected tab, the prompt shows them: `(watch network:off routes:2) pw>`. `modes`
 lists them for every tab, and `modes off` turns them all off. Each of these commands on its own shows
 its state and what you can run next.

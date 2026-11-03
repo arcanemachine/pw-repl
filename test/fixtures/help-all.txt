@@ -26,15 +26,17 @@ Common tasks:
   fake a backend response                 route <glob> <status> <json>, route <glob> abort
   change or slow an API response          route <glob> patch <json>, route <glob> delay <time>
   cut or slow the whole network           network off, network slow, then network on
+  test a WebSocket reconnect              websocket route <glob>, reload, then websocket drop
+  fake a WebSocket server                 websocket route <glob> fake, reload, then websocket send <text>
   record a video of the page              record on, then record off (help video for a take)
   show a pointer where the agent acts     cursor on, then cursor off
   say what is happening on screen         toast <text>, then toast off
   point something out on the page         highlight <ref>, then highlight off
   clean up                                modes off
 
-Modes (watch, capture, profile, record, route, network off or slow, emulate, viewport, highlight, cursor
-and toast) stay on until turned off; the prompt shows the selected tab's: (watch routes:1) pw>. Each of
-them on its own, and modes, shows its state and what you can run next.
+Modes (watch, capture, profile, record, route, websocket route, network off or slow, emulate, viewport,
+highlight, cursor and toast) stay on until turned off; the prompt shows the selected tab's: (watch
+routes:1) pw>. Each of them on its own, and modes, shows its state and what you can run next.
 
 Times are in milliseconds, as in Playwright, or in seconds with an s: wait .done 30000, or wait .done
 30s.
@@ -882,10 +884,11 @@ runs.
       Each line: #number, time, method, status (HTTP code, pending, no response, failed: <reason>, <code> then
       failed: <reason> when its body was cut off, or <code> faked), duration, kind (document, fetch, xhr,
       script, image, ...), URL. A WebSocket's line is open, closed or failed: <reason>, kind websocket, and
-      ends with its messages, (3 sent, 5 received). An SSE stream's, kind eventsource, ends with (5 received),
-      and its status is <code>, closed once the page has closed it. messages <#> shows them. A line "--- the
-      page loads <url>" marks where each page load starts, even when a filter hides that request. body <#>
-      shows what a request got back.
+      ends with its messages, (3 sent, 5 received); one websocket route holds says so first (faked by pw-repl;
+      3 sent, 5 received). An SSE stream's, kind eventsource, ends with (5 received), and its status is
+      <code>, closed once the page has closed it. messages <#> shows them. A line "--- the page loads <url>"
+      marks where each page load starts, even when a filter hides that request. body <#> shows what a request
+      got back.
 
       Kept: from when the REPL connects, and a tab opened since from its first page (one a link opens
       included); the last 200 per tab, of every kind the page requests (not the browser's own, such as the
@@ -933,9 +936,10 @@ runs.
       Options:
         --all               each message as kept (up to 4000 characters), not capped.
 
-      Each line: #number (of its connection, left out for one), time, sent or received, the message. A binary
-      one shows as [binary, <n> bytes]; an SSE event other than message starts with its name, [update].
-      Messages can contain sensitive data, as bodies can.
+      Each line: #number (of its connection, left out for one), time, sent or received (received (sent by
+      pw-repl) for one websocket send gave the page), the message. A binary one shows as [binary, <n> bytes];
+      an SSE event other than message starts with its name, [update]. Messages can contain sensitive data, as
+      bodies can.
 
       Kept from when the REPL connects, like requests. A connection the page opened before that shows from its
       next message on, its earlier ones not seen: requests marks it (opened before the REPL connected), with
@@ -1007,9 +1011,9 @@ runs.
       https://host/app/dashboard/** sends /dashboard/x to /app/dashboard/x. A URL with no host (/login) is on
       the request's. Each prints Rewritten: or Redirected:, and requests shows the URL asked for, marked
       rewritten or redirected. Only HTTP is routed: a WebSocket still goes where the page sent it, and its
-      messages are neither seen nor changed by a route (messages shows them). A page loaded through a rewrite
-      keeps its own address, so its relative links resolve against that; a redirect moves it. The request a
-      redirect leads to goes to the network unrouted, a fake for its URL included.
+      messages are neither seen nor changed by a route (websocket route routes it). A page loaded through a
+      rewrite keeps its own address, so its relative links resolve against that; a redirect moves it. The
+      request a redirect leads to goes to the network unrouted, a fake for its URL included.
 
       A rewrite to the same protocol is the browser's own request, sent on: it goes out with the new URL's
       cookies, under the browser's rules for a request from another site (often none), and a redirect it
@@ -1022,7 +1026,7 @@ runs.
       Arguments:
         off                 cuts it, like dropped wifi, for requests. An open WebSocket is not closed: its
                             messages are held, and arrive when the network is on again (websocket close closes
-                            it).
+                            it, and websocket drop drops it).
         slow [<ms> [<kbps>]]
                             each request takes at least <ms> (a minimum, not added to a slow server's own
                             time), at <kbps> both ways. Default: DevTools' Slow 4G: 563ms, 1440 kbps down, 675
@@ -1036,20 +1040,55 @@ runs.
       network slow does not slow a WebSocket's messages, and an SSE stream already open keeps flowing while
       the network is off.
 
-  websocket close [#<n>|url-part]             close the tab's open WebSockets, to test reconnecting
+  websocket close|drop|send|route ...         close, drop or fake the tab's WebSockets
       Arguments:
-        close               closes every open WebSocket of the selected tab, and says how many.
-        #<n>                only those to that one's URL, by its number in requests, while it is open: they
-                            cannot be told apart. Not one whose URL is unknown (opened before the REPL
-                            connected).
-        url-part            only those whose URL contains it.
+        close [#<n>|url-part]
+                            closes the tab's open WebSockets from the page's side, as its own ws.close(4000,
+                            "closed by pw-repl") would: wasClean true. With #<n> (its number in requests,
+                            while it is open), those to that one's URL, which cannot be told apart; with
+                            url-part, those whose URL contains it; with neither, all.
+        route <url-glob>    routes the tab's sockets to that URL (a ws:// or wss:// URL: **/chat) through
+                            pw-repl to their server: nothing changes, but send and drop then reach them.
+        route <url-glob> fake
+                            fakes their server: the page's socket opens, but no connection is made. What the
+                            page sends shows in messages and gets no answer but what websocket send sends.
+        route off <url-glob> | --all
+                            removes one route, or all. Sockets open already stay as they are.
+        route               lists the selected tab's WebSocket routes.
+        send [#<n>|url-part] <message>
+                            sends the message, the rest of the line as written (quotes are part of it), to the
+                            page on a routed socket, as if from its server. With more than one open, name one.
+                            messages shows it as received (sent by pw-repl).
+        drop [#<n>|url-part]
+                            drops routed sockets, all with neither: the page sees a dropped connection, a
+                            close event with code 1006 and wasClean false, as when the network fails. Through
+                            to a server, that socket is closed too.
 
-      It closes them from the page's side, as the page's own ws.close(4000, "closed by pw-repl") would: the
-      page sees a close event with code 4000 and wasClean true, and its reconnect logic runs. A dropped
-      connection (code 1006, wasClean false) cannot be made: a library that reconnects only after an unclean
-      close will not reconnect. network off does not close an open WebSocket.
+      To test reconnecting: close for a close the page made, drop for a dropped connection. A library that
+      reconnects only after an unclean close reconnects after drop, not after close. network off does not
+      close an open WebSocket.
 
-      Only sockets in the main frame's JavaScript are reached: not those of an iframe or a worker.
+      Routes (route): Playwright's routeWebSocket. A route puts a stand-in for WebSocket into each page loaded
+      from then on, so it reaches a page loaded before it only after reload; once a page has the stand-in, a
+      new route reaches the sockets it opens next. The route command says which. Each routed socket prints a
+      line (Routed: or Faked:) with its number as in requests, which marks it routed through pw-repl or faked
+      by pw-repl. A routed socket's messages show in messages, those websocket send sent marked (sent by
+      pw-repl). A glob may be quoted; routing the same glob again replaces it. Routes belong to the tab and
+      last until route off, modes off or the REPL exits. After route off, the page keeps the stand-in, passing
+      its sockets through, until a reload.
+
+      Answering a fake in time: a page that waits only briefly for its server's answer gives up before you can
+      read what it sent and reply. Put the steps in a file, ending with the send, and run it with pw-repl send
+      --file answer.txt: wait message <text in the page's message> returns as soon as it comes, and the send
+      follows at once, in milliseconds. Nothing between them (a snapshot, a sleep), or the answer is late
+      again.
+
+        websocket route **/chat fake
+        reload
+        wait message hello
+        websocket send {"type":"welcome"}
+
+      close reaches only sockets in the main frame's JavaScript: not those of an iframe or a worker.
 
 == devtools ==
 Cookie and storage listings omit values. eval, cdp, html, screenshots, recordings and URLs can still
@@ -1156,8 +1195,9 @@ Completion: @<id> <command> makes the REPL print [[pw-done:<id>:ok|error]] when 
         --mine              after off: only the sender's own.
 
       The modes, each turned on and off with its own command: watch on|off, network off|slow|on, route <glob>
-      ... | route off <glob>|--all, capture on|off, record on|off, emulate ... | emulate off, viewport <WxH> |
-      viewport off, highlight <selector> | highlight off, cursor on|off.
+      ... | route off <glob>|--all, websocket route <glob> | websocket route off <glob>|--all, capture on|off,
+      record on|off, emulate ... | emulate off, viewport <WxH> | viewport off, highlight <selector> |
+      highlight off, cursor on|off.
 
   dialog [accept [text] | dismiss]  show, accept or dismiss an open alert, confirm or prompt
       Arguments:

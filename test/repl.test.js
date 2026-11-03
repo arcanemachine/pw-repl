@@ -2774,6 +2774,60 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.doesNotMatch(await ok('requests ws://'), / open - websocket/);
   });
 
+  it('routes a WebSocket through to its server, sends the page a message, and drops it', async () => {
+    await ok(`goto ${site.url}/socket-page`);
+    await ok('wait message "echo hello 1"');
+    assert.match((await repl.run('websocket send hi')).output, /No open routed WebSocket on the selected tab: websocket send reaches only sockets websocket route holds \(websocket route <url-glob>, then reload\)/);
+    assert.equal(await ok('websocket route **/socket'), 'Routed: **/socket -> through to its server (reload: it reaches only pages loaded from now on)');
+    assert.match(await ok('websocket route'), /^WebSocket routes on the selected tab \(1\):\n {2}\*\*\/socket {2}through to its server\n/);
+    assert.match(await ok('modes'), /\(websocket-routes:1\)/);
+    await ok('reload');
+    await ok('wait message "echo hello 1"');
+    await waitFor(async () => /^#(\d+) \S+ GET open - websocket ws:\S+\/socket \(routed through pw-repl; 1 sent, 1 received\)$/m.test(await ok('requests ws://')), 'the routed socket in requests');
+    const id = (await ok('requests ws://')).match(/^#(\d+) .* \(routed through pw-repl;/m)[1];
+    assert.equal(await ok('websocket send {"from": "pw-repl"}'), `Sent to the page on #${id} ${site.url.replace('http', 'ws')}/socket, as if from its server`);
+    assert.match(await ok(`messages #${id} 1`), /^#\d+ .*\n.*\n\S+ received \(sent by pw-repl\) \{"from": "pw-repl"\}$/);
+    await ok('eval ws.send("still there")');
+    await ok('wait message "echo still there"');
+    assert.equal(await ok(`websocket drop #${id}`), `Dropped #${id} ${site.url.replace('http', 'ws')}/socket: the page sees an unclean close (code 1006)`);
+    // The page reconnects after a close, and the route holds the new socket too.
+    await ok('wait message "echo hello 2"');
+    assert.deepEqual(JSON.parse(await ok('eval JSON.stringify(events)')), ['open', 'message:echo hello 1', 'message:{"from": "pw-repl"}', 'message:echo still there', 'close:1006:false', 'open', 'message:echo hello 2']);
+    await waitFor(async () => new RegExp(`^#${id} \\S+ GET closed \\d+ms websocket .*\\n#\\d+ \\S+ GET open - websocket \\S+ \\(routed through pw-repl;`, 'm').test(await ok('requests ws://')), 'the old socket closed, and the new one routed');
+    assert.equal(await ok('websocket close'), `Closed 1 open WebSocket, from the page's side (code 4000, "closed by pw-repl")`);
+    await ok('wait message "echo hello 3"');
+    assert.ok(JSON.parse(await ok('eval JSON.stringify(events)')).includes('close:4000:true'), 'websocket close reaches a routed socket');
+    assert.equal(await ok('websocket route off --all'), 'Removed: **/socket\nSockets open already stay as they are; a reload gives the page its own WebSocket back.');
+    assert.match(await ok('modes'), /^No modes are on/);
+  });
+
+  it('fakes a WebSocket\'s server', async () => {
+    await ok(`goto ${site.url}/socket-page`);
+    await ok('wait message "echo hello 1"');
+    await ok('websocket route **/socket fake');
+    await ok('reload');
+    await waitFor(async () => /^#\d+ \S+ GET open - websocket ws:\S+\/socket \(faked by pw-repl; 1 sent, 0 received\)$/m.test(await ok('requests ws://')), 'the faked socket in requests');
+    const id = (await ok('requests ws://')).match(/^#(\d+) .* \(faked by pw-repl;/m)[1];
+    assert.match(await ok(`messages #${id}`), /\n\S+ sent hello 1$/, 'what the page sent, which no server answered');
+    await ok('websocket send faked reply');
+    assert.match(await ok(`messages #${id} 1`), /\n\S+ received \(sent by pw-repl\) faked reply$/);
+    // A second route, on a page that has Playwright's stand-in, reaches its next socket without a reload.
+    assert.equal(await ok('websocket route **/other fake'), 'Routed: **/other -> fake (it reaches the sockets the page opens from now on)');
+    await ok(`eval window.other = new WebSocket("${site.url.replace('http', 'ws')}/other"); other.onopen = () => events.push("other open"); 1`);
+    await waitFor(async () => /^#\d+ .* websocket ws:\S+\/other \(faked by pw-repl;/m.test(await ok('requests ws://')), 'the second faked socket');
+    assert.match((await repl.run('websocket send faked')).output, /2 open routed WebSockets: name one by its number in requests \(#\d+, #\d+\)/);
+    assert.match(await ok('websocket send other only for other'), /^Sent to the page on #\d+ ws:\S+\/other, as if from its server$/, 'a URL part, then the message');
+    await ok('capture on');
+    assert.match(await ok('websocket drop socket'), /^Dropped #\d+ ws:\S+\/socket: the page sees an unclean close \(code 1006\)$/);
+    await waitFor(async () => JSON.parse(await ok('eval JSON.stringify(events)')).filter(e => e === 'open').length === 2, 'the page to reconnect to the fake');
+    assert.deepEqual(JSON.parse(await ok('eval JSON.stringify(events)')), ['open', 'message:faked reply', 'other open', 'close:1006:false', 'open']);
+    assert.match(await ok('capture off'), new RegExp(`#${id} websocket closed\\n\\+\\S+ #\\d+ websocket open ws:\\S+/socket \\(faked by pw-repl\\)\\n\\+\\S+ #\\d+ sent hello 2$`, 'm'));
+    // Leaving the page ends its faked sockets.
+    await ok(`goto ${site.url}/other`);
+    assert.doesNotMatch(await ok('requests ws://'), / open - websocket/);
+    assert.match((await repl.run('websocket drop')).output, /No open routed WebSocket on the selected tab: websocket drop reaches only sockets websocket route holds \(a page loaded before the route is not routed: reload\)/);
+  });
+
   // Not the stream that began before the REPL saw the tab: see units.test.js, "an SSE stream begun before".
   it('lists once an SSE stream of a tab a link opened', async () => {
     await ok('eval document.body.insertAdjacentHTML("beforeend", \'<a id="popup" href="/socket-page?listen" target="_blank">New tab</a>\'); "added"');
