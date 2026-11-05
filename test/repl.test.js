@@ -1519,6 +1519,13 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await waitFor(async () => /after-fetch/.test(await ok('info')), 'the navigation');
     const left = (await ok('requests /api/data')).trim().split('\n').pop().match(/#\d+/)[0];
     assert.match(await ok(`body ${left}`), /GET 200 \S+\/api\/data \(application\/json, 13 bytes\)\n\{\n  "real": true\n\}/);
+    // With a highlight drawn first: the session it uses resets the setting that keeps them as it detaches.
+    await ok('back');
+    await ok('highlight #load');
+    await ok('eval fetch("/api/data").then(r => r.json()).then(() => { location.href = "/other?after-highlight"; }); 0');
+    await waitFor(async () => /after-highlight/.test(await ok('info')), 'the navigation');
+    const highlighted = (await ok('requests /api/data')).trim().split('\n').pop().match(/#\d+/)[0];
+    assert.match(await ok(`body ${highlighted}`), /GET 200 \S+\/api\/data \(application\/json, 13 bytes\)\n\{\n  "real": true\n\}/, 'kept after a highlight too');
     await ok('watch off');
     await ok('tab close');
   });
