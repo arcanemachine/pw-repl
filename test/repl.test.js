@@ -1735,6 +1735,18 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     assert.doesNotMatch(await ok('requests 3 /api/empty'), /--- the page loads \S+\/api\/empty/, 'no load marked where none happened');
   });
 
+  it('gives up on a slow page at goto --timeout, outcome unknown, and wait load picks it up', async () => {
+    const late = await repl.run(`goto --timeout=300ms ${site.url}/slow-page`);
+    assert.equal(late.status, 'error');
+    assert.equal(late.unconfirmed, true, 'the page may still be loading');
+    assert.match(late.output, /^Error: The page did not finish loading within 300ms and may still be loading: wait load <time> waits for it, or goto --timeout=<time> waits longer/);
+    assert.match(await ok('wait load 5s'), /^Loaded: \S+\/slow-page — Late$/);
+    assert.match(await ok(`goto --timeout=5s ${site.url}/slow-page`), /\/slow-page — Late$/, 'a longer timeout loads it');
+    const usage = await repl.run('goto --timeout=soon /x');
+    assert.equal(usage.unconfirmed, undefined, 'a usage error did nothing');
+    assert.match(usage.output, /^Error: Usage: goto \[--timeout=<time>\] <url>/);
+  });
+
   it('says sleep takes milliseconds when the number looks like seconds', async () => {
     assert.equal(await ok('sleep 3'), 'Slept 3ms (sleep takes milliseconds: sleep 3s for 3s)');
     assert.equal(await ok('sleep 150'), 'Slept 150ms');

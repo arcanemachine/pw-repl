@@ -70,7 +70,8 @@ own lists them all.
                             change when tabs open or close.
         <url-part>          selects the one tab whose URL contains it; refused if none or several do.
         new [url]           opens a tab behind the one in front, so it does not take the window from whoever
-                            is using it, and selects it. The URL is read as goto reads it.
+                            is using it, and selects it. The URL is read as goto reads it, and takes goto's
+                            --timeout before it.
         close [url-part]    closes the selected tab, or the one matching url-part; of several, the one you
                             opened, if exactly one of them is, and refused otherwise.
 
@@ -84,14 +85,22 @@ own lists them all.
       nothing, and say truly whether they are seen. Each window shows a tab, so with several windows (an
       incognito one, say) several tabs are marked; focused is the one with the keyboard.
 
-  goto <url>                                           navigate the selected tab
+  goto [--timeout=<time>] <url>                        navigate the selected tab
       Arguments:
         <url>               without a scheme, http:// for localhost, 127.x and [::1], and https:// otherwise,
                             as in the address bar.
+      Options:
+        --timeout=<time>    how long the page has to load (its HTML parsed, not its images). Default: 15s.
+                            Past 20s, give send time too, or it gives up first: pw-repl send -t 70s goto
+                            --timeout=60s <url>.
 
       A page that does not load says why, as wait load does: a failed request, after which the tab shows
       Chrome's error page (info names the URL that failed), or an answer with no page (a 204), which leaves
       the tab where it was. tab new, reload, back and forward say it the same way.
+
+      Slow pages (--timeout): a page that has not loaded in time goes on loading, and the outcome is unknown
+      (pw-repl send exits 2). wait load <time> waits for it to finish; goto --timeout=<time> waits longer from
+      the start. reload and tab new <url> take --timeout too.
 
   back                                                 go back one history entry
       The browser may bring the page back from its back/forward cache, as it was: nothing loads or runs again,
@@ -100,7 +109,10 @@ own lists them all.
   forward                                              go forward one history entry
       Like back, it may bring the page back from the back/forward cache without loading it again.
 
-  reload                                               reload the selected tab
+  reload [--timeout=<time>]                            reload the selected tab
+      Options:
+        --timeout=<time>    how long the page has to load, as goto's. Default: 15s.
+
   info                                                 selected tab URL, title and viewport
 
 == interact ==

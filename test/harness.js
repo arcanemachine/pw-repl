@@ -325,6 +325,8 @@ fetch('/api/big').then(r => r.json()).then(drawLayers);
     if (req.url === '/other') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end('<!doctype html><title>Other</title><h1>Other</h1>'); }
     // Loads for a moment, for wait load.
     if (req.url === '/slow-load') { res.writeHead(200, { 'Content-Type': 'text/html' }); return res.end('<!doctype html><title>Slow</title><img src="/slow-image">'); }
+    // A page whose HTML comes late, for goto --timeout.
+    if (req.url === '/slow-page') { setTimeout(() => { res.writeHead(200, { 'Content-Type': 'text/html' }); res.end('<!doctype html><title>Late</title>'); }, 800); return; }
     if (req.url === '/slow-image') { setTimeout(() => { res.writeHead(404); res.end(); }, 800); return; }
     if (req.url === '/style.css') { res.writeHead(200, { 'Content-Type': 'text/css' }); return res.end('h1 { color: teal; }'); }
     if (req.url === '/api/empty') { res.writeHead(204); return res.end(); }
