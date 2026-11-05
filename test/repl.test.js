@@ -3182,7 +3182,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
   it('shows a toast over the page as a mode of the tab, replaced by the next, and gone with toast off', async () => {
     const shown = 'eval (o => o?.toast ? o.host.isConnected + " " + o.toast.textContent + " " + getComputedStyle(o.toast).opacity : "none")(document[Symbol.for("pw-repl-overlay")])';
     assert.equal(await ok('toast'), 'No toast is up in the selected tab; toast <text> shows one');
-    assert.equal(await ok('toast Filing a ticket for a damaged package'), 'Showing the toast until toast off. Read time: 2.1s (7 words; 300ms a word, at least 1.5s), which a recording waits out before the next toast, toast off or record off.');
+    assert.equal(await ok('toast Filing a ticket for a damaged package'), 'Showing the toast until toast off. Read time: 2.1s (7 words; 300ms a word, at least 1.5s), which a video recording (record on) waits out before the next toast, toast off or record off.');
     assert.equal(await ok(shown), 'true Filing a ticket for a damaged package 1', 'faded in by the time it returns');
     assert.match(await ok('modes'), /\(toast\)/);
     assert.match(await ok('toast'), /^A toast is up in the selected tab: "Filing a ticket for a damaged package"; toast off hides it$/);
