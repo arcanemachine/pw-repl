@@ -235,6 +235,9 @@ function serveSocket(req, socket) {
 async function startSite() {
   // Open SSE streams, each sent what /events/push?<text> asks for.
   const streams = new Set();
+  // Requests for /api/held, answered when /api/release is asked for: a test decides when they finish.
+  /** @type {http.ServerResponse[]} */
+  const held = [];
   const handler = (req, res) => {
     req.originalUrl = req.url;
     req.url = new URL(req.url, 'http://fixture').pathname;
@@ -330,6 +333,12 @@ fetch('/api/big').then(r => r.json()).then(drawLayers);
     if (req.url === '/slow-image') { setTimeout(() => { res.writeHead(404); res.end(); }, 800); return; }
     if (req.url === '/style.css') { res.writeHead(200, { 'Content-Type': 'text/css' }); return res.end('h1 { color: teal; }'); }
     if (req.url === '/api/empty') { res.writeHead(204); return res.end(); }
+    if (req.url === '/api/held') { held.push(res); return; }
+    if (req.url === '/api/release') {
+      for (const waiting of held.splice(0)) { waiting.writeHead(200, { 'Content-Type': 'application/json' }); waiting.end('{"held":true}'); }
+      res.writeHead(204);
+      return res.end();
+    }
     if (req.url === '/api/slow') { setTimeout(() => { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end('{"slow":true}'); }, 1500); return; }
     if (req.url === '/api/data') { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end('{"real":true}'); }
     if (req.url === '/api/cookie') { res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': 'from=backend; Path=/' }); return res.end(JSON.stringify({ cookie: req.headers.cookie || null })); }

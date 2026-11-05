@@ -1574,6 +1574,16 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await waitFor(async () => /api\/slow/.test(late = await ok('watch new')), 'the late request');
     assert.match(late, /click button "Load" \(continued\)\n +#\d+ GET 200 faked \S+\/api\/slow/);
     assert.equal(await ok('watch new'), 'No new steps');
+    await ok('eval document.querySelector("#load").onclick = () => fetch("/api/held"); "set"');
+    await ok('click #load');
+    let pending = '';
+    await waitFor(async () => /api\/held/.test(pending = await ok('watch new')), 'the held request');
+    assert.match(pending, /#\d+ GET pending \S+\/api\/held/);
+    await ok('eval fetch("/api/release").then(() => "released")');
+    let answered = '';
+    await waitFor(async () => /api\/held/.test(answered = await ok('watch new')), 'its answer');
+    assert.match(answered, /click button "Load" \(continued\)\n +#\d+ GET 200 \S+\/api\/held/, 'a request shown pending is shown again once answered');
+    assert.equal(await ok('watch new'), 'No new steps');
     await ok('route off **/api/slow');
     await ok('reload');
     await ok('watch off');

@@ -387,8 +387,8 @@ Output is capped; --all right after the command, or at the end, shows everything
         on                  starts recording the tab's steps; after watch off, a new recording.
         off                 stops it; anyone's watch off stops it, since a watch belongs to the tab.
         (none) | <n>        says whether it is on, and shows the last 20 steps, or the last n.
-        new                 only the steps not shown yet, and requests that have since arrived for the last
-                            one.
+        new                 only the steps not shown yet, and for the last one, requests that have since
+                            arrived and answers to those it showed pending.
         save <file>         writes the steps as commands, a file that pw-repl send --file <file> runs again;
                             it refuses a file that exists.
       Options (watch on):
