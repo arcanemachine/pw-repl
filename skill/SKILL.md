@@ -221,7 +221,8 @@ pw-repl send -c <name> close                        # your modes off; tab close 
 - The browser may have tabs that are not yours, and someone may be using it. Whether to read or act in
   one of those tabs, or to open your own (`tab new <url>`), depends on the task; when that is not clear,
   ask. `tab` marks `(visible)` the tab the user sees: "this page" is usually that one. A tab you have
-  selected is never marked (help tab says why).
+  selected is never marked (help tab says why). With several windows open, `tab` lists the tabs under
+  each window; `window label <n> <name>` labels one, so "my docs window" can be found (help window).
 - No tab is selected when the REPL starts. A start URL's tab, marked `(the start URL)` in `tab`, is
   selected at its prompt and for `send` without a client name; a named client (`-c`) selects it with
   `tab <index>`. Closing a tab the REPL opened goes back to the tab before it, if the REPL opened that

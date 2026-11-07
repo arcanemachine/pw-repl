@@ -47,7 +47,8 @@ pw> screenshot
 pw> quit
 ```
 
-Commands act on the selected tab. `tab` lists the tabs, with `*` on the selected one.
+Commands act on the selected tab. `tab` lists the tabs, with `*` on the selected one, under their windows
+when there are several; `window label <n> <name>` labels a window.
 
 ### Install
 

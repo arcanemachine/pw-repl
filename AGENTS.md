@@ -15,7 +15,7 @@ If you hit a limitation or write a workaround, consider adding the capability to
   in `lib/help.js` under one topic; `lib/commands.js` gathers every module's commands. A command that
   needs no tab, only reads, or takes `--all` is also listed in `lib/runner.js`'s `NO_TAB_NEEDED`,
   `READ_ONLY` or `INSPECTION`, and one that takes fixed words in `complete` (`lib/commands.js`).
-- The modules, one per facility, each with its commands: `lib/tabs.js` (tabs, navigating),
+- The modules, one per facility, each with its commands: `lib/tabs.js` (tabs, windows, navigating),
   `lib/elements.js` (choosing a match; the interact and mouse commands; highlight), `lib/cursor.js` (the pointer
   drawn over the page, which the element and mouse commands glide first), `lib/touch.js` (touch gestures, under emulate mobile), `lib/toast.js` (a line of text
   over the page), `lib/overlay.js` (the element the cursor and toast are drawn in, one layer each), `lib/inspect.js` (reading the

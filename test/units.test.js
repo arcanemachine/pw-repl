@@ -298,6 +298,14 @@ describe('server endpoints', () => {
   });
 });
 
+describe('window groups', () => {
+  const { windowGroups } = require('../lib/tabs');
+  it('groups only with two windows or more, unknown last', () => {
+    assert.deepEqual(windowGroups([1, null, 1]).grouped, false, 'one window and a tab Chrome did not place');
+    assert.deepEqual(windowGroups([2, null, 1, 2]), { grouped: true, groups: [{ n: 1, tabs: [2] }, { n: 2, tabs: [0, 3] }, { n: null, tabs: [1] }] });
+  });
+});
+
 describe('tab completion', () => {
   it('completes command names', () => {
     assert.deepEqual(complete('rou'), [['route'], 'rou']);

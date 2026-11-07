@@ -1081,6 +1081,36 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     }
   });
 
+  it('groups the tabs under their windows when there are several, and labels a window', async () => {
+    assert.doesNotMatch(await ok('tab'), /^Window/m, 'one window: the listing as ever');
+    const { chromium } = require('playwright-core');
+    const user = await chromium.connectOverCDP(chrome.cdpUrl, { noDefaults: true });
+    const browser = await user.newBrowserCDPSession();
+    try {
+      const { targetId } = await browser.send('Target.createTarget', { url: `${site.url}/?own-window`, newWindow: true });
+      await waitFor(async () => /\?own-window/.test(await ok('tab')), 'the new window\'s tab');
+      const fresh = (await repl.runAs('window-lister', 'window')).output;
+      const [, n, i] = (/^Window (\d+): 1 tab, \[(\d+)\]$/m.exec(fresh) || []).map(Number);
+      assert.ok(n > 1, 'the new window has a number of its own');
+      assert.match((await repl.runAs('window-lister', `tab ${i}`)).output, /\?own-window/, 'window gives its sender the indexes tab <index> takes');
+      for (const usage of ['window label 2', 'window foo']) assert.match((await repl.run(usage)).output, /Usage: window \[label <n> <name> \| label <n> off\]/, usage);
+      assert.match(await ok(`window label ${n} docs`), new RegExp(`^Window ${n} is labeled docs$`, 'm'));
+      const listing = await ok('tab');
+      assert.match(listing, new RegExp(`^Window ${n}, docs:\\n {2}\\[\\d+\\] ${site.url}/\\?own-window`, 'm'), 'its tab under its labeled header');
+      const indexes = listing.match(/^[* ] \[(\d+)\]/gm).map(line => Number(/\d+/.exec(line)[0]));
+      assert.deepEqual(indexes.slice().sort((a, b) => a - b), indexes.map((_, i) => i), 'every index once');
+      await ok(`window label ${n} off`);
+      assert.match(await ok('window'), new RegExp(`^Window ${n}: 1 tab`, 'm'), 'the label is off');
+      await browser.send('Target.closeTarget', { targetId });
+      await waitFor(async () => !/\?own-window/.test(await ok('tab')), 'the window closing');
+      assert.doesNotMatch(await ok('tab'), /^Window/m, 'one window again');
+      assert.match((await repl.run(`window label ${n} docs`)).output, new RegExp(`No window ${n} is open now`));
+    } finally {
+      await browser.detach().catch(() => {});
+      await user.close();
+    }
+  });
+
   it('saves what was watched as commands that send --file runs again, values and all, a password as a variable', async () => {
     const path = require('path');
     const os = require('os');
