@@ -2837,13 +2837,18 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await ok(`goto ${site.url}/socket-page`);
     await ok('wait message "echo hello 1"');
     assert.match((await repl.run('websocket send hi')).output, /No open routed WebSocket on the selected tab: websocket send reaches only sockets websocket route holds \(websocket route <url-glob>, then reload\)/);
-    assert.equal(await ok('websocket route **/socket'), 'Routed: **/socket -> through to its server (reload: it reaches only pages loaded from now on)');
+    assert.equal(await ok('websocket route **/socket'), 'Routed: **/socket -> through to its server (it reaches the sockets the page opens from now on)');
+    // The socket open already is not routed; one the page opens next is, with no reload.
+    assert.match((await repl.run('websocket send hi')).output, /\(a socket open before the route is not routed: reload\)/);
+    await ok(`eval const s = new WebSocket(location.origin.replace('http', 'ws') + '/socket'); s.onopen = () => s.send('late'); 'opened'`);
+    await ok('wait message "echo late"');
+    await waitFor(async () => /^#\d+ \S+ GET open - websocket ws:\S+\/socket \(routed through pw-repl; 1 sent, 1 received\)$/m.test(await ok('requests ws://')), 'the socket opened after the route, routed');
     assert.match(await ok('websocket route'), /^WebSocket routes on the selected tab \(1\):\n {2}\*\*\/socket {2}through to its server\n/);
     assert.match(await ok('modes'), /\(websocket-routes:1\)/);
     await ok('reload');
     await ok('wait message "echo hello 1"');
     await waitFor(async () => /^#(\d+) \S+ GET open - websocket ws:\S+\/socket \(routed through pw-repl; 1 sent, 1 received\)$/m.test(await ok('requests ws://')), 'the routed socket in requests');
-    const id = (await ok('requests ws://')).match(/^#(\d+) .* \(routed through pw-repl;/m)[1];
+    const id = (await ok('requests ws://')).match(/^#(\d+) \S+ GET open - websocket .* \(routed through pw-repl;/m)[1];
     assert.equal(await ok('websocket send {"from": "pw-repl"}'), `Sent to the page on #${id} ${site.url.replace('http', 'ws')}/socket, as if from its server`);
     assert.match(await ok(`messages #${id} 1`), /^#\d+ .*\n.*\n\S+ received \(sent by pw-repl\) \{"from": "pw-repl"\}$/);
     await ok('eval ws.send("still there")');
@@ -2884,7 +2889,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     // Leaving the page ends its faked sockets.
     await ok(`goto ${site.url}/other`);
     assert.doesNotMatch(await ok('requests ws://'), / open - websocket/);
-    assert.match((await repl.run('websocket drop')).output, /No open routed WebSocket on the selected tab: websocket drop reaches only sockets websocket route holds \(a page loaded before the route is not routed: reload\)/);
+    assert.match((await repl.run('websocket drop')).output, /No open routed WebSocket on the selected tab: websocket drop reaches only sockets websocket route holds \(a socket open before the route is not routed: reload\)/);
   });
 
   // Not the stream that began before the REPL saw the tab: see units.test.js, "an SSE stream begun before".

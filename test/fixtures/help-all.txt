@@ -1101,14 +1101,14 @@ runs.
       reconnects only after an unclean close reconnects after drop, not after close. network off does not
       close an open WebSocket.
 
-      Routes (route): Playwright's routeWebSocket. A route puts a stand-in for WebSocket into each page loaded
-      from then on, so it reaches a page loaded before it only after reload; once a page has the stand-in, a
-      new route reaches the sockets it opens next. The route command says which. Each routed socket prints a
-      line (Routed: or Faked:) with its number as in requests, which marks it routed through pw-repl or faked
-      by pw-repl. A routed socket's messages show in messages, those websocket send sent marked (sent by
-      pw-repl). A glob may be quoted; routing the same glob again replaces it. Routes belong to the tab and
-      last until route off, modes off or the REPL exits. After route off, the page keeps the stand-in, passing
-      its sockets through, until a reload.
+      Routes (route): Playwright's routeWebSocket. A route puts a stand-in for WebSocket into the page's
+      document at once, and into each page loaded after, so it reaches the sockets the page opens from then
+      on; sockets open already stay as they are until a reload. The route command says which. Each routed
+      socket prints a line (Routed: or Faked:) with its number as in requests, which marks it routed through
+      pw-repl or faked by pw-repl. A routed socket's messages show in messages, those websocket send sent
+      marked (sent by pw-repl). A glob may be quoted; routing the same glob again replaces it. Routes belong
+      to the tab and last until route off, modes off or the REPL exits. After route off, the page keeps the
+      stand-in, passing its sockets through, until a reload.
 
       Answering a fake in time: a page that waits only briefly for its server's answer gives up before you can
       read what it sent and reply. Put the steps in a file, ending with the send, and run it with pw-repl send

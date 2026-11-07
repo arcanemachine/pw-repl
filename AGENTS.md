@@ -91,11 +91,7 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `fe
    means cutting the release again. Dependencies are always the newest
    stable release, never pinned back. When the newest breaks a test, fix it in our code; only a
    regression of the dependency's own, with the fix already in its next release, keeps the version before
-   it, until that release ships. playwright-core stays at 1.63 for that reason: on 1.64.1 a click
-   on a link to a 204 hangs at "waiting for scheduled navigations to finish" until its timeout, in plain
-   Playwright too (chromium.launch, a page with a link to a 204, page.click on it); 1.65's alphas fix it.
-   The test "waits for the page to load, counting a navigation that just began" shows it: move up once it
-   passes on the newest release. `@types/node` stays on the major of the oldest Node in `engines`, so that
+   it, until that release ships. `@types/node` stays on the major of the oldest Node in `engines`, so that
    type-checking flags an API that Node lacks: move it up when `engines` does.
 2. `npm run release <patch|minor|major>` cuts it: `npm version` refuses a working tree with changes, runs
    the checks in the `preversion` script (`npm run typecheck`, then `npm test`), then sets the version in
