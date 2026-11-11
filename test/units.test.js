@@ -513,6 +513,21 @@ describe('screenshot files', () => {
   });
 });
 
+describe('send\'s command line', () => {
+  const { commandLine } = require('../lib/send');
+  const { unquote } = require('../lib/syntax');
+
+  it('sends dialog accept\'s text whole, as given in the shell', () => {
+    for (const [words, text] of [[[''], ''], [['  '], '  '], [[' x '], ' x '], [['a b', 'c'], 'a b c'], [['"x"'], '"x"'], [['a\\b\nc'], 'a\\b\nc'], [['--x=a b'], '--x=a b']]) {
+      const line = commandLine(['dialog', 'accept', ...words]);
+      assert.equal(unquote(line.slice('dialog accept '.length)), text, line);
+    }
+    assert.equal(commandLine(['dialog-accept', '']), 'dialog-accept ""');
+    assert.equal(commandLine(['dialog', 'accept']), 'dialog accept', 'no text: the default');
+    assert.equal(commandLine(['dialog', 'dismiss']), 'dialog dismiss');
+  });
+});
+
 describe('send --file variables', () => {
   const { variablesIn, expandVariables } = require('../lib/syntax');
   const values = { PW_PASSWORD: 'a"b\\c d', PW_WHO: 'Ada' };

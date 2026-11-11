@@ -117,9 +117,10 @@ of a REPL of your own, which `send` refuses. The words after `send` are the comm
 `select`, `press`, `upload` and `wait`, a word quoted in your shell stays one word
 (`pw-repl send fill "text=Your name" Ada`, `pw-repl send wait text "Showing 1"`); other commands get the words as they are, joined by
 spaces (`pw-repl send eval "document.title + ' x'"`). A command that takes only a selector takes the
-whole line, spaces and all: `pw-repl send click "text=Your name"`. `send`'s own options (`-t`, `-c`, `-e`,
-`-s`, `--no-vars`) go before the command or after it (`pw-repl send open <url> -t 30s`); after `--`, every
-word is the command's. It works however the REPL was started:
+whole line, spaces and all: `pw-repl send click "text=Your name"`. `dialog accept`'s text is sent whole,
+as given in your shell: `pw-repl send dialog accept ""` answers a prompt with an empty text. `send`'s
+own options (`-t`, `-c`, `-e`, `-s`, `--no-vars`) go before the command or after it (`pw-repl send
+open <url> -t 30s`); after `--`, every word is the command's. It works however the REPL was started:
 
 - `run` (in tmux): `send` types the command into the tmux pane and reads the result back off the screen.
   It types only when the pane's last line is a bare prompt, so nothing lands in a shell or in the middle

@@ -1236,7 +1236,7 @@ Completion: @<id> <command> makes the REPL print [[pw-done:<id>:ok|error]] when 
       Arguments:
         (none)              lists the open dialogs; * marks the selected tab's.
         accept [text]       answers OK: text answers a prompt, and accept alone keeps its default, as OK in
-                            the browser does.
+                            the browser does. accept "" answers an empty text; quotes keep spaces at its ends.
         dismiss             answers Cancel.
 
       It answers the selected tab's dialog, or the only one open, and runs at once, ahead of other commands.

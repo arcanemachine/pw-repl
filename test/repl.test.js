@@ -3119,6 +3119,19 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await waitFor(() => /Dialog \[prompt\]: Name\?/.test(repl.stdout.slice(start3)), 'the prompt');
     await ok('dialog accept');
     assert.equal(await ok('text #out'), 'Ada');
+    // Text given is the answer as given: empty, spaces at its ends and inside, typed or through send.
+    const answer = async accept => {
+      const at = repl.stdout.length;
+      await ok('eval setTimeout(() => { window.answer = prompt("Name?", "Ada"); })');
+      await waitFor(() => /Dialog \[prompt\]: Name\?/.test(repl.stdout.slice(at)), 'the prompt');
+      await accept();
+      return JSON.parse(await ok('eval JSON.stringify(window.answer)'));
+    };
+    for (const [line, text] of [['dialog accept ""', ''], ['dialog accept "  "', '  '], ['dialog accept a  b ', 'a  b'], ['dialog-accept " x "', ' x ']]) {
+      assert.equal(await answer(() => ok(line)), text, line);
+    }
+    assert.equal(await answer(() => pwSend(['dialog', 'accept', ''])), '', 'an empty text through send');
+    assert.equal(await answer(() => pwSend(['dialog', 'accept', ' x '])), ' x ', 'spaces at its ends through send');
   });
 
   it('highlights elements as playwright-cli does, as a mode that modes off and a new page end', async () => {
