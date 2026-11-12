@@ -39,6 +39,9 @@ If you hit a limitation or write a workaround, consider adding the capability to
   its name, form and API style (an option named as Playwright's API names it, e.g. type's `delay`), or
   accepts theirs too (`lib/cli-names.js`, `help playwright-cli`). Deviate only where it is necessary, as
   where sharing a browser with a user needs it, and say why in the help.
+- Don't assume a feature works for others as it does on the developer's system. Windows, focus and desktops
+  depend on the window manager, and the OS and browser setup differ too: one machine where it works is one data
+  point. Build and document for systems that may differ.
 - Comment the *why* when it isn't obvious from the code.
 - `npm run typecheck` type-checks `bin/` and `lib/` (`tsc` over the JavaScript, no build step): run it
   before a commit, and keep it clean. A type goes in JSDoc where one is needed; what JSDoc cannot declare
