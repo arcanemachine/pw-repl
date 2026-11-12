@@ -48,7 +48,9 @@ pw> quit
 ```
 
 Commands act on the selected tab. `tab` lists the tabs, with `*` on the selected one, under their windows
-when there are several; `window label <n> <name>` labels a window.
+when there are several. `window new [url]` opens a window, `tab new --window <n|label> [url]` opens a tab
+in one without asking Chrome to bring that window forward, `window label <n> <name>` labels one, and
+`window close` closes one.
 
 ### Install
 

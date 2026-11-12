@@ -1093,7 +1093,7 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       const [, n, i] = (/^Window (\d+): 1 tab, \[(\d+)\]$/m.exec(fresh) || []).map(Number);
       assert.ok(n > 1, 'the new window has a number of its own');
       assert.match((await repl.runAs('window-lister', `tab ${i}`)).output, /\?own-window/, 'window gives its sender the indexes tab <index> takes');
-      for (const usage of ['window label 2', 'window foo']) assert.match((await repl.run(usage)).output, /Usage: window \[label <n> <name> \| label <n> off\]/, usage);
+      for (const usage of ['window label 2', 'window foo']) assert.match((await repl.run(usage)).output, /Usage: window \[new \[--label <name>\] \[url\] \| close <n\|label> \| label <n> <name\|off>\]/, usage);
       assert.match(await ok(`window label ${n} docs`), new RegExp(`^Window ${n} is labeled docs$`, 'm'));
       const listing = await ok('tab');
       assert.match(listing, new RegExp(`^Window ${n}, docs:\\n {2}\\[\\d+\\] ${site.url}/\\?own-window`, 'm'), 'its tab under its labeled header');
@@ -1109,6 +1109,28 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       await browser.detach().catch(() => {});
       await user.close();
     }
+  });
+
+  it('opens a window, opens tabs in a window by its label, and closes a window of its own tabs only', async () => {
+    const opened = await ok(`window new --label side ${site.url}/?side`);
+    const n = Number(/^Window (\d+), side:$/m.exec(opened)?.[1]);
+    assert.ok(n > 1, opened);
+    assert.match(opened, /^\* \[\d+\] \S+\/\?side$/m, 'its tab, selected');
+    assert.match((await repl.runAs('window-other', 'window')).output, new RegExp(`^Window ${n}, side: 1 tab`, 'm'), 'its label, for every client');
+    // The page's own window.open is not the one used.
+    await ok('eval window.open = () => { throw new Error("replaced") }; 0');
+    assert.match(await ok(`tab new --window side ${site.url}/?second`), new RegExp(`^Window ${n}, side:\\n(?:.*\\n)*?\\* \\[\\d+\\] \\S+/\\?second`, 'm'), 'the tab, selected, in that window');
+    assert.match(await ok('tab new --window 1'), /^New tab created in Window 1 and selected$/m, 'by number too');
+    for (const [label, error] of [['two words', /one word/], ['7', /not a number/], ['"docs', /no quotes/], ['side', new RegExp(`Window ${n} is labeled side already`)]]) {
+      assert.match((await repl.run(`window label 1 ${label}`)).output, error, label);
+    }
+    assert.match((await repl.run('tab new --window nowhere')).output, /No open window is labeled nowhere/, 'never the window Chrome picks');
+    const refused = await repl.runAs('window-other', 'window close side');
+    assert.equal(refused.status, 'error');
+    assert.match(refused.output, /has tabs you did not open, so it is left open:\n.*\?side {2}\(opened by the prompt or an unnamed sender\)/, refused.output);
+    assert.match((await repl.run('window close 1')).output, /has tabs you did not open/, 'the user\'s tabs are not its to close');
+    assert.match(await ok('window close side'), new RegExp(`^Closed Window ${n}, side, with 2 tabs$`, 'm'));
+    assert.doesNotMatch(await ok('window'), /side/, 'its label goes with it');
   });
 
   it('saves what was watched as commands that send --file runs again, values and all, a password as a variable', async () => {

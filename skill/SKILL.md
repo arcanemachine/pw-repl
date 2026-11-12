@@ -224,6 +224,10 @@ pw-repl send -c <name> close                        # your modes off; tab close 
   ask. `tab` marks `(visible)` the tab the user sees: "this page" is usually that one. A tab you have
   selected is never marked (help tab says why). With several windows open, `tab` lists the tabs under
   each window; `window label <n> <name>` labels one, so "my docs window" can be found (help window).
+  To work in a window of its own, where the user is not: `tab new --window <n|label> [url]` opens your
+  tab there, without asking Chrome to bring that window forward. `window new [url]` opens a window, which
+  may take the user's focus, depending on their window manager; `window close <n|label>` closes one whose
+  tabs you opened.
 - No tab is selected when the REPL starts. A start URL's tab, marked `(the start URL)` in `tab`, is
   selected at its prompt and for `send` without a client name; a named client (`-c`) selects it with
   `tab <index>`. Closing a tab the REPL opened goes back to the tab before it, if the REPL opened that
