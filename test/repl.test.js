@@ -680,6 +680,18 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
       assert.match(shown, /\(a password: not shown\)/, view);
       assert.doesNotMatch(shown, /hunter2|424242|987/, view);
     }
+    // A placeholder puts the value on a line of its own; ' #' or ': ' in the name quotes the field's key.
+    await ok('eval document.body.insertAdjacentHTML("beforeend", "<input id=ph type=password aria-label=Secret placeholder=hint><input id=q type=password aria-label=\'PIN #2\'><input id=qph type=password aria-label=\'PIN: now\' placeholder=hint><input id=memo aria-label=Memo placeholder=hint>"); 0');
+    for (const [field, value] of [['#ph', 'phsecret'], ['#q', 'qsecret'], ['#qph', 'qphsecret'], ['#memo', 'memotext']]) await ok(`fill ${field} ${value}`);
+    const placed = await ok('snapshot');
+    assert.match(placed, /textbox "Secret" \[ref=(e\d+)\]:\n +- \/placeholder: hint\n +- text: \(a password: not shown\)/);
+    assert.match(placed, /'textbox "PIN #2" \[ref=e\d+\]': \(a password: not shown\)/);
+    assert.match(placed, /'textbox "PIN: now" \[ref=e\d+\]':\n +- \/placeholder: hint\n +- text: \(a password: not shown\)/);
+    assert.match(placed, /textbox "Memo"[^\n]*:\n +- \/placeholder: hint\n +- text: memotext/, 'not a password: its value shows');
+    const secretRef = /textbox "Secret" \[ref=(e\d+)\]/.exec(placed)[1];
+    for (const view of ['snapshot --full', `snapshot ${secretRef}`, 'snapshot #ph', 'snapshot --grep secret']) {
+      assert.doesNotMatch(await ok(view), /phsecret|qsecret|qphsecret/, view);
+    }
     // As a page that keeps the value attribute in step with the field does (React).
     await ok('eval pw.setAttribute("value", pw.value); document.querySelector("#name").setAttribute("value", "Ada"); 0');
     assert.match(await ok('attrs #pw'), /"value": "\(a password: not shown\)"/);

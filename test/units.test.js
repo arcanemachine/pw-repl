@@ -417,6 +417,21 @@ describe('snapshot changes', () => {
     assert.deepEqual(summarizeChanges(before, before.replace(/\[ref=e\d+\]/g, '[ref=f1e9]')), []);
   });
 
+  it('leaves out a field\'s value under its placeholder, and one whose key is quoted', () => {
+    const fields = (/** @type {string} */ value) => [
+      '- textbox "Pin" [ref=e1]:',
+      '  - /placeholder: hint',
+      `  - text: ${value}`,
+      `- 'textbox "Password #2" [ref=e2]': ${value}`,
+      '- \'textbox "Pin: now" [ref=e3]\':',
+      '  - /placeholder: hint',
+      `  - text: ${value}`,
+      '- paragraph [ref=e4]:',
+      `  - text: ${value}`,
+    ].join('\n');
+    assert.deepEqual(summarizeChanges(fields('one'), fields('sekret')), ['~ text: sekret'], 'text that is not a field\'s value still shows');
+  });
+
   it('blanks out the text of editable areas, as text or as a name', () => {
     const text = ['- generic "Draft" [ref=e1]: CESECRET', '- paragraph: my private draft', '- button "Go"', '  - text: CESECRET'].join('\n');
     assert.equal(scrubEditable(text, ['CESECRET', 'my private draft']), ['- generic "Draft" [ref=e1]', '- paragraph', '- button "Go"', '  - text'].join('\n'));
