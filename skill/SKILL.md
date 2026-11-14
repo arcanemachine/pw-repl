@@ -95,6 +95,7 @@ client of your own: `PW_CLIENT=<name>` (or `send -c <name>`), with a name that s
 - `modes` and `tab` say which client turned each mode on and opened each tab. `modes off --mine` turns
   off only what you turned on; `tab close <url-part>` closes a tab you opened.
 - Commands run one at a time, from every client: a long one (`capture on 60s`, `sleep`) holds the rest.
+  To wait for someone to act in a tab, `watch new --wait <time>` waits beside them instead (`help watch`).
 
 A REPL of your own, on a socket of its own, is for a browser of your own (`--launch`), or when you are
 asked for one. Several REPLs on one browser each see every tab but list only their own modes, and can

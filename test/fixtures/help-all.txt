@@ -20,6 +20,7 @@ Common tasks:
   show an agent what I do                 watch on, click around, then watch
   see each step as I click                watch on --live
   watch a tab someone will open           watch on --next-tab [url-part]
+  wait for someone to click               watch on, then watch new --wait 300s
   replay what I clicked through           watch save flow.txt, then pw-repl send --file flow.txt
   record requests and console together    capture on, then capture off
   find what makes the page slow           profile on, then profile off; profile reload for a load
@@ -438,6 +439,12 @@ Output is capped; --all right after the command, or at the end, shows everything
         (none) | <n>        says whether it is on, and shows the last 20 steps, or the last n.
         new                 only the steps not shown yet, and for the last one, requests that have since
                             arrived and answers to those it showed pending.
+        new --wait <time>   watch new, once it has something: waits up to time for someone to act, then
+                            answers once the tab has been quiet for 1s (5s at most), so requests a step starts
+                            a moment later are under it. A slow one shows as pending: the next watch new shows
+                            its answer, and body <#> what it returned. Nothing within time: No new steps. Give
+                            send longer: pw-repl send -t 330s watch new --wait 300s (an agent's shell may stop
+                            a command past 10 minutes).
         save <file>         writes the steps as commands, a file that pw-repl send --file <file> runs again;
                             it refuses a file that exists.
       Options (watch on):
@@ -489,6 +496,11 @@ Output is capped; --all right after the command, or at the end, shows everything
       too; console error and requests --all show what failed. Without a url-part, --next-tab takes the first
       tab anyone opens: check tab and info once it fires, since another tab opening later does not show in
       watch.
+
+      Waiting for someone (new --wait): sent to the server, it runs beside the queue, so other commands, your
+      own too, run while it waits; at the prompt or through tmux it holds the REPL until it answers. It needs
+      a watch on: it stays with the tab selected when it began. A page that keeps requesting (polling) answers
+      at the 5s limit with them, as (continued).
 
       Shared: every client sees the same steps, and watch new's place is shared: when another client watches
       the tab too, read it with watch <n>, since each one's watch new would hide steps from the other.

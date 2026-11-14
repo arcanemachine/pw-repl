@@ -164,6 +164,7 @@ example the Docker bridge gateway, `ip route | awk '/default/ {print $3}'`).
 | show an agent what I do               | `watch on`, click around, then `watch`                                |
 | see each step as I click              | `watch on --live`                                                     |
 | watch a tab someone will open         | `watch on --next-tab [url-part]`                                      |
+| wait for someone to click             | `watch on`, then `watch new --wait 300s`                              |
 | replay what I clicked through         | `watch save flow.txt`, then `pw-repl send --file flow.txt`            |
 | record requests and console together  | `capture on`, then `capture off`                                      |
 | find what makes the page slow         | `profile on`, then `profile off`; `profile reload` for a load         |

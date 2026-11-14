@@ -27,7 +27,7 @@ If you hit a limitation or write a workaround, consider adding the capability to
   detached with its `detachSession`: Chrome resets the tab's kept response bodies when one detaches), `lib/util.js` small shared helpers, and `lib/written.js` the files written and for whom. No facility requires `lib/modes.js` or
   `lib/commands.js`, and a unit test fails on a require cycle, which CommonJS would not report.
 - `bin/pw-repl.js` is the command line; `lib/start.js` connects and runs the prompt; `lib/runner.js`
-  runs commands one at a time (`quit` and `dialog` skip its queue); `lib/server.js` is the command
+  runs commands one at a time (`quit`, `dialog` and a sent `watch new --wait` skip its queue); `lib/server.js` is the command
   server; `lib/send.js` and `lib/client.js` are `send` and `where`; `lib/background.js` is
   `serve --background`, `attach` and `stop`; `lib/launch.js` is `--launch`; `lib/syntax.js` is how a
   command line's words are read, shared with `send`, and its `{{ PW_NAME }}` variables; `lib/cli-names.js` maps playwright-cli's command

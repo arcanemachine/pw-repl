@@ -155,11 +155,12 @@ describe('quitting at the prompt while a sent command runs', { skip: SKIP }, () 
   });
 
   // Sends through pw-repl send, as an agent would, and stops the REPL once the command is running.
-  const sendThenQuit = async (command, stop = () => repl.type('quit')) => {
+  const sendThenQuit = async (command, stop = () => repl.type('quit'), first = []) => {
     // Each test starts its own REPL; the one before is stopped so its socket folder goes too.
     await repl?.stop();
     repl = await startRepl(chrome.cdpUrl);
     await repl.run(`tab new ${site.url}/`);
+    for (const line of first) await repl.run(line);
     const sender = spawn(process.execPath, [path.join(__dirname, '..', 'bin', 'pw-repl.js'), 'send', '-e', repl.socket, '-t', '30s', command]);
     let stdout = '';
     let stderr = '';
@@ -192,6 +193,12 @@ describe('quitting at the prompt while a sent command runs', { skip: SKIP }, () 
     assert.equal(result.code, 1, result.stderr);
     assert.match(result.stdout, /The REPL quit before this command finished\.$/m);
     assert.doesNotMatch(result.stderr, /cannot reach|not answering/);
+  });
+
+  it('answers a watch new --wait, which runs beside the queue, as interrupted', async () => {
+    const result = await sendThenQuit('watch new --wait 30s', undefined, ['watch on']);
+    assert.equal(result.code, 1, result.stderr);
+    assert.match(result.stdout, /The REPL quit before this command finished\.$/m);
   });
 });
 

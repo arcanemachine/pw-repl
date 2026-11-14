@@ -1660,6 +1660,34 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     await ok('watch off');
   });
 
+  it('waits beside the queue with watch new --wait, and answers with the step\'s late requests', async () => {
+    const off = await repl.run('watch new --wait 5s');
+    assert.equal(off.status, 'error');
+    assert.match(off.output, /^Error: Not watching the selected tab; watch on starts it/, 'refused at once with no watch on');
+    await ok('watch on');
+    await ok('route **/api/slow 200 {"slow":true}');
+    await ok('eval document.querySelector("#load").onclick = () => setTimeout(() => fetch("/api/slow"), 400)');
+    const start = repl.stdout.length;
+    let answered = false;
+    const waiting = repl.run('watch new --wait 20s').then(result => { answered = true; return result; });
+    // Commands run while it waits: another client's, and the waiting client's own.
+    assert.match((await repl.runAs('beside-wait', 'help watch')).output, /new --wait <time>/);
+    assert.match(await ok('info'), /URL:/);
+    assert.equal(answered, false, 'nothing has happened yet');
+    await ok('click #load');
+    const result = await waiting;
+    assert.equal(result.status, 'ok', result.output);
+    assert.match(result.output, /^\S+ click button "Load"\n[\s\S]*#\d+ GET 200 faked \S+\/api\/slow/, 'the request that began after the click is under it');
+    assert.match(repl.stdout.slice(start), /\[server\] watch new --wait 20s\n\S+ click button "Load"/, 'the pane shows the answer under the command again');
+    assert.equal(await ok('watch new'), 'No new steps', 'it moved watch new\'s place');
+    assert.equal(await ok('watch new --wait 300'), 'No new steps', 'nothing within its time');
+    const gaveUp = await pwSend(['-t', '1s', 'watch new --wait 10s']);
+    assert.equal(gaveUp.status, 2, gaveUp.output);
+    await waitFor(() => /watch new --wait 10s: cancelled, its sender gave up/.test(repl.stdout.slice(start)), 'the pane to say it was cancelled');
+    await ok('route off **/api/slow');
+    await ok('watch off');
+  });
+
   it('adds what each step changed on screen with watch on --changes, without field values', async () => {
     await ok('reload');
     await ok('watch on --changes');
