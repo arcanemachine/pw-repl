@@ -378,6 +378,35 @@ describe('snapshot grep', () => {
     const text = ['- main [ref=e1]:', '  - paragraph [ref=e2]:', '    - text: "Total:"', '    - strong [ref=e3]: 3,105.75'].join('\n');
     assert.deepEqual(grepSnapshot(text, 'total'), ['main › paragraph [ref=e2] › text: "Total:"']);
   });
+
+  it('keeps the chosen options under a select it hits, each once', () => {
+    const text = [
+      '- form [ref=e1]:',
+      '  - combobox "Size" [ref=e2]:',
+      '    - option "Small"',
+      '    - option "Medium" [selected]',
+      '  - listbox "Multi" [ref=e3]:',
+      '    - option "A" [selected] [ref=e4]',
+      '    - option "B" [ref=e5]',
+      '    - group "More" [ref=e9]:',
+      '      - \'option "C: [selected]" [selected] [ref=e6]\'',
+      '  - combobox "Plain" [ref=e7]:',
+      '    - option "[selected]"',
+      '  - combobox "City" [ref=e8]: Oslo',
+    ].join('\n');
+    assert.deepEqual(grepSnapshot(text, 'size'), ['form › combobox "Size" [ref=e2]', '  - option "Medium" [selected]']);
+    // The listbox and one of its chosen options are hits: the option shows under it, not again on its own.
+    assert.deepEqual(grepSnapshot(text, /Multi|"A"/), [
+      'form › listbox "Multi" [ref=e3]',
+      '  - option "A" [selected] [ref=e4]',
+      '  - option "C: [selected]" [selected] [ref=e6]',
+    ]);
+    // An option hit whose select is not one prints as before.
+    assert.deepEqual(grepSnapshot(text, 'medium'), ['form › combobox "Size" [ref=e2] › option "Medium" [selected]']);
+    // [selected] in a name is not a choice; a value on the line has nothing under it.
+    assert.deepEqual(grepSnapshot(text, 'plain'), ['form › combobox "Plain" [ref=e7]']);
+    assert.deepEqual(grepSnapshot(text, 'city'), ['form › combobox "City" [ref=e8]: Oslo']);
+  });
 });
 
 describe('snapshot changes', () => {
