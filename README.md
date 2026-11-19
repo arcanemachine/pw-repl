@@ -50,7 +50,7 @@ pw> quit
 Commands act on the selected tab. `tab` lists the tabs, with `*` on the selected one, under their windows
 when there are several. `window new [url]` opens a window, `tab new --window <n|label> [url]` opens a tab
 in one without asking Chrome to bring that window forward, `window label <n> <name>` labels one, and
-`window close` closes one.
+`window close` closes one. `title <text>` names a tab, and keeps the name across page loads.
 
 ### Install
 
@@ -185,8 +185,8 @@ it all.
 ### Modes
 
 Some commands turn on a mode that stays on until you turn it off: `watch`, `capture`, `profile`,
-`record`, `route`, `websocket route`, `network off` or `slow`, `emulate`, `viewport`, `highlight`, `cursor`
-and `toast`.
+`record`, `route`, `websocket route`, `network off` or `slow`, `emulate`, `viewport`, `highlight`, `cursor`,
+`toast` and `title`.
 While any are on in the selected tab, the prompt shows them: `(watch network:off routes:2) pw>`. `modes`
 lists them for every tab, and `modes off` turns them all off. Each of these commands on its own shows
 its state and what you can run next.

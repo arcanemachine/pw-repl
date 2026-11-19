@@ -248,6 +248,9 @@ pw-repl send -c <name> close                        # your modes off; tab close 
 - What a page copied (a Copy button): click it, then `clipboard` prints it. In a headless browser
   (`--launch`) that is the browser's own clipboard. In one with a window it is the user's, which may
   hold a password, so `clipboard` refuses there without `--shared-clipboard`: ask the user first.
+- To name a tab for the user, e.g. to match a numbered list, `title <text>` sets its title and keeps it
+  across page loads and the page's own changes, while the REPL runs; `title off` puts the page's back.
+  `eval document.title=...` lasts only until the page next sets it.
 - To point something out, to the user or in a screenshot, `highlight <ref|selector>` draws a box over it
   without changing the page (`--style=<css>` restyles it; `highlight off` hides them), without
   Playwright's locator label unless `highlight --labels on`.

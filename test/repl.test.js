@@ -3332,6 +3332,42 @@ describe('REPL against a real browser', { skip: SKIP }, () => {
     }
   });
 
+  it('keeps a title on the tab across page loads, puts it back when the page sets its own, and lets it go with title off', async () => {
+    const kept = '"[1] Django: New York", kept by the REPL; title off puts back the page\'s own';
+    assert.equal(await ok('title'), '"Fixture"; title <text> sets one the REPL keeps');
+    // Runs of spaces read back as one: compared as read back, it is not put back forever.
+    assert.equal(await ok('title "[1] Django:  New York"'), 'The tab\'s title is "[1] Django: New York", kept across page loads and put back when the page sets its own; title off lets it go');
+    assert.equal(await ok('title'), kept);
+    assert.match(await ok('modes'), /\(title\)/);
+    // A single-page app setting its own on a route change: ours is put back, and the page's is the one off restores.
+    await ok('eval document.title = "Route B"');
+    assert.equal(await ok('eval document.title'), '[1] Django: New York');
+    await ok('eval document.querySelector("title").textContent = "Route C"');
+    assert.equal(await ok('eval document.title'), '[1] Django: New York');
+    assert.equal(await ok('title off'), 'The page\'s own title is back: "Route C"');
+    assert.equal(await ok('title off'), 'The REPL was not keeping a title in the selected tab');
+    // Kept across page loads.
+    await ok('title "[1] Django:  New York"');
+    await ok('reload');
+    await waitFor(async () => (await ok('title')) === kept, 'the title after a reload');
+    await ok('click text=Other');
+    await ok('wait load');
+    await waitFor(async () => (await ok('title')) === kept, 'the title on a new page');
+    // A page that fights for its title is let have it, until its next page load.
+    await ok('eval new MutationObserver(() => { if (document.title !== "Mine") document.title = "Mine"; }).observe(document.head, { subtree: true, childList: true, characterData: true }); document.title = "Mine"');
+    assert.equal(await ok('title'), 'Keeping the title "[1] Django: New York", but the page shows "Mine": the page set its own more than 20 times in a second, so the REPL stopped putting it back until the next page load; title <text> sets it again, title off lets it go');
+    await ok('reload');
+    await waitFor(async () => (await ok('title')) === kept, 'the title after the page that fought reloads');
+    assert.match(await ok('modes off'), /title off/);
+    assert.equal(await ok('eval document.title'), 'Other');
+    // A document with no title gets none back.
+    await ok('eval document.querySelector("title").remove()');
+    await ok('title Untitled');
+    assert.equal(await ok('eval document.querySelectorAll("title").length'), '1');
+    assert.equal(await ok('title off'), 'The page\'s own title is back: ""');
+    assert.equal(await ok('eval document.querySelectorAll("title").length'), '0');
+  });
+
   it('keeps a toast up for its read time while the tab records', { skip: FFMPEG ? false : 'no ffmpeg found: npx playwright-core install ffmpeg' }, async () => {
     const dir = fs.mkdtempSync(require('path').join(require('os').tmpdir(), 'pw-repl-toast-'));
     try {
