@@ -22,7 +22,7 @@ If you hit a limitation or write a workaround, consider adding the capability to
   page, screenshots, eval, CDP, waits), `lib/watch.js`, `lib/requestlog.js` (requests, bodies, console,
   WebSocket and SSE messages), `lib/routes.js`, `lib/network.js`, `lib/websockets.js` (closing, dropping and routing WebSockets), `lib/emulation.js` (and viewport), `lib/capture.js`, `lib/profile.js` (performance traces;
   `lib/trace.js` reads and sums them up), `lib/record.js`
-  (video, through ffmpeg, and the steps file saved with it), `lib/dialogs.js` and `lib/modes.js`. Beneath them, `lib/tabstate.js` is the one record kept per tab, `lib/cdp.js` the CDP
+  (video, through ffmpeg, and the steps file saved with it), `lib/dialogs.js` and `lib/modes.js`. Beneath them, `lib/tabstate.js` is the one record kept per tab, `lib/kept.js` what is applied again on each new document of a tab (a per-tab setting that must outlast its document, such as the cursor or a toast, goes through it), `lib/cdp.js` the CDP
   session kept per tab and a background tab kept drawing while commands act in it (any other session on a tab is
   detached with its `detachSession`: Chrome resets the tab's kept response bodies when one detaches), `lib/util.js` small shared helpers, and `lib/written.js` the files written and for whom. No facility requires `lib/modes.js` or
   `lib/commands.js`, and a unit test fails on a require cycle, which CommonJS would not report.
